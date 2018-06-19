@@ -14,7 +14,6 @@ namespace SoftwareCo
         // non-hardcoded attributes
         public JsonObject source = new JsonObject();
         public String data = "0"; // keystroke count
-        public String version = "0.1.2";
 
         // start and end are in seconds
         public long start;
@@ -27,11 +26,6 @@ namespace SoftwareCo
             long nowMillis = Convert.ToInt64((DateTime.Now - DateTime.MinValue).TotalMilliseconds);
             start = (long) Math.Round((double)(nowMillis / 1000));
             project = projectInfo;
-            String pluginVersion = Constants.PluginVersion;
-            if (pluginVersion != null)
-            {
-                this.version = pluginVersion;
-            }
         }
 
         public void ResetData()

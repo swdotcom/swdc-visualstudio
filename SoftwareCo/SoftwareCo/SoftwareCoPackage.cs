@@ -338,6 +338,24 @@ namespace SoftwareCo
                 Logger.Info("Software.com: sending: " + softwareDataContent);
                 HttpContent contentPost = new StringContent(softwareDataContent, Encoding.UTF8, "application/json");
 
+                HttpResponseMessage response = await SendRequest(HttpMethod.Post, "/data", contentPost);
+                if (response != null)
+                {
+                    int statusCode = (int)response.StatusCode;
+                    Logger.Info("response status: " + statusCode);
+                    if (statusCode >= 300)
+                    {
+                        // failed, save it to the offline file
+                    }
+                    else
+                    {
+
+                    }
+                }
+                
+                
+
+                /**
                 HttpClient client = new HttpClient
                 {
                     Timeout = TimeSpan.FromSeconds(5)
@@ -381,12 +399,62 @@ namespace SoftwareCo
                     _lastPostTime = now;
                     _lastDocument = null;
                 }
+            **/
             }
+        }
+
+        private async Task<HttpResponseMessage> SendRequest(HttpMethod httpMethod, string uri, HttpContent optionalPayload)
+        {
+
+            HttpClient client = new HttpClient
+            {
+                Timeout = TimeSpan.FromSeconds(5)
+            };
+            var cts = new CancellationTokenSource();
+            HttpResponseMessage response = null;
+            try
+            {
+                string endpoint = Constants.api_endpoint + "" + uri;
+                if (httpMethod.Equals(HttpMethod.Post.ToString()))
+                {
+                    response = await client.PostAsync(endpoint, optionalPayload, cts.Token);
+                }
+                else if (httpMethod.Equals(HttpMethod.Get.ToString()))
+                {
+                    response = await client.GetAsync(endpoint, cts.Token);
+                }
+            }
+            catch (HttpRequestException e)
+            {
+                NotifyPostException(e);
+            }
+            catch (TaskCanceledException e)
+            {
+                if (e.CancellationToken == cts.Token)
+                {
+                    // triggered by the caller
+                    NotifyPostException(e);
+                }
+                else
+                {
+                    // a web request timeout (possibly other things!?)
+                    Logger.Info("We are having trouble receiving a response from Software.com");
+                }
+            }
+            catch (Exception e)
+            {
+                NotifyPostException(e);
+            }
+            finally
+            {
+            }
+            return response;
         }
 
         private void NotifyPostException(Exception e)
         {
 
+            /**
             if (!_alreadyNotifiedUserOfNoPM && !this.IsPluginManagerInstalled())
             {
                 IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
@@ -439,6 +507,7 @@ namespace SoftwareCo
                     0,
                     out result);
             }
+            **/
         }
 
         private bool EnoughTimePassed(DateTime now)
