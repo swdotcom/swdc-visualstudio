@@ -486,10 +486,9 @@ namespace SoftwareCo
 
         private void UpdateStatus()
         {
-            IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
             if (!this._hasJwt || !this._isAuthenticated || !this._isOnline)
             {
-                statusbar.SetText("Software.com");
+                this.SetStatus("Software.com");
             }
         }
 
@@ -638,15 +637,14 @@ namespace SoftwareCo
                     {
                         sessionTime = minutesTotal + " min";
                     }
-
-                    IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
+                    
                     if (avgKpm > 0 || minutesTotal > 0)
                     {
-                        statusbar.SetText("<s> " + avgKpm + " KPM, " + sessionTime);
+                        this.SetStatus("<s> " + avgKpm + " KPM, " + sessionTime);
                     }
                     else
                     {
-                        statusbar.SetText("Software.com");
+                        this.SetStatus("Software.com");
                     }
                 }
                 else
@@ -796,12 +794,10 @@ namespace SoftwareCo
                 string pmFileToSave = this.getDownloadDestinationPathName();
 
                 WebClient client = new WebClient();
-                IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
-                statusbar.SetText("Downloading Software desktop...");
+                this.SetStatus("Downloading Software desktop...");
                 client.DownloadFile(pmUrl, pmFileToSave);
-                statusbar.SetText("Completed Software desktop download");
+                this.SetStatus("Completed Software desktop download");
                 await Task.Delay(5000);
-                statusbar.Clear();
                 // install it
                 System.Diagnostics.Process.Start(pmFileToSave);
             }
@@ -824,14 +820,18 @@ namespace SoftwareCo
 
         private void DownloadProgressCallback(object sender, DownloadProgressChangedEventArgs e)
         {
-            IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
-            statusbar.SetText("Downloading Software desktop: " + e.ProgressPercentage + "%");
+            this.SetStatus("Downloading Software desktop: " + e.ProgressPercentage + "%");
         }
 
         private void DownloadProgressCompletedCallback(object sender, AsyncCompletedEventArgs e)
         {
+            this.SetStatus("Completed Software desktop download");
+        }
+
+        private void SetStatus(string msg)
+        {
             IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
-            statusbar.SetText("Completed Software desktop download");
+            statusbar.SetText(msg);
         }
 
         #endregion
