@@ -543,6 +543,40 @@ namespace SoftwareCo
                 return obj;
             throw new SerializationException("Invalid JSON string");
         }
+        /**
+        public static IDictionary<string, object> ToDictionary(string json)
+        {
+            var dictionary = new Dictionary<string, object>();
+            object obj;
+            if (TryDeserializeObject(json, out obj))
+            {
+                foreach (PropertyDescriptor property in TypeDescriptor.GetProperties(obj))
+                {
+                    object value = property.GetValue(obj);
+                    if (value != null)
+                    {
+                        dictionary.Add(property.Name, value);
+                    }
+                }
+                return dictionary;
+            }
+            throw new SerializationException("Invalid JSON string");
+        }
+    **/
+
+        public static object GetValue(string json, string key)
+        {
+            IDictionary<String, object> dict = (IDictionary<string, object>)DeserializeObject(json);
+            object val = "";
+            if (dict.TryGetValue(key, out val))
+            {
+                return val;
+            }
+            else
+            {
+                return null;
+            }
+        }
 
         /// <summary>
         /// Try parsing the json string into a value.

@@ -68,9 +68,25 @@ namespace SoftwareCo
             this.addOrUpdateFileInfo(fileName, property, dataVal);
 
             // update the overall count
-            if (property.Equals("keys"))
+            if (property.Equals("add") || property.Equals("delete"))
             {
                 data = Convert.ToString(Convert.ToInt32(data) + dataVal);
+
+                // update the "keys" and "netkeys"
+                if (property.Equals("add"))
+                {
+                    // "add"
+                    // add this to the "keys"and "netkeys"
+                    this.addOrUpdateFileInfo(fileName, "keys", dataVal);
+                    this.addOrUpdateFileInfo(fileName, "netkeys", dataVal);
+                }
+                else
+                {
+                    // "delete"
+                    // add this to the "keys" and subtract from the "netkeys"
+                    this.addOrUpdateFileInfo(fileName, "keys", dataVal);
+                    this.addOrUpdateFileInfo(fileName, "netkeys", dataVal/-1);
+                }
             }
         }
 
@@ -109,7 +125,13 @@ namespace SoftwareCo
             fileInfoData.Add("close", 0);
             fileInfoData.Add("delete", 0);
             fileInfoData.Add("keys", 0);
+            fileInfoData.Add("add", 0);
+            fileInfoData.Add("netkeys", 0);
             fileInfoData.Add("length", 0);
+            fileInfoData.Add("lines", 0);
+            fileInfoData.Add("linesAdded", 0);
+            fileInfoData.Add("linesRemoved", 0);
+            fileInfoData.Add("syntax", "");
             if (property != null && count > 0)
             {
                 fileInfoData.Remove(property);

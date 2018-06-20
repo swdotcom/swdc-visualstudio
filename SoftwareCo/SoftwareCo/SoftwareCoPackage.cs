@@ -14,6 +14,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel;
+using System.Collections.Generic;
 
 namespace SoftwareCo
 {
@@ -54,6 +55,7 @@ namespace SoftwareCo
         private TextDocumentKeyPressEvents _textDocKeyEvent;
 
         private Timer timer;
+        private Timer kpmTimer;
 
         // Used by Constants for version info
         public static DTE2 ObjDte;
@@ -68,6 +70,11 @@ namespace SoftwareCo
         private bool _alreadyNotifiedUserOfNoResponse = false;
         private bool _alreadyNotifiedUserOfNoPM = false;
         private bool _downloading = false;
+
+        private bool _isOnline = true;
+        private bool _isAuthenticated = true;
+        private bool _hasJwt = true;
+
         #endregion
 
         /// <summary>
@@ -126,13 +133,23 @@ namespace SoftwareCo
                 var autoEvent = new AutoResetEvent(false);
 
                 // setup timer to process events every 60 seconds
-                long delayToStart = 1000L; // wait a second to start
                 long timerInterval = 60000L; // timer interval
                 timer = new Timer(
                     ProcessSoftwareDataTimerCallbackAsync,
                     autoEvent,
-                    delayToStart,
+                    timerInterval,
                     timerInterval);
+
+                this.SendOfflineData();
+
+                // start in 30 seconds
+                kpmTimer = new Timer(
+                    ProcessFetchDailyKpmTimerCallbackAsync,
+                    autoEvent,
+                    30000L,
+                    timerInterval);
+
+                this.AuthenticationNotificationCheck();
             }
             catch (Exception ex)
             {
@@ -182,7 +199,7 @@ namespace SoftwareCo
             String fileName = document.FullName;
             FileInfo fi = new FileInfo(fileName);
             long diff = this.getFileDiffLength(fi);
-            long kpm = _softwareData.getFileInfoDataForProperty(fi.FullName, "keys");
+            long kpm = _softwareData.getFileInfoDataForProperty(fi.FullName, "add");
             if (diff > kpm + 1)
             {
                 // register a copy and past event
@@ -226,10 +243,10 @@ namespace SoftwareCo
                 }
                 else
                 {
-                    _softwareData.UpdateData(fileName, "keys", 1);
+                    _softwareData.UpdateData(fileName, "add", 1);
                     Logger.Info("Software.com: KPM incremented");
                 }
-                
+
             }
         }
 
@@ -318,6 +335,9 @@ namespace SoftwareCo
         {
             AutoResetEvent autoEvent = (AutoResetEvent)stateInfo;
 
+            this.CheckAuthStatus();
+            this.SendOfflineData();
+
             DateTime now = DateTime.UtcNow;
             if (_softwareData != null && _softwareData.HasData() && (EnoughTimePassed(now) || timer == null))
             {
@@ -336,74 +356,25 @@ namespace SoftwareCo
 
                 string softwareDataContent = SimpleJson.SerializeObject(_softwareData);
                 Logger.Info("Software.com: sending: " + softwareDataContent);
-                HttpContent contentPost = new StringContent(softwareDataContent, Encoding.UTF8, "application/json");
 
-                HttpResponseMessage response = await SendRequest(HttpMethod.Post, "/data", contentPost);
-                if (response != null)
+                HttpResponseMessage response = await SendRequest(HttpMethod.Post, "/data", softwareDataContent);
+                if (!this.IsOk(response))
                 {
-                    int statusCode = (int)response.StatusCode;
-                    Logger.Info("response status: " + statusCode);
-                    if (statusCode >= 300)
-                    {
-                        // failed, save it to the offline file
-                    }
-                    else
-                    {
+                    this.StorePayload(softwareDataContent);
+                }
 
-                    }
-                }
-                
-                
-
-                /**
-                HttpClient client = new HttpClient
-                {
-                    Timeout = TimeSpan.FromSeconds(5)
-                };
-                var cts = new CancellationTokenSource();
-                HttpResponseMessage response = null;
-                try
-                {
-                    response = await client.PostAsync(PLUGIN_MGR_ENDPOINT, contentPost, cts.Token);
-                }
-                catch (HttpRequestException e)
-                {
-                    NotifyPostException(e);
-                }
-                catch (TaskCanceledException e)
-                {
-                    if (e.CancellationToken == cts.Token)
-                    {
-                        // triggered by the caller
-                        NotifyPostException(e);
-                    }
-                    else
-                    {
-                        // a web request timeout (possibly other things!?)
-                        if (!_alreadyNotifiedUserOfNoResponse)
-                        {
-                            _alreadyNotifiedUserOfNoResponse = true;
-                            Logger.Info("" +
-                                "We are having trouble receiving a response from Software.com. " +
-                                "Please make sure the Plugin Manager is running and logged in.");
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    NotifyPostException(e);
-                }
-                finally
-                {
-                    _softwareData.ResetData();
-                    _lastPostTime = now;
-                    _lastDocument = null;
-                }
-            **/
+                _softwareData.ResetData();
+                _lastPostTime = now;
+                _lastDocument = null;
             }
         }
 
-        private async Task<HttpResponseMessage> SendRequest(HttpMethod httpMethod, string uri, HttpContent optionalPayload)
+        private bool IsOk(HttpResponseMessage response)
+        {
+            return (response != null && (int)response.StatusCode <= 300);
+        }
+
+        private async Task<HttpResponseMessage> SendRequest(HttpMethod httpMethod, string uri, string optionalPayload)
         {
 
             HttpClient client = new HttpClient
@@ -412,28 +383,46 @@ namespace SoftwareCo
             };
             var cts = new CancellationTokenSource();
             HttpResponseMessage response = null;
+            object jwt = this.getItem("jwt");
+            if (jwt != null)
+            {
+                // add the authorizationn
+                client.DefaultRequestHeaders.Add("Authorization", (string)jwt);
+            }
+            HttpContent contentPost = null;
+            if (optionalPayload != null)
+            {
+                contentPost = new StringContent(optionalPayload, Encoding.UTF8, "application/json");
+            }
+            bool isPost = (httpMethod.Equals(HttpMethod.Post));
             try
             {
                 string endpoint = Constants.api_endpoint + "" + uri;
-                if (httpMethod.Equals(HttpMethod.Post.ToString()))
+                if (isPost)
                 {
-                    response = await client.PostAsync(endpoint, optionalPayload, cts.Token);
+                    response = await client.PostAsync(endpoint, contentPost, cts.Token);
                 }
-                else if (httpMethod.Equals(HttpMethod.Get.ToString()))
+                else
                 {
                     response = await client.GetAsync(endpoint, cts.Token);
                 }
             }
             catch (HttpRequestException e)
             {
-                NotifyPostException(e);
+                if (isPost)
+                {
+                    NotifyPostException(e);
+                }
             }
             catch (TaskCanceledException e)
             {
                 if (e.CancellationToken == cts.Token)
                 {
                     // triggered by the caller
-                    NotifyPostException(e);
+                    if (isPost)
+                    {
+                        NotifyPostException(e);
+                    }
                 }
                 else
                 {
@@ -443,7 +432,10 @@ namespace SoftwareCo
             }
             catch (Exception e)
             {
-                NotifyPostException(e);
+                if (isPost)
+                {
+                    NotifyPostException(e);
+                }
             }
             finally
             {
@@ -453,61 +445,239 @@ namespace SoftwareCo
 
         private void NotifyPostException(Exception e)
         {
+            Logger.Error("We are having trouble sending data to Software.com, reason: " + e.Message);
+        }
 
-            /**
-            if (!_alreadyNotifiedUserOfNoPM && !this.IsPluginManagerInstalled())
+        private void StorePayload(string softwareDataContent)
+        {
+            string datastoreFile = this.getSoftwareDataStoreFile();
+            // append to the file
+            File.AppendAllText(datastoreFile, softwareDataContent + Environment.NewLine);
+        }
+
+        private void CheckAuthStatus()
+        {
+            this.HasJwt();
+            this.IsOnline();
+            this.IsAuthenticated();
+        }
+
+        private async void IsOnline()
+        {
+            HttpResponseMessage response = await SendRequest(HttpMethod.Get, "/ping", null);
+            this._isOnline = this.IsOk(response);
+            this.UpdateStatus();
+        }
+
+        private async void IsAuthenticated()
+        {
+            HttpResponseMessage response = await SendRequest(HttpMethod.Get, "/users/ping", null);
+            this._isAuthenticated = this.IsOk(response);
+            this.UpdateStatus();
+        }
+
+        private bool HasJwt()
+        {
+            object jwt = this.getItem("jwt");
+            this._hasJwt = (jwt != null);
+            this.UpdateStatus();
+            return this._hasJwt;
+        }
+
+        private void UpdateStatus()
+        {
+            IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
+            if (!this._hasJwt || !this._isAuthenticated || !this._isOnline)
             {
-                IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
-
-                _alreadyNotifiedUserOfNoPM = true;
-
-                string msg = "We are having trouble sending data to Software.com. " +
-                "The Software plugin manager may not be installed.  Would you like to download it now?";
-
-                Guid clsid = Guid.Empty;
-                int result;
-                uiShell.ShowMessageBox(
-                    0,
-                    ref clsid,
-                    string.Empty,
-                    msg,
-                    string.Empty,
-                    0,
-                    OLEMSGBUTTON.OLEMSGBUTTON_YESNO,
-                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST,
-                    OLEMSGICON.OLEMSGICON_INFO,
-                    0,
-                    out result);
-                // yes = 6, no = 7
-                if (result == 6)
-                {
-                    this.DownloadPluginManager();
-                }
-            } else if (!_downloading && !_alreadyNotifiedUserOfNoResponse)
-            {
-                _alreadyNotifiedUserOfNoResponse = true;
-
-                IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
-
-                string msg = "We are having trouble sending data to Software.com. " +
-                "Please make sure the Plugin Manager is on and logged in.";
-
-                Guid clsid = Guid.Empty;
-                int result;
-                uiShell.ShowMessageBox(
-                    0,
-                    ref clsid,
-                    string.Empty,
-                    msg,
-                    string.Empty,
-                    0,
-                    OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST,
-                    OLEMSGICON.OLEMSGICON_INFO,
-                    0,
-                    out result);
+                statusbar.SetText("Software.com");
             }
-            **/
+        }
+
+        private void AuthenticationNotificationCheck()
+        {
+
+            object lastUpdateTime = this.getItem("vs_lastUpdateTime");
+            long nowInSec = this.getNowInSeconds();
+            if (lastUpdateTime != null && (nowInSec - (long)lastUpdateTime) < (60 * 60 * 24))
+            {
+                // we've already asked via the prompt. let the status bar do the work from now on
+                return;
+            }
+
+            this.setItem("vs_lastUpdateTime", nowInSec);
+
+            string msg = "To see your coding data in Software.com, please sign in to your account.";
+
+            Guid clsid = Guid.Empty;
+            int result;
+            IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
+            uiShell.ShowMessageBox(
+                0,
+                ref clsid,
+                string.Empty,
+                msg,
+                string.Empty,
+                0,
+                OLEMSGBUTTON.OLEMSGBUTTON_OKCANCEL,
+                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST,
+                OLEMSGICON.OLEMSGICON_INFO,
+                0,
+                out result);
+            // ok_cancel = 1
+            Logger.Info("Selected result: " + result);
+            if (result == 1)
+            {
+                // launch the browser
+                this.launchSoftwareDashboard();
+            }
+        }
+
+        private async void SendOfflineData()
+        {
+            string datastoreFile = this.getSoftwareDataStoreFile();
+            if (File.Exists(datastoreFile))
+            {
+                // get the content
+                string[] lines = File.ReadAllLines(datastoreFile);
+                if (lines != null && lines.Length > 0)
+                {
+                    StringBuilder sb = new StringBuilder();
+                    foreach (string line in lines)
+                    {
+                        if (line != null && line.Trim().Length > 0)
+                        {
+                            sb.Append(line).Append(",");
+                        }
+                    }
+                    String lineContent = sb.ToString();
+                    lineContent = "[" + lineContent.Substring(0, lineContent.LastIndexOf(",")) + "]";
+                    HttpResponseMessage response = await SendRequest(HttpMethod.Post, "/data/batch", lineContent);
+                    if (this.IsOk(response))
+                    {
+                        // delete the file
+                        File.Delete(datastoreFile);
+                    }
+                }
+            }
+        }
+
+        private object getItem(string key)
+        {
+            // read the session json file
+            string sessionFile = this.getSoftwareSessionFile();
+            if (File.Exists(sessionFile))
+            {
+                string content = File.ReadAllText(sessionFile);
+                if (content != null)
+                {
+                    object val = SimpleJson.GetValue(content, key);
+                    if (val != null)
+                    {
+                        return val;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private void setItem(String key, object val)
+        {
+            string sessionFile = this.getSoftwareSessionFile();
+            IDictionary<string, object> dict = new Dictionary<string, object>();
+            string content = "";
+            if (File.Exists(sessionFile))
+            {
+                content = File.ReadAllText(sessionFile);
+                // conver to dictionary
+                dict = (IDictionary<string, object>)SimpleJson.DeserializeObject(content);
+                dict.Remove(key);
+            }
+            dict.Add(key, val);
+            content = SimpleJson.SerializeObject(dict);
+            // write it back to the file
+            File.WriteAllText(sessionFile, content);
+        }
+
+        private async void ProcessFetchDailyKpmTimerCallbackAsync(Object stateInfo)
+        {
+            if (this._isAuthenticated && this._isOnline)
+            {
+                long nowInSec = this.getNowInSeconds();
+                HttpResponseMessage response = await SendRequest(HttpMethod.Get, "/sessions?summary=true&from=" + nowInSec, null);
+                if (this.IsOk(response))
+                {
+                    // get the json data
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+                    object inFlowObj;
+                    jsonObj.TryGetValue("inFlow", out inFlowObj);
+                    bool inFlow = (inFlowObj == null) ? true : (bool)inFlowObj;
+
+                    object kpmObj;
+                    jsonObj.TryGetValue("kpm", out kpmObj);
+                    int avgKpm = (kpmObj == null) ? 0 : (int)kpmObj;
+
+                    object minutesTotalObj;
+                    jsonObj.TryGetValue("minutesTotal", out minutesTotalObj);
+                    int minutesTotal = (minutesTotalObj == null) ? 0 : (int)minutesTotalObj;
+
+                    string sessionTime = "";
+                    if (minutesTotal == 60)
+                    {
+                        sessionTime = "1 hr";
+                    }
+                    else if (minutesTotal > 60)
+                    {
+                        sessionTime = String.Format("%.2f", (minutesTotal / 60)) + " hrs";
+                    }
+                    else if (minutesTotal == 1)
+                    {
+                        sessionTime = "1 min";
+                    }
+                    else
+                    {
+                        sessionTime = minutesTotal + " min";
+                    }
+
+                    IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
+                    if (avgKpm > 0 || minutesTotal > 0)
+                    {
+                        statusbar.SetText("<s> " + avgKpm + " KPM, " + sessionTime);
+                    }
+                    else
+                    {
+                        statusbar.SetText("Software.com");
+                    }
+                }
+                else
+                {
+                    this.CheckAuthStatus();
+                }
+            }
+            else
+            {
+                this.CheckAuthStatus();
+            }
+            
+        }
+
+        private string createToken()
+        {
+            return System.Guid.NewGuid().ToString();
+        }
+
+        private void launchSoftwareDashboard()
+        {
+            string url = Constants.url_endpoint;
+            if (!this.HasJwt())
+            {
+                // create the token
+                string tokenVal = this.createToken();
+                this.setItem("token", tokenVal);
+                url += "/onboarding?token=" + tokenVal;
+            }
+
+            System.Diagnostics.Process.Start(url);
         }
 
         private bool EnoughTimePassed(DateTime now)
@@ -583,6 +753,28 @@ namespace SoftwareCo
             return "https://s3-us-west-1.amazonaws.com/swdc-plugin-manager/software.exe";
         }
 
+        private String getSoftwareDataDir()
+        {
+            String userHomeDir = Environment.ExpandEnvironmentVariables("%HOMEPATH%");
+            string softwareDataDir = userHomeDir + "\\.software";
+            if (!Directory.Exists(softwareDataDir))
+            {
+                // create it
+                Directory.CreateDirectory(softwareDataDir);
+            }
+            return softwareDataDir;
+        }
+
+        private String getSoftwareSessionFile()
+        {
+            return this.getSoftwareDataDir() + "\\session.json";
+        }
+
+        private String getSoftwareDataStoreFile()
+        {
+            return this.getSoftwareDataDir() + "\\data.json";
+        }
+
         private String getPluginManagerInstallDirectory()
         {
             String userHomeDir = Environment.ExpandEnvironmentVariables("%HOMEPATH%");
@@ -605,9 +797,9 @@ namespace SoftwareCo
 
                 WebClient client = new WebClient();
                 IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
-                statusbar.SetText("Downloading Software plugin manager...");
+                statusbar.SetText("Downloading Software desktop...");
                 client.DownloadFile(pmUrl, pmFileToSave);
-                statusbar.SetText("Completed Software plugin manager download");
+                statusbar.SetText("Completed Software desktop download");
                 await Task.Delay(5000);
                 statusbar.Clear();
                 // install it
@@ -633,13 +825,13 @@ namespace SoftwareCo
         private void DownloadProgressCallback(object sender, DownloadProgressChangedEventArgs e)
         {
             IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
-            statusbar.SetText("Downloading Software plugin manager: " + e.ProgressPercentage + "%");
+            statusbar.SetText("Downloading Software desktop: " + e.ProgressPercentage + "%");
         }
 
         private void DownloadProgressCompletedCallback(object sender, AsyncCompletedEventArgs e)
         {
             IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
-            statusbar.SetText("Completed Software plugin manager download");
+            statusbar.SetText("Completed Software desktop download");
         }
 
         #endregion
