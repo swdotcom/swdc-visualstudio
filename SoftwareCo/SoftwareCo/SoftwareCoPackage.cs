@@ -371,7 +371,7 @@ namespace SoftwareCo
 
         private bool IsOk(HttpResponseMessage response)
         {
-            return (response != null && (int)response.StatusCode <= 300);
+            return (response != null && response.StatusCode == HttpStatusCode.OK);
         }
 
         private async Task<HttpResponseMessage> SendRequest(HttpMethod httpMethod, string uri, string optionalPayload)
@@ -538,19 +538,23 @@ namespace SoftwareCo
             {
                 // get the content
                 string[] lines = File.ReadAllLines(datastoreFile);
+
                 if (lines != null && lines.Length > 0)
                 {
-                    StringBuilder sb = new StringBuilder();
+                    List<String> jsonLines = new List<string>();
+                    //StringBuilder sb = new StringBuilder();
                     foreach (string line in lines)
                     {
                         if (line != null && line.Trim().Length > 0)
                         {
-                            sb.Append(line).Append(",");
+                            //sb.Append(line).Append(",");
+                            jsonLines.Add(line);
                         }
                     }
-                    String lineContent = sb.ToString();
-                    lineContent = "[" + lineContent.Substring(0, lineContent.LastIndexOf(",")) + "]";
-                    HttpResponseMessage response = await SendRequest(HttpMethod.Post, "/data/batch", lineContent);
+                    //String lineContent = sb.ToString();
+                    //lineContent = lineContent.Substring(0, lineContent.LastIndexOf(","));
+                    string jsonContent = "[" + string.Join(",", jsonLines) + "]";
+                    HttpResponseMessage response = await SendRequest(HttpMethod.Post, "/data/batch", jsonContent);
                     if (this.IsOk(response))
                     {
                         // delete the file
@@ -597,6 +601,36 @@ namespace SoftwareCo
             File.WriteAllText(sessionFile, content);
         }
 
+        private async void RetrieveAuthToken()
+        {
+            if (this.HasJwt())
+            {
+                return;
+            }
+            object token = this.getItem("token");
+            string jwt = null;
+            HttpResponseMessage response = await SendRequest(HttpMethod.Get, "/users/plugin/confirm?token=" + token, null);
+            if (this.IsOk(response))
+            {
+                string responseBody = await response.Content.ReadAsStringAsync();
+                IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+                jsonObj.TryGetValue("jwt", out object jwtObj);
+                jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
+
+                if (jwt != null)
+                {
+                    this.setItem("jwt", jwt);
+                }
+
+                this.setItem("vs_lastUpdateTime", this.getNowInSeconds());
+            }
+
+            if (jwt == null)
+            {
+                this.RetrieveAuthTokenTimeout(60000);
+            }
+        }
+
         private async void ProcessFetchDailyKpmTimerCallbackAsync(Object stateInfo)
         {
             if (this._isAuthenticated && this._isOnline)
@@ -608,17 +642,15 @@ namespace SoftwareCo
                     // get the json data
                     string responseBody = await response.Content.ReadAsStringAsync();
                     IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
-                    object inFlowObj;
-                    jsonObj.TryGetValue("inFlow", out inFlowObj);
-                    bool inFlow = (inFlowObj == null) ? true : (bool)inFlowObj;
 
-                    object kpmObj;
-                    jsonObj.TryGetValue("kpm", out kpmObj);
-                    int avgKpm = (kpmObj == null) ? 0 : (int)kpmObj;
-
-                    object minutesTotalObj;
-                    jsonObj.TryGetValue("minutesTotal", out minutesTotalObj);
-                    int minutesTotal = (minutesTotalObj == null) ? 0 : (int)minutesTotalObj;
+                    jsonObj.TryGetValue("inFlow", out object inFlowObj);
+                    bool inFlow = (inFlowObj == null) ? true : Convert.ToBoolean(inFlowObj);
+                    
+                    jsonObj.TryGetValue("kpm", out object kpmObj);
+                    long avgKpm = (kpmObj == null) ? 0 : Convert.ToInt64(kpmObj);
+                    
+                    jsonObj.TryGetValue("minutesTotal", out object minutesTotalObj);
+                    long minutesTotal = (minutesTotalObj == null) ? 0 : Convert.ToInt64(minutesTotalObj);
 
                     string sessionTime = "";
                     if (minutesTotal == 60)
@@ -661,7 +693,7 @@ namespace SoftwareCo
 
         private string createToken()
         {
-            return System.Guid.NewGuid().ToString();
+            return System.Guid.NewGuid().ToString().Replace("-", "");
         }
 
         private void launchSoftwareDashboard()
@@ -672,10 +704,21 @@ namespace SoftwareCo
                 // create the token
                 string tokenVal = this.createToken();
                 this.setItem("token", tokenVal);
-                url += "/onboarding?token=" + tokenVal;
+                url += "/login?token=" + tokenVal;
             }
 
             System.Diagnostics.Process.Start(url);
+
+            this.RetrieveAuthTokenTimeout(30000);
+        }
+
+        private async void RetrieveAuthTokenTimeout(int millisToWait)
+        {
+            if (!this.HasJwt())
+            {
+                await Task.Delay(millisToWait);
+                this.RetrieveAuthToken();
+            }
         }
 
         private bool EnoughTimePassed(DateTime now)
