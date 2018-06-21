@@ -350,12 +350,18 @@ namespace SoftwareCo
                 {
                     HandleDocumentEventActivity(document.FullName, false);
                 }
-                long nowInSec = this.getNowInSeconds();
-                _softwareData.start = nowInSec - 60;
-                _softwareData.end = nowInSec;
+                _softwareData.end = _softwareData.start + 60;
 
                 string softwareDataContent = SimpleJson.SerializeObject(_softwareData);
                 Logger.Info("Software.com: sending: " + softwareDataContent);
+
+                /**
+                 * [SoftwareCo Info 08:24:17 AM] Software.com: sending:
+                 * {"type":"Events","pluginId":6,"source":{"C:\\Users\\Xavier Luiz\\source\\repos\\UnitTestProject3\\UnitTestProject3\\UnitTest1.cs":
+                 * {"paste":0,"open":0,"close":0,"delete":7,"keys":17,"add":10,"netkeys":3,"length":595,"lines":0,"linesAdded":0,
+                 * "linesRemoved":0,"syntax":""}},"data":"17","start":63665166199,"end":63665166259,
+                 * "project":{"name":"UnitTestProject3","directory":"C:\\Users\\Xavier Luiz\\source\\repos"}}
+                 **/
 
                 HttpResponseMessage response = await SendRequest(HttpMethod.Post, "/data", softwareDataContent);
                 if (!this.IsOk(response))
@@ -553,7 +559,7 @@ namespace SoftwareCo
                     }
                     //String lineContent = sb.ToString();
                     //lineContent = lineContent.Substring(0, lineContent.LastIndexOf(","));
-                    string jsonContent = "[" + string.Join(",", jsonLines) + "]";
+                    string jsonContent = "\\[" + string.Join(",", jsonLines) + "\\]";
                     HttpResponseMessage response = await SendRequest(HttpMethod.Post, "/data/batch", jsonContent);
                     if (this.IsOk(response))
                     {
@@ -859,9 +865,9 @@ namespace SoftwareCo
             client.DownloadProgressChanged += new DownloadProgressChangedEventHandler(DownloadProgressCallback);
             client.DownloadFileAsync(uri, pmFileToSave);
             **/
-        }
+            }
 
-        private void DownloadProgressCallback(object sender, DownloadProgressChangedEventArgs e)
+            private void DownloadProgressCallback(object sender, DownloadProgressChangedEventArgs e)
         {
             this.SetStatus("Downloading Software desktop: " + e.ProgressPercentage + "%");
         }

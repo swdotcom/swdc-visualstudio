@@ -13,7 +13,7 @@ namespace SoftwareCo
 
         // non-hardcoded attributes
         public JsonObject source = new JsonObject();
-        public String data = "0"; // keystroke count
+        public long data = 0; // keystroke count
 
         // start and end are in seconds
         public long start;
@@ -30,7 +30,7 @@ namespace SoftwareCo
 
         public void ResetData()
         {
-            data = "0";
+            data = 0;
             source = new JsonObject();
             if (project != null)
             {
@@ -44,6 +44,9 @@ namespace SoftwareCo
         public Boolean HasData()
         {
             long dataCount = 0;
+            if (this.data > 0) {
+                return true;
+            }
             // these will be the filename keys
             foreach (String key in source.Keys)
             {
@@ -70,7 +73,7 @@ namespace SoftwareCo
             // update the overall count
             if (property.Equals("add") || property.Equals("delete"))
             {
-                data = Convert.ToString(Convert.ToInt32(data) + dataVal);
+                data += + dataVal;
 
                 // update the "keys" and "netkeys"
                 if (property.Equals("add"))
