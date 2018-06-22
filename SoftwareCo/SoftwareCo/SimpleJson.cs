@@ -1159,7 +1159,7 @@ namespace SoftwareCo
                         safeCharacterCount = 0;
                     }
 
-                    builder.Append('\\');
+                    // builder.Append('\\');
                     builder.Append(EscapeTable[c]);
                 }
             }

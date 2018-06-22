@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -324,10 +323,10 @@ namespace SoftwareCo
             InitializeSoftwareData();
         }
 
-        private long getNowInSeconds()
+        public static long getNowInSeconds()
         {
-            long nowMillis = Convert.ToInt64((DateTime.Now - DateTime.MinValue).TotalMilliseconds);
-            return (long)Math.Round((double)(nowMillis / 1000));
+            long unixSeconds = DateTimeOffset.Now.ToUnixTimeSeconds();
+            return unixSeconds;
         }
 
         // This method is called by the timer delegate.
@@ -352,22 +351,59 @@ namespace SoftwareCo
                 }
                 _softwareData.end = _softwareData.start + 60;
 
+
                 string softwareDataContent = SimpleJson.SerializeObject(_softwareData);
+                // string softwareDataContent = _softwareData.GetAsJson();
                 Logger.Info("Software.com: sending: " + softwareDataContent);
+                
+                object jwt = this.getItem("jwt");
+                var httpWebRequest = (HttpWebRequest)WebRequest.Create(Constants.api_endpoint + "/data");
+                httpWebRequest.ContentType = "application/json";
+                if (jwt != null)
+                {
+                    // add the authorizationn
+                    httpWebRequest.Headers.Add("Authorization", Convert.ToString(jwt));
+                }
+                httpWebRequest.Method = "POST";
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+
+                using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
+                {
+                    IDictionary<string, object> dict = _softwareData.GetAsDictionary();
+                    streamWriter.Write(softwareDataContent);
+                    streamWriter.Flush();
+                    streamWriter.Close();
+                }
+
+                try
+                {
+                    var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+                    using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+                    {
+                        var result = streamReader.ReadToEnd();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.Error("failed to send post request: ");
+                }
 
                 /**
+                 * "{\"start\":1529683309,\"end\":1529683369,\"data\":9,\"pluginId\":6,\"source\":{\"C:\\Users\\Xavier Luiz\\source\\repos\\UnitTestProject3\\UnitTestProject3\\UnitTest1.cs\":{\"paste\":0,\"open\":0,\"close\":0,\"delete\":0,\"keys\":9,\"add\":9,\"netkeys\":9,\"length\":569,\"lines\":0,\"linesAdded\":0,\"linesRemoved\":0,\"syntax\":\"\"}},\"type\":Events,{\"name\":UnitTestProject3,\"directory\":C:\\Users\\Xavier Luiz\\source\\repos}}"
                  * [SoftwareCo Info 08:24:17 AM] Software.com: sending:
                  * {"type":"Events","pluginId":6,"source":{"C:\\Users\\Xavier Luiz\\source\\repos\\UnitTestProject3\\UnitTestProject3\\UnitTest1.cs":
                  * {"paste":0,"open":0,"close":0,"delete":7,"keys":17,"add":10,"netkeys":3,"length":595,"lines":0,"linesAdded":0,
-                 * "linesRemoved":0,"syntax":""}},"data":"17","start":63665166199,"end":63665166259,
+                 * "linesRemoved":0,"syntax":""}},"data":"17","start":1529683309,"end":1529683369,
                  * "project":{"name":"UnitTestProject3","directory":"C:\\Users\\Xavier Luiz\\source\\repos"}}
                  **/
+                /**
+                HttpResponseMessage response = await SendRequestAsync(HttpMethod.Post, "/data", softwareDataContent);
 
-                HttpResponseMessage response = await SendRequest(HttpMethod.Post, "/data", softwareDataContent);
                 if (!this.IsOk(response))
                 {
                     this.StorePayload(softwareDataContent);
                 }
+                **/
 
                 _softwareData.ResetData();
                 _lastPostTime = now;
@@ -380,7 +416,7 @@ namespace SoftwareCo
             return (response != null && response.StatusCode == HttpStatusCode.OK);
         }
 
-        private async Task<HttpResponseMessage> SendRequest(HttpMethod httpMethod, string uri, string optionalPayload)
+        private async Task<HttpResponseMessage> SendRequestAsync(HttpMethod httpMethod, string uri, string optionalPayload)
         {
 
             HttpClient client = new HttpClient
@@ -470,14 +506,14 @@ namespace SoftwareCo
 
         private async void IsOnline()
         {
-            HttpResponseMessage response = await SendRequest(HttpMethod.Get, "/ping", null);
+            HttpResponseMessage response = await SendRequestAsync(HttpMethod.Get, "/ping", null);
             this._isOnline = this.IsOk(response);
             this.UpdateStatus();
         }
 
         private async void IsAuthenticated()
         {
-            HttpResponseMessage response = await SendRequest(HttpMethod.Get, "/users/ping", null);
+            HttpResponseMessage response = await SendRequestAsync(HttpMethod.Get, "/users/ping", null);
             this._isAuthenticated = this.IsOk(response);
             this.UpdateStatus();
         }
@@ -502,7 +538,7 @@ namespace SoftwareCo
         {
 
             object lastUpdateTime = this.getItem("vs_lastUpdateTime");
-            long nowInSec = this.getNowInSeconds();
+            long nowInSec = getNowInSeconds();
             if (lastUpdateTime != null && (nowInSec - (long)lastUpdateTime) < (60 * 60 * 24))
             {
                 // we've already asked via the prompt. let the status bar do the work from now on
@@ -559,13 +595,15 @@ namespace SoftwareCo
                     }
                     //String lineContent = sb.ToString();
                     //lineContent = lineContent.Substring(0, lineContent.LastIndexOf(","));
-                    string jsonContent = "\\[" + string.Join(",", jsonLines) + "\\]";
+                    /**
+                    string jsonContent = "[" + string.Join(",", jsonLines) + "]";
                     HttpResponseMessage response = await SendRequest(HttpMethod.Post, "/data/batch", jsonContent);
                     if (this.IsOk(response))
                     {
                         // delete the file
                         File.Delete(datastoreFile);
                     }
+                    **/
                 }
             }
         }
@@ -615,7 +653,7 @@ namespace SoftwareCo
             }
             object token = this.getItem("token");
             string jwt = null;
-            HttpResponseMessage response = await SendRequest(HttpMethod.Get, "/users/plugin/confirm?token=" + token, null);
+            HttpResponseMessage response = await SendRequestAsync(HttpMethod.Get, "/users/plugin/confirm?token=" + token, null);
             if (this.IsOk(response))
             {
                 string responseBody = await response.Content.ReadAsStringAsync();
@@ -628,7 +666,7 @@ namespace SoftwareCo
                     this.setItem("jwt", jwt);
                 }
 
-                this.setItem("vs_lastUpdateTime", this.getNowInSeconds());
+                this.setItem("vs_lastUpdateTime", getNowInSeconds());
             }
 
             if (jwt == null)
@@ -641,8 +679,8 @@ namespace SoftwareCo
         {
             if (this._isAuthenticated && this._isOnline)
             {
-                long nowInSec = this.getNowInSeconds();
-                HttpResponseMessage response = await SendRequest(HttpMethod.Get, "/sessions?summary=true&from=" + nowInSec, null);
+                long nowInSec = getNowInSeconds();
+                HttpResponseMessage response = await SendRequestAsync(HttpMethod.Get, "/sessions?summary=true&from=" + nowInSec, null);
                 if (this.IsOk(response))
                 {
                     // get the json data

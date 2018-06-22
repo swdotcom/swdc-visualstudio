@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
+using Commons.Json;
+using System.Collections.Generic;
 
 namespace SoftwareCo
 {
@@ -23,8 +26,7 @@ namespace SoftwareCo
 
         public SoftwareData(ProjectInfo projectInfo)
         {
-            long nowMillis = Convert.ToInt64((DateTime.Now - DateTime.MinValue).TotalMilliseconds);
-            start = (long) Math.Round((double)(nowMillis / 1000));
+            start = SoftwareCoPackage.getNowInSeconds();
             project = projectInfo;
         }
 
@@ -36,9 +38,58 @@ namespace SoftwareCo
             {
                 project.ResetData();
             }
-            long nowMillis = Convert.ToInt64((DateTime.Now - DateTime.MinValue).TotalMilliseconds);
-            start = (long)Math.Round((double)(nowMillis / 1000));
+            start = SoftwareCoPackage.getNowInSeconds();
             end = 0L;
+        }
+
+        public IDictionary<string, object> GetAsDictionary()
+        {
+            IDictionary<string, object> dict = new Dictionary<string, object>();
+            dict.Add("start", this.start);
+            dict.Add("end", this.end);
+            dict.Add("pluginId", this.pluginId);
+            dict.Add("data", this.data);
+            dict.Add("type", this.type);
+            dict.Add("project", this.project.GetAsDictionary());
+            dict.Add("source", this.GetSourceDictionary());
+            return dict;
+        }
+
+        public string GetAsJson()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.Append("{");
+
+            sb.Append("'start'").Append(":").Append(this.start).Append(",");
+            sb.Append("'end'").Append(":").Append(this.end).Append(",");
+            sb.Append("'data'").Append(":").Append(this.data).Append(",");
+            sb.Append("'pluginId'").Append(":'").Append(this.pluginId).Append("',");
+            sb.Append("'source'").Append(":'").Append(this.source.ToString()).Append("',");
+            sb.Append("'type'").Append(":'").Append(this.type).Append("',");
+            sb.Append(this.project.GetAsJson());
+
+            sb.Append("}");
+
+            return sb.ToString();
+        }
+
+        private IDictionary<string, object> GetSourceDictionary()
+        {
+            IDictionary<string, object> dict = new Dictionary<string, object>();
+            foreach (String key in source.Keys)
+            {
+                IDictionary<string, object> innerDict = new Dictionary<string, object>();
+                JsonObject fileInfoData = (JsonObject)source[key];
+                // go through the properties of this and check if any have data
+                // close, open, paste, delete, keys
+                foreach (String prop in fileInfoData.Keys)
+                {
+                    innerDict.Add(prop, fileInfoData[prop]);
+                }
+                dict.Add(key, innerDict);
+            }
+            return dict;
         }
 
         public Boolean HasData()
@@ -55,10 +106,17 @@ namespace SoftwareCo
                 // close, open, paste, delete, keys
                 foreach (String prop in fileInfoData.Keys)
                 {
-                    dataCount = Convert.ToInt64(fileInfoData[prop]);
-                    if (dataCount > 0)
+                    try
                     {
-                        return true;
+                        dataCount = Convert.ToInt64(fileInfoData[prop]);
+                        if (dataCount > 0)
+                        {
+                            return true;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        // not a int 64 value
                     }
                 }
             }
@@ -162,6 +220,26 @@ namespace SoftwareCo
         {
             name = nameVal;
             directory = directoryVal;
+        }
+
+        public IDictionary<string, object> GetAsDictionary()
+        {
+            IDictionary<string, object> dict = new Dictionary<string, object>();
+            dict.Add("name", this.name);
+            dict.Add("directory", this.directory);
+            return dict;
+        }
+
+        public string GetAsJson()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("{");
+
+            sb.Append("'name'").Append(":'").Append(this.name).Append("',");
+            sb.Append("'directory'").Append(":'").Append(this.directory).Append("'");
+
+            sb.Append("}");
+            return sb.ToString();
         }
 
         public void ResetData()
