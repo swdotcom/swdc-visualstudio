@@ -61,13 +61,13 @@ namespace SoftwareCo
 
             sb.Append("{");
 
-            sb.Append("start").Append(":").Append(this.start).Append(",");
-            sb.Append("end").Append(":").Append(this.end).Append(",");
-            sb.Append("data").Append(":").Append(this.data).Append(",");
-            sb.Append("pluginId").Append(":'").Append(this.pluginId).Append("',");
-            sb.Append("source").Append(":'").Append(this.source.ToString()).Append("',");
-            sb.Append("type").Append(":'").Append(this.type).Append("',");
-            sb.Append(this.project.GetAsJson());
+            sb.Append("\"start\"").Append(":").Append(this.start).Append(",");
+            sb.Append("\"end\"").Append(":").Append(this.end).Append(",");
+            sb.Append("\"data\"").Append(":").Append(this.data).Append(",");
+            sb.Append("\"pluginId\"").Append(":'").Append(this.pluginId).Append("',");
+            // .Append("\"source\"").Append(":'").Append(this.source.ToString()).Append("',");
+            sb.Append("\"type\"").Append(":'").Append(this.type).Append("',");
+            sb.Append("\"project\"").Append(":").Append(this.project.GetAsJson());
 
             sb.Append("}");
 
@@ -235,8 +235,8 @@ namespace SoftwareCo
             StringBuilder sb = new StringBuilder();
             sb.Append("{");
 
-            sb.Append("name").Append(":'").Append(this.name).Append("',");
-            sb.Append("directory").Append(":'").Append(this.directory).Append("'");
+            sb.Append("\"name\"").Append(":'").Append(this.name).Append("',");
+            sb.Append("\"directory\"").Append(":'").Append(this.directory).Append("'");
 
             sb.Append("}");
             return sb.ToString();

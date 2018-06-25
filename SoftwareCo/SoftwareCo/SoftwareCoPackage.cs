@@ -355,7 +355,7 @@ namespace SoftwareCo
                 // string softwareDataContent = SimpleJson.SerializeObject(_softwareData);
                 string softwareDataContent = "'" + _softwareData.GetAsJson() + "'";
                 Logger.Info("Software.com: sending: " + softwareDataContent);
-                
+                /**
                 object jwt = this.getItem("jwt");
                 var httpWebRequest = (HttpWebRequest)WebRequest.Create(Constants.api_endpoint + "/data");
                 httpWebRequest.ContentType = "application/json";
@@ -387,7 +387,7 @@ namespace SoftwareCo
                 {
                     Logger.Error("failed to send post request: ");
                 }
-
+                ***/
                 /**
                  * "{\"start\":1529683309,\"end\":1529683369,\"data\":9,\"pluginId\":6,\"source\":{\"C:\\Users\\Xavier Luiz\\source\\repos\\UnitTestProject3\\UnitTestProject3\\UnitTest1.cs\":{\"paste\":0,\"open\":0,\"close\":0,\"delete\":0,\"keys\":9,\"add\":9,\"netkeys\":9,\"length\":569,\"lines\":0,\"linesAdded\":0,\"linesRemoved\":0,\"syntax\":\"\"}},\"type\":Events,{\"name\":UnitTestProject3,\"directory\":C:\\Users\\Xavier Luiz\\source\\repos}}"
                  * [SoftwareCo Info 08:24:17 AM] Software.com: sending:
@@ -396,14 +396,13 @@ namespace SoftwareCo
                  * "linesRemoved":0,"syntax":""}},"data":"17","start":1529683309,"end":1529683369,
                  * "project":{"name":"UnitTestProject3","directory":"C:\Users\\Xavier Luiz\\source\\repos"}}
                  **/
-                /**
+
                 HttpResponseMessage response = await SendRequestAsync(HttpMethod.Post, "/data", softwareDataContent);
 
                 if (!this.IsOk(response))
                 {
                     this.StorePayload(softwareDataContent);
                 }
-                **/
 
                 _softwareData.ResetData();
                 _lastPostTime = now;
