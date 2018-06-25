@@ -130,12 +130,6 @@
     <PackageReference Include="Commons.Json">
       <Version>0.3.0.775</Version>
     </PackageReference>
-    <PackageReference Include="JSON">
-      <Version>1.0.1</Version>
-    </PackageReference>
-    <PackageReference Include="json-serialize">
-      <Version>1.1.2</Version>
-    </PackageReference>
     <PackageReference Include="Microsoft.AspNet.WebApi.Client">
       <Version>5.2.6</Version>
     </PackageReference>
@@ -165,9 +159,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VSSDK.BuildTools">
       <Version>15.7.109</Version>
-    </PackageReference>
-    <PackageReference Include="Newtonsoft.Json">
-      <Version>11.0.2</Version>
     </PackageReference>
     <PackageReference Include="SimpleJson">
       <Version>0.38.0</Version>

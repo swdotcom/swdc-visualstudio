@@ -352,8 +352,8 @@ namespace SoftwareCo
                 _softwareData.end = _softwareData.start + 60;
 
 
-                string softwareDataContent = SimpleJson.SerializeObject(_softwareData);
-                // string softwareDataContent = _softwareData.GetAsJson();
+                // string softwareDataContent = SimpleJson.SerializeObject(_softwareData);
+                string softwareDataContent = "'" + _softwareData.GetAsJson() + "'";
                 Logger.Info("Software.com: sending: " + softwareDataContent);
                 
                 object jwt = this.getItem("jwt");
@@ -394,7 +394,7 @@ namespace SoftwareCo
                  * {"type":"Events","pluginId":6,"source":{"C:\\Users\\Xavier Luiz\\source\\repos\\UnitTestProject3\\UnitTestProject3\\UnitTest1.cs":
                  * {"paste":0,"open":0,"close":0,"delete":7,"keys":17,"add":10,"netkeys":3,"length":595,"lines":0,"linesAdded":0,
                  * "linesRemoved":0,"syntax":""}},"data":"17","start":1529683309,"end":1529683369,
-                 * "project":{"name":"UnitTestProject3","directory":"C:\\Users\\Xavier Luiz\\source\\repos"}}
+                 * "project":{"name":"UnitTestProject3","directory":"C:\Users\\Xavier Luiz\\source\\repos"}}
                  **/
                 /**
                 HttpResponseMessage response = await SendRequestAsync(HttpMethod.Post, "/data", softwareDataContent);
