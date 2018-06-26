@@ -519,7 +519,7 @@ namespace SoftwareCo
 
             this.setItem("vs_lastUpdateTime", nowInSec);
 
-            string msg = "To see your coding data in Software.com, please sign in to your account.";
+            string msg = "To see your coding data in Software.com, please log in to your account.";
 
             Guid clsid = Guid.Empty;
             int result;
