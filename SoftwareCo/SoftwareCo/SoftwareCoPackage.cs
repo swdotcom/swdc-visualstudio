@@ -511,7 +511,7 @@ namespace SoftwareCo
 
             object lastUpdateTime = this.getItem("vs_lastUpdateTime");
             long nowInSec = getNowInSeconds();
-            if (lastUpdateTime != null && (nowInSec - (long)lastUpdateTime) < (60 * 60 * 24))
+            if (lastUpdateTime != null && (nowInSec - (long)lastUpdateTime) < (60 * 60 * 12))
             {
                 // we've already asked via the prompt. let the status bar do the work from now on
                 return;
