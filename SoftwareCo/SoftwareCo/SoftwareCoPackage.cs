@@ -351,53 +351,26 @@ namespace SoftwareCo
                 }
                 _softwareData.end = _softwareData.start + 60;
 
-
-                // string softwareDataContent = SimpleJson.SerializeObject(_softwareData);
-                string softwareDataContent = "'" + _softwareData.GetAsJson() + "'";
+                string softwareDataContent = _softwareData.GetAsJson();
                 Logger.Info("Software.com: sending: " + softwareDataContent);
-                /**
-                object jwt = this.getItem("jwt");
-                var httpWebRequest = (HttpWebRequest)WebRequest.Create(Constants.api_endpoint + "/data");
-                httpWebRequest.ContentType = "application/json";
-                if (jwt != null)
-                {
-                    // add the authorizationn
-                    httpWebRequest.Headers.Add("Authorization", Convert.ToString(jwt));
-                }
-                httpWebRequest.Method = "POST";
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
-                using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
-                {
-                    IDictionary<string, object> dict = _softwareData.GetAsDictionary();
-                    streamWriter.Write(softwareDataContent);
-                    streamWriter.Flush();
-                    streamWriter.Close();
-                }
-
-                try
-                {
-                    var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-                    using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-                    {
-                        var result = streamReader.ReadToEnd();
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logger.Error("failed to send post request: ");
-                }
-                ***/
                 /**
-                 * "{\"start\":1529683309,\"end\":1529683369,\"data\":9,\"pluginId\":6,\"source\":{\"C:\\Users\\Xavier Luiz\\source\\repos\\UnitTestProject3\\UnitTestProject3\\UnitTest1.cs\":{\"paste\":0,\"open\":0,\"close\":0,\"delete\":0,\"keys\":9,\"add\":9,\"netkeys\":9,\"length\":569,\"lines\":0,\"linesAdded\":0,\"linesRemoved\":0,\"syntax\":\"\"}},\"type\":Events,{\"name\":UnitTestProject3,\"directory\":C:\\Users\\Xavier Luiz\\source\\repos}}"
-                 * [SoftwareCo Info 08:24:17 AM] Software.com: sending:
-                 * {"type":"Events","pluginId":6,"source":{"C:\\Users\\Xavier Luiz\\source\\repos\\UnitTestProject3\\UnitTestProject3\\UnitTest1.cs":
-                 * {"paste":0,"open":0,"close":0,"delete":7,"keys":17,"add":10,"netkeys":3,"length":595,"lines":0,"linesAdded":0,
-                 * "linesRemoved":0,"syntax":""}},"data":"17","start":1529683309,"end":1529683369,
-                 * "project":{"name":"UnitTestProject3","directory":"C:\Users\\Xavier Luiz\\source\\repos"}}
+                 * the payload needs to look like this
+                 {
+                  "start":1529683309,"end":1529683369,"data":9,"pluginId":6,
+                  "source":{
+  	                "C:\\Users\\Xavier Luiz\\source\\repos\\UnitTestProject3\\UnitTestProject3\\UnitTest1.cs":{
+    	                "paste":0,"open":0,"close":0,"delete":0,"keys":9,"add":9,
+                                "netkeys":9,"length":569,"lines":0,"linesAdded":0,"linesRemoved":0,"syntax":""
+  	                }
+                  },
+                  "type":"Events",
+                  "project":{"name":"UnitTestProject3","directory":"C:\\Users\\Xavier Luiz\\source\\repos"}
+                }
                  **/
 
                 HttpResponseMessage response = await SendRequestAsync(HttpMethod.Post, "/data", softwareDataContent);
+
 
                 if (!this.IsOk(response))
                 {
@@ -583,26 +556,20 @@ namespace SoftwareCo
                 if (lines != null && lines.Length > 0)
                 {
                     List<String> jsonLines = new List<string>();
-                    //StringBuilder sb = new StringBuilder();
                     foreach (string line in lines)
                     {
                         if (line != null && line.Trim().Length > 0)
                         {
-                            //sb.Append(line).Append(",");
                             jsonLines.Add(line);
                         }
                     }
-                    //String lineContent = sb.ToString();
-                    //lineContent = lineContent.Substring(0, lineContent.LastIndexOf(","));
-                    /**
                     string jsonContent = "[" + string.Join(",", jsonLines) + "]";
-                    HttpResponseMessage response = await SendRequest(HttpMethod.Post, "/data/batch", jsonContent);
+                    HttpResponseMessage response = await SendRequestAsync(HttpMethod.Post, "/data/batch", jsonContent);
                     if (this.IsOk(response))
                     {
                         // delete the file
                         File.Delete(datastoreFile);
                     }
-                    **/
                 }
             }
         }
@@ -702,7 +669,8 @@ namespace SoftwareCo
                     }
                     else if (minutesTotal > 60)
                     {
-                        sessionTime = String.Format("%.2f", (minutesTotal / 60)) + " hrs";
+                        string formatedHrs = String.Format("{0:0.00}", (minutesTotal / 60));
+                        sessionTime = formatedHrs + " hrs";
                     }
                     else if (minutesTotal == 1)
                     {
@@ -715,7 +683,14 @@ namespace SoftwareCo
                     
                     if (avgKpm > 0 || minutesTotal > 0)
                     {
-                        this.SetStatus("<s> " + avgKpm + " KPM, " + sessionTime);
+                        if (inFlow)
+                        {
+                            this.SetStatus("<s> " + avgKpm + " KPM, " + sessionTime + " ^");
+                        }
+                        else
+                        {
+                            this.SetStatus("<s> " + avgKpm + " KPM, " + sessionTime);
+                        }
                     }
                     else
                     {

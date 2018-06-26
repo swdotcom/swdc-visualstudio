@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Commons.Json;
-using System.Collections.Generic;
 
 namespace SoftwareCo
 {
@@ -57,21 +56,15 @@ namespace SoftwareCo
 
         public string GetAsJson()
         {
-            StringBuilder sb = new StringBuilder();
-
-            sb.Append("{");
-
-            sb.Append("\"start\"").Append(":").Append(this.start).Append(",");
-            sb.Append("\"end\"").Append(":").Append(this.end).Append(",");
-            sb.Append("\"data\"").Append(":").Append(this.data).Append(",");
-            sb.Append("\"pluginId\"").Append(":'").Append(this.pluginId).Append("',");
-            // .Append("\"source\"").Append(":'").Append(this.source.ToString()).Append("',");
-            sb.Append("\"type\"").Append(":'").Append(this.type).Append("',");
-            sb.Append("\"project\"").Append(":").Append(this.project.GetAsJson());
-
-            sb.Append("}");
-
-            return sb.ToString();
+            JsonObject jsonObj = new JsonObject();
+            jsonObj.Add("start", this.start);
+            jsonObj.Add("end", this.end);
+            jsonObj.Add("pluginId", this.pluginId);
+            jsonObj.Add("type", this.type);
+            jsonObj.Add("data", this.data);
+            jsonObj.Add("source", this.source);
+            jsonObj.Add("project", this.project.GetAsJson());
+            return jsonObj.ToString();
         }
 
         private IDictionary<string, object> GetSourceDictionary()
@@ -230,16 +223,12 @@ namespace SoftwareCo
             return dict;
         }
 
-        public string GetAsJson()
+        public JsonObject GetAsJson()
         {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("{");
-
-            sb.Append("\"name\"").Append(":'").Append(this.name).Append("',");
-            sb.Append("\"directory\"").Append(":'").Append(this.directory).Append("'");
-
-            sb.Append("}");
-            return sb.ToString();
+            JsonObject jsonObj = new JsonObject();
+            jsonObj.Add("name", this.name);
+            jsonObj.Add("directory", this.directory);
+            return jsonObj;
         }
 
         public void ResetData()
