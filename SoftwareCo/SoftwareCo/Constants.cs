@@ -6,8 +6,6 @@
         internal static string PluginVersion = "0.1.4";
         internal const string EditorName = "visualstudio";
 
-        internal const string TEST_API_ENDPOINT = "http://localhost:5000";
-        internal const string TEST_URL_ENDPOINT = "http://localhost:3000";
         internal const string PROD_API_ENDPOINT = "https://api.software.com";
         internal const string PROD_URL_ENDPOINT = "https://alpha.software.com";
 
