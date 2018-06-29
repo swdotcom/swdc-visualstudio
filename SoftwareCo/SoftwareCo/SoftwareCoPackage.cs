@@ -511,7 +511,7 @@ namespace SoftwareCo
 
             object lastUpdateTime = this.getItem("vs_lastUpdateTime");
             long nowInSec = getNowInSeconds();
-            if (lastUpdateTime != null && (nowInSec - (long)lastUpdateTime) < (60 * 60 * 12))
+            if (lastUpdateTime != null && (nowInSec - (long)lastUpdateTime) < (60 * 60 * 6))
             {
                 // we've already asked via the prompt. let the status bar do the work from now on
                 return;
@@ -720,9 +720,13 @@ namespace SoftwareCo
             if (!this.HasJwt())
             {
                 // create the token
-                string tokenVal = this.createToken();
-                this.setItem("token", tokenVal);
-                url += "/login?token=" + tokenVal;
+                object tokenVal = this.getItem("token");
+                if (tokenVal == null || ((string)tokenVal).Equals(""))
+                {
+                    tokenVal = this.createToken();
+                    this.setItem("token", tokenVal);
+                }
+                url += "/login?token=" + (string)tokenVal;
             }
 
             System.Diagnostics.Process.Start(url);

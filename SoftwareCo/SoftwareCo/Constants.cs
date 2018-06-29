@@ -3,7 +3,7 @@
     internal static class Constants
     {
         internal const string PluginName = "swdc-visualstudio";
-        internal static string PluginVersion = "0.1.4";
+        internal static string PluginVersion = "0.1.7";
         internal const string EditorName = "visualstudio";
 
         internal const string PROD_API_ENDPOINT = "https://api.software.com";
