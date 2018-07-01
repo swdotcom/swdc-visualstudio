@@ -73,6 +73,7 @@ namespace SoftwareCo
         private bool _isOnline = true;
         private bool _isAuthenticated = true;
         private bool _hasJwt = true;
+        private bool _hasToken = false;
 
         #endregion
 
@@ -493,9 +494,16 @@ namespace SoftwareCo
         private bool HasJwt()
         {
             object jwt = this.getItem("jwt");
-            this._hasJwt = (jwt != null);
+            this._hasJwt = (jwt != null && !((string)jwt).Equals(""));
             this.UpdateStatus();
             return this._hasJwt;
+        }
+
+        private bool HasToken()
+        {
+            object token = this.getItem("token");
+            this._hasToken = (token != null && !((string)token).Equals(""));
+            return this._hasToken;
         }
 
         private void UpdateStatus()
@@ -508,12 +516,16 @@ namespace SoftwareCo
 
         private void AuthenticationNotificationCheck()
         {
-
-            object lastUpdateTime = this.getItem("vs_lastUpdateTime");
+            object lastUpdateTimeObj = this.getItem("vs_lastUpdateTime");
+            long lastUpdate = (lastUpdateTimeObj != null) ? (long)lastUpdateTimeObj : 0;
             long nowInSec = getNowInSeconds();
-            if (lastUpdateTime != null && (nowInSec - (long)lastUpdateTime) < (60 * 60 * 6))
+            if (this.HasToken() && (nowInSec - lastUpdate) < (60 * 60 * 4))
             {
-                // we've already asked via the prompt. let the status bar do the work from now on
+                // we've already asked via the prompt, we'll wait to ask in intervals of every 4 hours
+                return;
+            } else if (!this.HasToken() && (nowInSec - lastUpdate) < (60 * 5))
+            {
+                // we don't have the jwt but it hasn't been 5 minutes or longer
                 return;
             }
 
