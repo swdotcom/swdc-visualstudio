@@ -376,6 +376,7 @@ namespace SoftwareCo
                 if (!this.IsOk(response))
                 {
                     this.StorePayload(softwareDataContent);
+                    this.AuthenticationNotificationCheck();
                 }
 
                 _softwareData.ResetData();
@@ -519,14 +520,29 @@ namespace SoftwareCo
             object lastUpdateTimeObj = this.getItem("vs_lastUpdateTime");
             long lastUpdate = (lastUpdateTimeObj != null) ? (long)lastUpdateTimeObj : 0;
             long nowInSec = getNowInSeconds();
-            if (this.HasToken() && (nowInSec - lastUpdate) < (60 * 60 * 4))
+
+            if ((this.HasJwt() && this._isAuthenticated) || !this._isOnline)
             {
-                // we've already asked via the prompt, we'll wait to ask in intervals of every 4 hours
+                // we're already authenticated or we're not online to begin with
                 return;
-            } else if (!this.HasToken() && (nowInSec - lastUpdate) < (60 * 5))
+            }
+
+            if (this.HasToken())
             {
-                // we don't have the jwt but it hasn't been 5 minutes or longer
-                return;
+                // we have a token so only update every 4 hours
+                if ((nowInSec - lastUpdate) < (60 * 60 * 4))
+                {
+                    // not over 4 hours yet
+                    return;
+                }
+            } else
+            {
+                // no token, update after 5 minutes
+                if ((nowInSec - lastUpdate) < (60 * 5))
+                {
+                    // not over 5 minutes yet
+                    return;
+                }
             }
 
             this.setItem("vs_lastUpdateTime", nowInSec);
