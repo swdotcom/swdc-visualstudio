@@ -8,6 +8,8 @@
 
 *Software* is installed and uninstalled via the Visual Studio Marketplace.
 
+<!--- Begin: setup --->
+
 ### Install
 
 1. Navigate to **Tools** > **Extensions**
@@ -21,6 +23,8 @@
 1. Navigate to **Tools** > **Extensions**
 2. Click **Online**
 3. **Uninstall** Software
+
+<!--- End: setup --->
 
 ## Privacy
 
