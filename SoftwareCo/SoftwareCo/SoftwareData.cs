@@ -121,10 +121,14 @@ namespace SoftwareCo
             // update the keys count for the file info object
             this.addOrUpdateFileInfo(fileName, property, dataVal);
 
+            if (property.Equals("add"))
+            {
+                data += dataVal;
+            }
+
             // update the overall count
             if (property.Equals("add") || property.Equals("delete"))
             {
-                data += + dataVal;
 
                 // update the "keys" and "netkeys"
                 if (property.Equals("add"))
@@ -161,12 +165,13 @@ namespace SoftwareCo
             if (source.ContainsKey(fileName))
             {
                 fileInfoData = (JsonObject)source[fileName];
+                // sum up the previous amount with the count coming in
                 long dataCount = Convert.ToInt64(fileInfoData[property]) + count;
                 
                 fileInfoData.Remove(property);
                 fileInfoData.Add(property, dataCount);
-                source.Remove(fileName);
-                source.Add(fileName, fileInfoData);
+                // source.Remove(fileName);
+                // source.Add(fileName, fileInfoData);
                 return;
             }
 

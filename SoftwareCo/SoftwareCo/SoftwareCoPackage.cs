@@ -194,6 +194,19 @@ namespace SoftwareCo
             return fileDiff;
         }
 
+        private int getLineCount(string fileName)
+        {
+            int counter = 0;
+            using (var file = new StreamReader(fileName))
+            {
+                while (file.ReadLine() != null)
+                {
+                    counter++;
+                }
+            }
+            return counter;
+        }
+
         private void DocEventsOnDocumentSaved(Document document)
         {
             String fileName = document.FullName;
@@ -235,16 +248,32 @@ namespace SoftwareCo
                     _softwareData.addOrUpdateFileInfo(fileName, "length", fi.Length);
                 }
 
+                bool isNewLine = false;
                 if (Keypress == "\b")
                 {
                     // register a delete event
                     _softwareData.UpdateData(fileName, "delete", 1);
                     Logger.Info("Software.com: Delete character incremented");
                 }
+                else if (Keypress == "\r")
+                {
+                    isNewLine = true;
+                }
                 else
                 {
                     _softwareData.UpdateData(fileName, "add", 1);
                     Logger.Info("Software.com: KPM incremented");
+                }
+                long lineCount = _softwareData.getFileInfoDataForProperty(fileName, "lines");
+                if (lineCount == 0)
+                {
+                    lineCount = this.getLineCount(fileName);
+                    _softwareData.addOrUpdateFileInfo(fileName, "lines", lineCount);
+                }
+                else if (isNewLine)
+                {
+                    _softwareData.addOrUpdateFileInfo(fileName, "lines", 1);
+                    _softwareData.addOrUpdateFileInfo(fileName, "linesAdded", 1);
                 }
 
             }
