@@ -7,7 +7,7 @@
         internal const string EditorName = "visualstudio";
 
         internal const string PROD_API_ENDPOINT = "https://api.software.com";
-        internal const string PROD_URL_ENDPOINT = "https://alpha.software.com";
+        internal const string PROD_URL_ENDPOINT = "https://app.software.com";
 
         internal const string api_endpoint = PROD_API_ENDPOINT;
         internal const string url_endpoint = PROD_URL_ENDPOINT;
