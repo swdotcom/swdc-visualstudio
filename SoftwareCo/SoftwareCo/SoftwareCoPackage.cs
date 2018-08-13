@@ -730,27 +730,27 @@ namespace SoftwareCo
                 jsonObj.TryGetValue("inFlow", out object inFlowObj);
                 bool inFlow = (inFlowObj == null) ? true : Convert.ToBoolean(inFlowObj);
                     
-                jsonObj.TryGetValue("kpm", out object kpmObj);
-                long avgKpm = (kpmObj == null) ? 0 : Convert.ToInt64(kpmObj);
+                jsonObj.TryGetValue("currentSessionKpm", out object currentSessionKpm);
+                long currentSessionKpmVal = (currentSessionKpm == null) ? 0 : Convert.ToInt64(currentSessionKpm);
 
-                jsonObj.TryGetValue("sessionMinGoalPercent", out object sessionMinGoalPercentObj);
-                double sessionMinGoalPercent = (sessionMinGoalPercentObj == null) ? 0.0 : Convert.ToDouble(sessionMinGoalPercentObj);
+                jsonObj.TryGetValue("currentSessionGoalPercent", out object currentSessionGoalPercent);
+                double currentSessionGoalPercentVal = (currentSessionGoalPercent == null) ? 0.0 : Convert.ToDouble(currentSessionGoalPercent);
                     
-                jsonObj.TryGetValue("minutesTotal", out object minutesTotalObj);
-                long minutesTotal = (minutesTotalObj == null) ? 0 : Convert.ToInt64(minutesTotalObj);
+                jsonObj.TryGetValue("currentSessionMinutes", out object currentSessionMinutes);
+                long currentSessionMinutesVal = (currentSessionMinutes == null) ? 0 : Convert.ToInt64(currentSessionMinutes);
 
                 string sessionTimeIcon = "";
-                if (sessionMinGoalPercent > 0)
+                if (currentSessionGoalPercentVal > 0)
                 {
-                    if (sessionMinGoalPercent < 0.45)
+                    if (currentSessionGoalPercentVal < 0.45)
                     {
                         sessionTimeIcon = "○";
                     }
-                    else if (sessionMinGoalPercent < 0.7)
+                    else if (currentSessionGoalPercentVal < 0.7)
                     {
                         sessionTimeIcon = "◒";
                     }
-                    else if (sessionMinGoalPercent < 0.95)
+                    else if (currentSessionGoalPercentVal < 0.95)
                     {
                         sessionTimeIcon = "◒";
                     }
@@ -761,27 +761,27 @@ namespace SoftwareCo
                 }
 
                 string sessionTime = "";
-                if (minutesTotal == 60)
+                if (currentSessionMinutesVal == 60)
                 {
                     sessionTime = "1 hr";
                 }
-                else if (minutesTotal > 60)
+                else if (currentSessionMinutesVal > 60)
                 {
-                    string formatedHrs = String.Format("{0:0.00}", (minutesTotal / 60));
+                    string formatedHrs = String.Format("{0:0.00}", (currentSessionMinutesVal / 60));
                     sessionTime = formatedHrs + " hrs";
                 }
-                else if (minutesTotal == 1)
+                else if (currentSessionMinutesVal == 1)
                 {
                     sessionTime = "1 min";
                 }
                 else
                 {
-                    sessionTime = minutesTotal + " min";
+                    sessionTime = currentSessionMinutesVal + " min";
                 }
                     
-                if (avgKpm > 0 || minutesTotal > 0)
+                if (currentSessionKpmVal > 0 || currentSessionMinutesVal > 0)
                 {
-                    string kpmMsg = avgKpm + " KPM";
+                    string kpmMsg = currentSessionKpmVal + " KPM";
                     if (inFlow) {
                         kpmMsg = "🚀" + " " + kpmMsg;
                     }
