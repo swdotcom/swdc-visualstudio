@@ -46,14 +46,14 @@ namespace SoftwareCo
         /// SoftwareCoPackage GUID string.
         /// </summary>
         public const string PackageGuidString = "0ae38c4e-1ac5-4457-bdca-bb2dfc342a1c";
-
-        private const string PLUGIN_MGR_ENDPOINT = "http://localhost:19234/api/v1/data";
+        
         private DTEEvents _dteEvents;
         private DocumentEvents _docEvents;
         private WindowEvents _windowEvents;
         private TextDocumentKeyPressEvents _textDocKeyEvent;
 
         private Timer timer;
+        private Timer docChangeTimer;
         private Timer kpmTimer;
 
         // Used by Constants for version info
@@ -73,6 +73,9 @@ namespace SoftwareCo
         private bool _hasToken = false;
 
         private static bool _telemetryOn = true;
+
+        private static int THIRTY_SECONDS = 1000 * 30;
+        private static int ONE_MINUTE = THIRTY_SECONDS * 2;
 
         #endregion
 
@@ -137,21 +140,28 @@ namespace SoftwareCo
                 var autoEvent = new AutoResetEvent(false);
 
                 // setup timer to process events every 1 minute
-                long timerInterval = 60000L; // timer interval
                 timer = new Timer(
                     ProcessSoftwareDataTimerCallbackAsync,
                     autoEvent,
-                    timerInterval,
-                    timerInterval);
+                    ONE_MINUTE,
+                    ONE_MINUTE);
+
+                // every 30 seconds
+                docChangeTimer = new Timer(
+                    CheckFileLengthUpdates,
+                    autoEvent,
+                    ONE_MINUTE,
+                    1000 * 30);
 
                 this.SendOfflineData();
 
                 // start in 5 seconds every 1 min
+                int delay = 1000 * 5;
                 kpmTimer = new Timer(
                     ProcessFetchDailyKpmTimerCallbackAsync,
                     autoEvent,
-                    5000L,
-                    timerInterval);
+                    delay,
+                    ONE_MINUTE);
 
                 this.AuthenticationNotificationCheck();
             }
@@ -183,21 +193,6 @@ namespace SoftwareCo
 
         #region Event Handlers
 
-        private long getFileDiffLength(FileInfo fi)
-        {
-            String fileName = fi.FullName;
-
-            long savedFileLen = _softwareData.getFileInfoDataForProperty(fileName, "length");
-
-            long fileDiff = savedFileLen;
-
-            if (fi != null)
-            {
-                fileDiff = fi.Length - savedFileLen;
-            }
-            return fileDiff;
-        }
-
         private int getLineCount(string fileName)
         {
             int counter = 0;
@@ -213,11 +208,12 @@ namespace SoftwareCo
 
         private void DocEventsOnDocumentSaved(Document document)
         {
+            InitializeSoftwareData();
             String fileName = document.FullName;
             FileInfo fi = new FileInfo(fileName);
-            long diff = this.getFileDiffLength(fi);
-            long kpm = _softwareData.getFileInfoDataForProperty(fi.FullName, "add");
-            if (diff > kpm + 1)
+            long prevLen = _softwareData.getFileInfoDataForProperty(fi.FullName, "length");
+            long diff = (fi != null && prevLen > 0) ? fi.Length - prevLen : 0;
+            if (diff > 1)
             {
                 // register a copy and past event
                 _softwareData.UpdateData(fileName, "paste", 1);
@@ -228,9 +224,10 @@ namespace SoftwareCo
 
         private void DocEventsOnDocumentOpening(String docPath, Boolean readOnly)
         {
+            InitializeSoftwareData();
             FileInfo fi = new FileInfo(docPath);
             // update the length of this 
-            if (_softwareData != null)
+            if (_softwareData != null && fi != null)
             {
                 _softwareData.UpdateData(fi.FullName, "length", fi.Length);
             }
@@ -244,11 +241,10 @@ namespace SoftwareCo
             String fileName = ObjDte.ActiveWindow.Document.FullName;
             if (!String.IsNullOrEmpty(Keypress))
             {
-                long fileLength = _softwareData.getFileInfoDataForProperty(fileName, "length");
-                if (fileLength == 0)
+                FileInfo fi = new FileInfo(fileName);
+                if (fi != null)
                 {
                     // update the file length
-                    FileInfo fi = new FileInfo(fileName);
                     _softwareData.addOrUpdateFileInfo(fileName, "length", fi.Length);
                 }
 
@@ -268,16 +264,18 @@ namespace SoftwareCo
                     _softwareData.UpdateData(fileName, "add", 1);
                     Logger.Info("Software.com: KPM incremented");
                 }
+                
+
+                if (isNewLine)
+                {
+                    _softwareData.addOrUpdateFileInfo(fileName, "linesAdded", 1);
+                }
+
                 long lineCount = _softwareData.getFileInfoDataForProperty(fileName, "lines");
-                if (lineCount == 0)
+                if (lineCount == 0 || isNewLine)
                 {
                     lineCount = this.getLineCount(fileName);
                     _softwareData.addOrUpdateFileInfo(fileName, "lines", lineCount);
-                }
-                else if (isNewLine)
-                {
-                    _softwareData.addOrUpdateFileInfo(fileName, "lines", 1);
-                    _softwareData.addOrUpdateFileInfo(fileName, "linesAdded", 1);
                 }
 
             }
@@ -361,6 +359,26 @@ namespace SoftwareCo
         {
             long unixSeconds = DateTimeOffset.Now.ToUnixTimeSeconds();
             return unixSeconds;
+        }
+
+        private void CheckFileLengthUpdates(Object stateInfo)
+        {
+            if (ObjDte.ActiveDocument != null && ObjDte.ActiveWindow.Document != null)
+            {
+                String fileName = ObjDte.ActiveWindow.Document.FullName;
+                if (fileName != null && !fileName.Equals(""))
+                {
+                    InitializeSoftwareData();
+
+                    // update the length for this file so we can correctly compute the paste diff
+                    FileInfo fi = new FileInfo(fileName);
+                    if (fi != null)
+                    {
+                        _softwareData.UpdateData(fileName, "length", fi.Length);
+                    }
+                }
+            }
+            
         }
 
         // This method is called by the timer delegate.
@@ -790,7 +808,7 @@ namespace SoftwareCo
                     {
                         sessionMsg = sessionTimeIcon + " " + sessionTime;
                     }
-                    this.SetStatus(kpmMsg + ", " + sessionMsg);
+                    this.SetStatus("<S> " + kpmMsg + ", " + sessionMsg);
                 }
                 else
                 {

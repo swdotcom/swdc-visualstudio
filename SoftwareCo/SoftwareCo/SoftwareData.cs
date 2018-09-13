@@ -121,10 +121,7 @@ namespace SoftwareCo
             // update the keys count for the file info object
             this.addOrUpdateFileInfo(fileName, property, dataVal);
 
-            if (property.Equals("add"))
-            {
-                data += dataVal;
-            }
+            this.updateDataCount(property);
 
             // update the overall count
             if (property.Equals("add") || property.Equals("delete"))
@@ -159,19 +156,40 @@ namespace SoftwareCo
             return 0;
         }
 
+        private void updateDataCount(String property)
+        {
+            if (property.Equals("add") || property.Equals("delete")
+                || property.Equals("paste") || property.Equals("linesAdded")
+                || property.Equals("linesRemoved"))
+            {
+                data += 1;
+            }
+        }
+
         public void addOrUpdateFileInfo(String fileName, String property, long count)
         {
+
+            this.updateDataCount(property);
+
             JsonObject fileInfoData = null;
             if (source.ContainsKey(fileName))
             {
                 fileInfoData = (JsonObject)source[fileName];
                 // sum up the previous amount with the count coming in
-                long dataCount = Convert.ToInt64(fileInfoData[property]) + count;
+
+                long dataCount = 0;
+                if (property.Equals("length") || property.Equals("lines"))
+                {
+                    dataCount = count;
+                }
+                else
+                {
+                    dataCount = Convert.ToInt64(fileInfoData[property]) + count;
+                }
+                
                 
                 fileInfoData.Remove(property);
                 fileInfoData.Add(property, dataCount);
-                // source.Remove(fileName);
-                // source.Add(fileName, fileInfoData);
                 return;
             }
 
