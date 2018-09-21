@@ -59,6 +59,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleJson.cs" />
     <Compile Include="SoftwareCoPackage.cs" />
+    <Compile Include="SoftwareCoUtil.cs" />
     <Compile Include="SoftwareData.cs" />
     <Compile Include="SoftwareEnableMetricsCommand.cs" />
     <Compile Include="SoftwareLaunchCommand.cs" />

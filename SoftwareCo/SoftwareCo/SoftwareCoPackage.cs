@@ -13,6 +13,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace SoftwareCo
 {
@@ -66,6 +67,7 @@ namespace SoftwareCo
 
         private DateTime _lastPostTime = DateTime.UtcNow;
         private SoftwareData _softwareData;
+        private SoftwareCoUtil _softwareUtil;
 
         private bool _isOnline = true;
         private bool _isAuthenticated = true;
@@ -134,6 +136,11 @@ namespace SoftwareCo
                 Software.SoftwareLaunchCommand.Initialize(this);
                 Software.SoftwareEnableMetricsCommand.Initialize(this);
                 Software.SoftwarePauseMetricsCommand.Initialize(this);
+
+                if (_softwareUtil == null)
+                {
+                    _softwareUtil = new SoftwareCoUtil();
+                }
 
                 // Create an AutoResetEvent to signal the timeout threshold in the
                 // timer callback has been reached.
@@ -237,6 +244,26 @@ namespace SoftwareCo
             string Keypress, TextSelection Selection, bool InStatementCompletion)
         {
             InitializeSoftwareData();
+
+            if (_softwareData.project.identifier == null || _softwareData.project.identifier.Equals(""))
+            {
+                IDictionary<string, string> resourceInfo = _softwareUtil.GetResourceInfo(_softwareData.project.directory);
+                if (resourceInfo.ContainsKey("identifier"))
+                {
+                    resourceInfo.TryGetValue("identifier", out string itentifierObj);
+                    String identifier = (itentifierObj == null) ? null : Convert.ToString(itentifierObj);
+                    if (identifier != null)
+                    {
+                        _softwareData.project.identifier = identifier;
+                        _softwareData.project.resource = resourceInfo;
+                    }
+                    
+                } else
+                {
+                    // fill it with the directory so we don't keep trying and causing latency
+                    _softwareData.project.identifier = _softwareData.project.directory;
+                }
+            }
 
             String fileName = ObjDte.ActiveWindow.Document.FullName;
             if (!String.IsNullOrEmpty(Keypress))
@@ -425,7 +452,6 @@ namespace SoftwareCo
                 {
 
                     HttpResponseMessage response = await SendRequestAsync(HttpMethod.Post, "/data", softwareDataContent);
-
 
                     if (!IsOk(response))
                     {
@@ -862,26 +888,24 @@ namespace SoftwareCo
 
         private void InitializeSoftwareData()
         {
-            String projectName = (ObjDte.Solution != null) ? Path.GetFileNameWithoutExtension(ObjDte.Solution.FullName) : "None";
-            String directoryName = (ObjDte.Solution != null) ? ObjDte.Solution.FileName : "";
-            int firstIdx = directoryName.IndexOf(projectName);
-            if (firstIdx > 0)
-            {
-                directoryName = directoryName.Substring(0, firstIdx - 1);
-            }
 
-            if (_softwareData == null)
+            if (_softwareData == null || String.IsNullOrEmpty(_softwareData.project.directory))
             {
-                ProjectInfo projectInfo = new ProjectInfo(projectName, directoryName);
-                _softwareData = new SoftwareData(projectInfo);
+                String projectName = (ObjDte.Solution != null) ? Path.GetFileNameWithoutExtension(ObjDte.Solution.FullName) : "None";
+                String solutionFileName = (ObjDte.Solution != null) ? ObjDte.Solution.FileName : "";
+
+                String directoryName = Path.GetDirectoryName(solutionFileName);
+                if (_softwareData == null)
+                {
+                    ProjectInfo projectInfo = new ProjectInfo(projectName, directoryName);
+                    _softwareData = new SoftwareData(projectInfo);
+                } else
+                {
+                    _softwareData.project.name = projectName;
+                    _softwareData.project.directory = directoryName;
+                }
             }
-            else if (String.IsNullOrEmpty(_softwareData.project.directory) ||
-                String.IsNullOrEmpty(_softwareData.project.name) ||
-                _softwareData.project.name.Equals("None"))
-            {
-                _softwareData.project.name = projectName;
-                _softwareData.project.directory = directoryName;
-            }
+         
         }
 
         private String getDownloadDestinationDirectory()

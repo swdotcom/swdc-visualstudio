@@ -231,6 +231,8 @@ namespace SoftwareCo
     {
         public String name;
         public String directory;
+        public String identifier;
+        public IDictionary<string, string> resource;
 
         public ProjectInfo(String nameVal, String directoryVal)
         {
@@ -243,6 +245,8 @@ namespace SoftwareCo
             IDictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("name", this.name);
             dict.Add("directory", this.directory);
+            dict.Add("identifier", this.identifier);
+            dict.Add("resource", this.resource);
             return dict;
         }
 
@@ -251,6 +255,8 @@ namespace SoftwareCo
             JsonObject jsonObj = new JsonObject();
             jsonObj.Add("name", this.name);
             jsonObj.Add("directory", this.directory);
+            jsonObj.Add("identifier", this.identifier);
+            jsonObj.Add("resource", this.resource);
             return jsonObj;
         }
 
