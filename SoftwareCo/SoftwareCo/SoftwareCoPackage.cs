@@ -218,6 +218,7 @@ namespace SoftwareCo
             InitializeSoftwareData();
             String fileName = document.FullName;
             FileInfo fi = new FileInfo(fileName);
+            
             long prevLen = _softwareData.getFileInfoDataForProperty(fi.FullName, "length");
             long diff = (fi != null && prevLen > 0) ? fi.Length - prevLen : 0;
             if (diff > 1)
@@ -268,11 +269,20 @@ namespace SoftwareCo
             String fileName = ObjDte.ActiveWindow.Document.FullName;
             if (!String.IsNullOrEmpty(Keypress))
             {
+
+                long prevLen = _softwareData.getFileInfoDataForProperty(fileName, "length");
                 FileInfo fi = new FileInfo(fileName);
                 if (fi != null)
                 {
                     // update the file length
-                    _softwareData.addOrUpdateFileInfo(fileName, "length", fi.Length);
+                    if (fi.Length != prevLen)
+                    {
+                        _softwareData.addOrUpdateFileInfo(fileName, "length", fi.Length);
+                    } else
+                    {
+                        long newLen = prevLen + 1;
+                        _softwareData.addOrUpdateFileInfo(fileName, "length", newLen);
+                    }
                 }
 
                 bool isNewLine = false;

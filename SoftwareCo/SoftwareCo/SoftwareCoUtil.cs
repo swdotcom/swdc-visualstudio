@@ -4,11 +4,35 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+// using SpotifyAPI.Local;
+// using SpotifyAPI.Local.Enums;
+// using SpotifyAPI.Local.Models;
 
 namespace SoftwareCo
 {
     class SoftwareCoUtil
     {
+        /**
+        private SpotifyLocalAPI _spotify = null;
+
+        public IDictionary<string, string> getTrackInfo()
+        {
+            IDictionary<string, string> dict = new Dictionary<string, string>();
+
+            if (_spotify == null)
+            {
+                _spotify = new SpotifyLocalAPI();
+            }
+
+            if (SpotifyLocalAPI.IsSpotifyRunning() && _spotify.Connect())
+            {
+                StatusResponse status = _spotify.GetStatus();
+                Logger.Info("got spotify status: " + status.ToString());
+            }
+
+            return dict;
+        }
+        **/
 
         public IDictionary<string, string> GetResourceInfo(string projectDir)
         {
