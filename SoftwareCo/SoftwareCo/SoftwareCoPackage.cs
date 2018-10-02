@@ -218,7 +218,7 @@ namespace SoftwareCo
             InitializeSoftwareData();
             String fileName = document.FullName;
             FileInfo fi = new FileInfo(fileName);
-            
+            /**
             long prevLen = _softwareData.getFileInfoDataForProperty(fi.FullName, "length");
             long diff = (fi != null && prevLen > 0) ? fi.Length - prevLen : 0;
             if (diff > 1)
@@ -226,7 +226,7 @@ namespace SoftwareCo
                 // register a copy and past event
                 _softwareData.UpdateData(fileName, "paste", 1);
                 Logger.Info("Software.com: Copy+Paste incremented");
-            }
+            }**/
             _softwareData.UpdateData(fileName, "length", fi.Length);
         }
 
@@ -267,6 +267,11 @@ namespace SoftwareCo
             }
 
             String fileName = ObjDte.ActiveWindow.Document.FullName;
+
+            if (ObjDte.ActiveWindow.Document.Language != null)
+            {
+                _softwareData.addOrUpdateFileStringInfo(fileName, "syntax", ObjDte.ActiveWindow.Document.Language);
+            }
             if (!String.IsNullOrEmpty(Keypress))
             {
 
@@ -314,6 +319,8 @@ namespace SoftwareCo
                     lineCount = this.getLineCount(fileName);
                     _softwareData.addOrUpdateFileInfo(fileName, "lines", lineCount);
                 }
+
+                _softwareData.keystrokes += 1;
 
             }
         }
@@ -438,7 +445,16 @@ namespace SoftwareCo
                 {
                     HandleDocumentEventActivity(document.FullName, false);
                 }
-                _softwareData.end = _softwareData.start + 60;
+                double offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+                _softwareData.local_start = _softwareData.start + ((int)offset * 60);
+                _softwareData.offset = Math.Abs((int)offset);
+                if (TimeZone.CurrentTimeZone.DaylightName != null
+                    && TimeZone.CurrentTimeZone.DaylightName != TimeZone.CurrentTimeZone.StandardName)
+                {
+                    _softwareData.timezone = TimeZone.CurrentTimeZone.DaylightName;
+                } else {
+                    _softwareData.timezone = TimeZone.CurrentTimeZone.StandardName;
+                }
 
                 string softwareDataContent = _softwareData.GetAsJson();
                 Logger.Info("Software.com: sending: " + softwareDataContent);
@@ -457,7 +473,7 @@ namespace SoftwareCo
                   "project":{"name":"UnitTestProject3","directory":"C:\\Users\\Xavier Luiz\\source\\repos"}
                 }
                  **/
-
+                
                 if (_telemetryOn)
                 {
 
