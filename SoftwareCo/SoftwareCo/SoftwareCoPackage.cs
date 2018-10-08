@@ -800,8 +800,8 @@ namespace SoftwareCo
                 jsonObj.TryGetValue("inFlow", out object inFlowObj);
                 bool inFlow = (inFlowObj == null) ? true : Convert.ToBoolean(inFlowObj);
                     
-                jsonObj.TryGetValue("currentSessionKpm", out object currentSessionKpm);
-                long currentSessionKpmVal = (currentSessionKpm == null) ? 0 : Convert.ToInt64(currentSessionKpm);
+                jsonObj.TryGetValue("lastKpm", out object lastKpm);
+                long lastKpmVal = (lastKpm == null) ? 0 : Convert.ToInt64(lastKpm);
 
                 jsonObj.TryGetValue("currentSessionGoalPercent", out object currentSessionGoalPercent);
                 double currentSessionGoalPercentVal = (currentSessionGoalPercent == null) ? 0.0 : Convert.ToDouble(currentSessionGoalPercent);
@@ -849,9 +849,9 @@ namespace SoftwareCo
                     sessionTime = currentSessionMinutesVal + " min";
                 }
                     
-                if (currentSessionKpmVal > 0 || currentSessionMinutesVal > 0)
+                if (lastKpmVal > 0 || currentSessionMinutesVal > 0)
                 {
-                    string kpmMsg = currentSessionKpmVal + " KPM";
+                    string kpmMsg = lastKpmVal + " KPM";
                     if (inFlow) {
                         kpmMsg = "🚀" + " " + kpmMsg;
                     }
