@@ -812,21 +812,26 @@ namespace SoftwareCo
                 string sessionTimeIcon = "";
                 if (currentSessionGoalPercentVal > 0)
                 {
-                    if (currentSessionGoalPercentVal < 0.45)
+                    if (currentSessionGoalPercentVal < 0.4)
                     {
-                        sessionTimeIcon = "○";
+                        sessionTimeIcon = "🌘";
                     }
                     else if (currentSessionGoalPercentVal < 0.7)
                     {
-                        sessionTimeIcon = "◒";
+                        sessionTimeIcon = "🌗";
                     }
-                    else if (currentSessionGoalPercentVal < 0.95)
+                    else if (currentSessionGoalPercentVal < 0.93)
                     {
-                        sessionTimeIcon = "◒";
+                        sessionTimeIcon = "🌖";
+                    }
+                    else if (currentSessionGoalPercentVal < 1.3)
+                    {
+                        sessionTimeIcon = "🌕";
                     }
                     else
                     {
-                        sessionTimeIcon = "⚫";
+                        sessionTimeIcon = "🌔";
+
                     }
                 }
 
