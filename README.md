@@ -1,31 +1,25 @@
 # *Software* for Visual Studio
 
-***Software* is currently in private beta. To use this plugin, please join the wait list at https://software.com**
+## Measure your coding activity in real time 
 
-*Software* measures activity in your text editor or IDE so you can see the times during the day when you are the most productive. We also help you see how much you code at work or at nights and weekends, how meetings impact the amount you code, and more. 
+*Software* shows you your coding activity to help you increase flow, decrease interrupts, and improve work-life balance. 
 
-## Setup
+It takes just a minute to install our plugin for Visual Studio (see the [setup instructions](https://www.software.com/text-editors-and-ides/visual-studio)).
 
-*Software* is installed and uninstalled via the Visual Studio Marketplace.
+### See your coding intensity
 
-<!--- Begin: setup --->
+Our plugin for Visual Studio features a status bar that shows your keystrokes per minute (KPM) for your last minute of activity. We show a rocket icon if your KPM is equal to or above your average KPM per day for the last 90 days--a subtle reminder of your relative coding focus and intensity. 
 
-### Install
+![Visual Studio status bar](https://uploads-ssl.webflow.com/5b589ab81371d7c6ffc8d17a/5b8cc51b902f3d48e8a7f822_vs-code-status-bar.png)
 
-1. Navigate to Tools > Extensions
-2. Click on Online
-3. Search for "Software"
-3. Install Software
-4. Restart Visual Studio
+### Time tracking
 
-### Uninstall
+Longer sessions are generally more productive because we can maintain context and more easily retain logical constructs related to our code. In the status bar, we show a circle with a partial fill (either 25%, 50%, 75%, or 100%) to indicate the duration of your current session vs. your average over the last 90 days.
 
-1. Navigate to Tools > Extensions
-2. Click Online
-3. Uninstall Software
+### Quantify your coding
 
-<!--- End: setup --->
+In addition to KPM and time, we also measure time spent by project, lines of code, characters added/deleted, and your current Spotify or iTunes track. We distill this data into interesting "datagrams" that you can view in your account at [app.software.com](https://app.software.com).
 
-## Privacy
+### Safe, secure, and free
 
-Your code is safe! We never process, send or store your code and we respect developer privacy. We give developers full control over their personal information, and we are fully committed to the spirit of privacy frameworks, such as GDPR. For more information, please review our [Privacy Policy](https://software.com/privacy-policy).
+All of our plugins are safe, secure, and free. We do not process, send, or store your proprietary code. We only track productivity-related data, and we make it easy to see the data we collect.
