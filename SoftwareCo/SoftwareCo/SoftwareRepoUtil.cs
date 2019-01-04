@@ -395,7 +395,7 @@ namespace SoftwareCo
                                     HttpResponseMessage response = await _util.SendRequestAsync(
                                         HttpMethod.Post, "/commits", jsonContent);
 
-                                    if (!_util.IsOk(response))
+                                    if (_util.IsOk(response))
                                     {
                                         Logger.Info(response.ToString());
                                     }
@@ -415,7 +415,7 @@ namespace SoftwareCo
                                 HttpResponseMessage response = await _util.SendRequestAsync(
                                     HttpMethod.Post, "/commits", jsonContent);
 
-                                if (!_util.IsOk(response))
+                                if (_util.IsOk(response))
                                 {
                                     Logger.Info(response.ToString());
                                 }
