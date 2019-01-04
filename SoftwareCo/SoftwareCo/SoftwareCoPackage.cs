@@ -56,6 +56,8 @@ namespace SoftwareCo
         private Timer timer;
         private Timer docChangeTimer;
         private Timer kpmTimer;
+        private Timer repoMemberTimer;
+        private Timer repoCommitsTimer;
 
         // Used by Constants for version info
         public static DTE2 ObjDte;
@@ -68,16 +70,16 @@ namespace SoftwareCo
         private DateTime _lastPostTime = DateTime.UtcNow;
         private SoftwareData _softwareData;
         private SoftwareCoUtil _softwareUtil;
+        private SoftwareRepoUtil _softwareRepoUtil;
 
         private bool _isOnline = true;
         private bool _isAuthenticated = true;
         private bool _hasJwt = true;
         private bool _hasToken = false;
 
-        private static bool _telemetryOn = true;
-
         private static int THIRTY_SECONDS = 1000 * 30;
         private static int ONE_MINUTE = THIRTY_SECONDS * 2;
+        private static int ONE_HOUR = ONE_MINUTE * 60;
 
         #endregion
 
@@ -133,13 +135,18 @@ namespace SoftwareCo
                 _windowEvents.WindowActivated += WindowEventsOnWindowActivated;
 
                 // initialize the menu commands
-                Software.SoftwareLaunchCommand.Initialize(this);
-                Software.SoftwareEnableMetricsCommand.Initialize(this);
-                Software.SoftwarePauseMetricsCommand.Initialize(this);
+                SoftwareLaunchCommand.Initialize(this);
+                SoftwareEnableMetricsCommand.Initialize(this);
+                SoftwarePauseMetricsCommand.Initialize(this);
 
                 if (_softwareUtil == null)
                 {
                     _softwareUtil = new SoftwareCoUtil();
+                }
+
+                if (_softwareRepoUtil == null)
+                {
+                    _softwareRepoUtil = new SoftwareRepoUtil();
                 }
 
                 // Create an AutoResetEvent to signal the timeout threshold in the
@@ -169,6 +176,20 @@ namespace SoftwareCo
                     autoEvent,
                     delay,
                     ONE_MINUTE);
+
+                delay = 1000 * 45;
+                repoMemberTimer = new Timer(
+                    ProcessRepoMembers,
+                    autoEvent,
+                    delay,
+                    ONE_HOUR);
+
+                delay = ONE_MINUTE + (1000 * 10);
+                repoCommitsTimer = new Timer(
+                    ProcessRepoCommits,
+                    autoEvent,
+                    delay,
+                    ONE_HOUR);
 
                 this.AuthenticationNotificationCheck();
             }
@@ -248,7 +269,7 @@ namespace SoftwareCo
 
             if (_softwareData.project.identifier == null || _softwareData.project.identifier.Equals(""))
             {
-                IDictionary<string, string> resourceInfo = _softwareUtil.GetResourceInfo(_softwareData.project.directory);
+                IDictionary<string, string> resourceInfo = _softwareRepoUtil.GetResourceInfo(_softwareData.project.directory);
                 if (resourceInfo.ContainsKey("identifier"))
                 {
                     resourceInfo.TryGetValue("identifier", out string itentifierObj);
@@ -399,12 +420,6 @@ namespace SoftwareCo
             InitializeSoftwareData();
         }
 
-        public static long getNowInSeconds()
-        {
-            long unixSeconds = DateTimeOffset.Now.ToUnixTimeSeconds();
-            return unixSeconds;
-        }
-
         private void CheckFileLengthUpdates(Object stateInfo)
         {
             if (ObjDte.ActiveDocument != null && ObjDte.ActiveWindow.Document != null)
@@ -423,6 +438,28 @@ namespace SoftwareCo
                 }
             }
             
+        }
+
+        private void ProcessRepoMembers(Object stateInfo)
+        {
+            InitializeSoftwareData();
+
+            if (_softwareData != null && _softwareData.project.directory != null)
+            {
+
+                _softwareRepoUtil.GetRepoUsers(_softwareData.project.directory);
+            }
+        }
+
+        private void ProcessRepoCommits(Object stateInfo)
+        {
+            InitializeSoftwareData();
+
+            if (_softwareData != null && _softwareData.project.directory != null)
+            {
+
+                _softwareRepoUtil.GetHistoricalCommitsAsync(_softwareData.project.directory);
+            }
         }
 
         // This method is called by the timer delegate.
@@ -474,12 +511,12 @@ namespace SoftwareCo
                 }
                  **/
                 
-                if (_telemetryOn)
+                if (_softwareUtil.isTelemetryOn())
                 {
 
-                    HttpResponseMessage response = await SendRequestAsync(HttpMethod.Post, "/data", softwareDataContent);
+                    HttpResponseMessage response = await _softwareUtil.SendRequestAsync(HttpMethod.Post, "/data", softwareDataContent);
 
-                    if (!IsOk(response))
+                    if (!_softwareUtil.IsOk(response))
                     {
                         this.StorePayload(softwareDataContent);
                         this.AuthenticationNotificationCheck();
@@ -497,93 +534,9 @@ namespace SoftwareCo
             }
         }
 
-        private static bool IsOk(HttpResponseMessage response)
-        {
-            return (response != null && response.StatusCode == HttpStatusCode.OK);
-        }
-
-        private static async Task<HttpResponseMessage> SendRequestAsync(HttpMethod httpMethod, string uri, string optionalPayload)
-        {
-
-            if (!_telemetryOn)
-            {
-                return null;
-            }
-
-            HttpClient client = new HttpClient
-            {
-                Timeout = TimeSpan.FromSeconds(5)
-            };
-            var cts = new CancellationTokenSource();
-            HttpResponseMessage response = null;
-            object jwt = getItem("jwt");
-            if (jwt != null)
-            {
-                // add the authorizationn
-                client.DefaultRequestHeaders.Add("Authorization", (string)jwt);
-            }
-            HttpContent contentPost = null;
-            if (optionalPayload != null)
-            {
-                contentPost = new StringContent(optionalPayload, Encoding.UTF8, "application/json");
-            }
-            bool isPost = (httpMethod.Equals(HttpMethod.Post));
-            try
-            {
-                string endpoint = Constants.api_endpoint + "" + uri;
-                if (isPost)
-                {
-                    response = await client.PostAsync(endpoint, contentPost, cts.Token);
-                }
-                else
-                {
-                    response = await client.GetAsync(endpoint, cts.Token);
-                }
-            }
-            catch (HttpRequestException e)
-            {
-                if (isPost)
-                {
-                    NotifyPostException(e);
-                }
-            }
-            catch (TaskCanceledException e)
-            {
-                if (e.CancellationToken == cts.Token)
-                {
-                    // triggered by the caller
-                    if (isPost)
-                    {
-                        NotifyPostException(e);
-                    }
-                }
-                else
-                {
-                    // a web request timeout (possibly other things!?)
-                    Logger.Info("We are having trouble receiving a response from Software.com");
-                }
-            }
-            catch (Exception e)
-            {
-                if (isPost)
-                {
-                    NotifyPostException(e);
-                }
-            }
-            finally
-            {
-            }
-            return response;
-        }
-
-        private static void NotifyPostException(Exception e)
-        {
-            Logger.Error("We are having trouble sending data to Software.com, reason: " + e.Message);
-        }
-
         private void StorePayload(string softwareDataContent)
         {
-            string datastoreFile = this.getSoftwareDataStoreFile();
+            string datastoreFile = _softwareUtil.getSoftwareDataStoreFile();
             // append to the file
             File.AppendAllText(datastoreFile, softwareDataContent + Environment.NewLine);
         }
@@ -597,21 +550,21 @@ namespace SoftwareCo
 
         private async void IsOnline()
         {
-            HttpResponseMessage response = await SendRequestAsync(HttpMethod.Get, "/ping", null);
-            this._isOnline = IsOk(response);
+            HttpResponseMessage response = await _softwareUtil.SendRequestAsync(HttpMethod.Get, "/ping", null);
+            this._isOnline = _softwareUtil.IsOk(response);
             this.UpdateStatus();
         }
 
         private async void IsAuthenticated()
         {
-            HttpResponseMessage response = await SendRequestAsync(HttpMethod.Get, "/users/ping", null);
-            this._isAuthenticated = IsOk(response);
+            HttpResponseMessage response = await _softwareUtil.SendRequestAsync(HttpMethod.Get, "/users/ping", null);
+            this._isAuthenticated = _softwareUtil.IsOk(response);
             this.UpdateStatus();
         }
 
         private bool HasJwt()
         {
-            object jwt = getItem("jwt");
+            object jwt = _softwareUtil.getItem("jwt");
             this._hasJwt = (jwt != null && !((string)jwt).Equals(""));
             this.UpdateStatus();
             return this._hasJwt;
@@ -619,7 +572,7 @@ namespace SoftwareCo
 
         private bool HasToken()
         {
-            object token = getItem("token");
+            object token = _softwareUtil.getItem("token");
             this._hasToken = (token != null && !((string)token).Equals(""));
             return this._hasToken;
         }
@@ -634,9 +587,9 @@ namespace SoftwareCo
 
         private void AuthenticationNotificationCheck()
         {
-            object lastUpdateTimeObj = getItem("vs_lastUpdateTime");
+            object lastUpdateTimeObj = _softwareUtil.getItem("vs_lastUpdateTime");
             long lastUpdate = (lastUpdateTimeObj != null) ? (long)lastUpdateTimeObj : 0;
-            long nowInSec = getNowInSeconds();
+            long nowInSec = _softwareUtil.getNowInSeconds();
 
             if ((this.HasJwt() && this._isAuthenticated) || !this._isOnline)
             {
@@ -662,7 +615,7 @@ namespace SoftwareCo
                 }
             }
 
-            setItem("vs_lastUpdateTime", nowInSec);
+            _softwareUtil.setItem("vs_lastUpdateTime", nowInSec);
 
             string msg = "To see your coding data in Software.com, please log in to your account.";
 
@@ -686,13 +639,13 @@ namespace SoftwareCo
             if (result == 1)
             {
                 // launch the browser
-                launchSoftwareDashboard();
+                _softwareUtil.launchSoftwareDashboard();
             }
         }
 
         private async void SendOfflineData()
         {
-            string datastoreFile = this.getSoftwareDataStoreFile();
+            string datastoreFile = _softwareUtil.getSoftwareDataStoreFile();
             if (File.Exists(datastoreFile))
             {
                 // get the content
@@ -709,8 +662,8 @@ namespace SoftwareCo
                         }
                     }
                     string jsonContent = "[" + string.Join(",", jsonLines) + "]";
-                    HttpResponseMessage response = await SendRequestAsync(HttpMethod.Post, "/data/batch", jsonContent);
-                    if (IsOk(response))
+                    HttpResponseMessage response = await _softwareUtil.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonContent);
+                    if (_softwareUtil.IsOk(response))
                     {
                         // delete the file
                         File.Delete(datastoreFile);
@@ -719,79 +672,16 @@ namespace SoftwareCo
             }
         }
 
-        public static object getItem(string key)
-        {
-            // read the session json file
-            string sessionFile = getSoftwareSessionFile();
-            if (File.Exists(sessionFile))
-            {
-                string content = File.ReadAllText(sessionFile);
-                if (content != null)
-                {
-                    object val = SimpleJson.GetValue(content, key);
-                    if (val != null)
-                    {
-                        return val;
-                    }
-                }
-            }
-            return null;
-        }
-
-        public static void setItem(String key, object val)
-        {
-            string sessionFile = getSoftwareSessionFile();
-            IDictionary<string, object> dict = new Dictionary<string, object>();
-            string content = "";
-            if (File.Exists(sessionFile))
-            {
-                content = File.ReadAllText(sessionFile);
-                // conver to dictionary
-                dict = (IDictionary<string, object>)SimpleJson.DeserializeObject(content);
-                dict.Remove(key);
-            }
-            dict.Add(key, val);
-            content = SimpleJson.SerializeObject(dict);
-            // write it back to the file
-            File.WriteAllText(sessionFile, content);
-        }
-
-        public static async void RetrieveAuthToken()
-        {
-            object token = getItem("token");
-            string jwt = null;
-            HttpResponseMessage response = await SendRequestAsync(HttpMethod.Get, "/users/plugin/confirm?token=" + token, null);
-            if (IsOk(response))
-            {
-                string responseBody = await response.Content.ReadAsStringAsync();
-                IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
-                jsonObj.TryGetValue("jwt", out object jwtObj);
-                jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
-
-                if (jwt != null)
-                {
-                    setItem("jwt", jwt);
-                }
-
-                setItem("vs_lastUpdateTime", getNowInSeconds());
-            }
-
-            if (jwt == null)
-            {
-                RetrieveAuthTokenTimeout(120000);
-            }
-        }
-
         private async void ProcessFetchDailyKpmTimerCallbackAsync(Object stateInfo)
         {
-            if (!_telemetryOn)
+            if (!_softwareUtil.isTelemetryOn())
             {
                 Logger.Info("Software.com metrics are currently paused. Enable to update your metrics.");
                 return;
             }
-            long nowInSec = getNowInSeconds();
-            HttpResponseMessage response = await SendRequestAsync(HttpMethod.Get, "/sessions?summary=true&from=" + nowInSec, null);
-            if (IsOk(response))
+            long nowInSec = _softwareUtil.getNowInSeconds();
+            HttpResponseMessage response = await _softwareUtil.SendRequestAsync(HttpMethod.Get, "/sessions?summary=true&from=" + nowInSec, null);
+            if (_softwareUtil.IsOk(response))
             {
                 // get the json data
                 string responseBody = await response.Content.ReadAsStringAsync();
@@ -875,43 +765,6 @@ namespace SoftwareCo
             
         }
 
-        public static string createToken()
-        {
-            return System.Guid.NewGuid().ToString().Replace("-", "");
-        }
-
-        public static void launchSoftwareDashboard()
-        {
-            string url = Constants.url_endpoint;
-            object tokenVal = getItem("token");
-            object jwtVal = getItem("jwt");
-
-            bool addedToken = false;
-            if (tokenVal == null || ((string)tokenVal).Equals(""))
-            {
-                tokenVal = createToken();
-                setItem("token", tokenVal);
-                addedToken = true;
-            } else if (jwtVal == null || ((string)jwtVal).Equals(""))
-            {
-                addedToken = true;
-            }
-
-            if (addedToken)
-            {
-                url += "/login?token=" + (string)tokenVal;
-                RetrieveAuthTokenTimeout(60000);
-            }
-
-            System.Diagnostics.Process.Start(url);
-        }
-
-        public static async void RetrieveAuthTokenTimeout(int millisToWait)
-        {
-            await Task.Delay(millisToWait);
-            RetrieveAuthToken();
-        }
-
         private bool EnoughTimePassed(DateTime now)
         {
             return _lastPostTime < now.AddMinutes(postFrequency);
@@ -944,37 +797,10 @@ namespace SoftwareCo
             return Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         }
 
-        private static String getSoftwareDataDir()
-        {
-            String userHomeDir = Environment.ExpandEnvironmentVariables("%HOMEPATH%");
-            string softwareDataDir = userHomeDir + "\\.software";
-            if (!Directory.Exists(softwareDataDir))
-            {
-                // create it
-                Directory.CreateDirectory(softwareDataDir);
-            }
-            return softwareDataDir;
-        }
-
-        private static String getSoftwareSessionFile()
-        {
-            return getSoftwareDataDir() + "\\session.json";
-        }
-
-        private String getSoftwareDataStoreFile()
-        {
-            return getSoftwareDataDir() + "\\data.json";
-        }
-
         private void SetStatus(string msg)
         {
             IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
             statusbar.SetText(msg);
-        }
-
-        public static void UpdateTelemetry(bool isOn)
-        {
-            _telemetryOn = isOn;
         }
 
         #endregion

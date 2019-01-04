@@ -8,7 +8,7 @@ namespace SoftwareCo
     class SoftwareData
     {
 
-        // TODO: backend driven, we should look at getting a list of types at some point
+        // TODO: backend driven, we should look at getting a list of types at some point.
         public String type = "Events";
         // sublime = 1, vs code = 2, eclipse = 3, intellij = 4, visualstudio = 6, atom = 7
         public int pluginId = 6;
@@ -23,11 +23,14 @@ namespace SoftwareCo
         public String timezone;
         public int offset; // in minutes
 
+        private SoftwareCoUtil _softwareUtil;
+
         public ProjectInfo project;
 
         public SoftwareData(ProjectInfo projectInfo)
         {
-            start = SoftwareCoPackage.getNowInSeconds();
+            _softwareUtil = new SoftwareCoUtil();
+            start = _softwareUtil.getNowInSeconds();
             project = projectInfo;
         }
 
@@ -39,7 +42,7 @@ namespace SoftwareCo
             {
                 project.ResetData();
             }
-            start = SoftwareCoPackage.getNowInSeconds();
+            start = _softwareUtil.getNowInSeconds();
             local_start = 0L;
         }
 

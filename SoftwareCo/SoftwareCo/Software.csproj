@@ -64,9 +64,12 @@
     <Compile Include="SoftwareEnableMetricsCommand.cs" />
     <Compile Include="SoftwareLaunchCommand.cs" />
     <Compile Include="SoftwarePauseMetricsCommand.cs" />
+    <Compile Include="SoftwareRepoUtil.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Key.snk" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
@@ -211,6 +214,9 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VSSDK.BuildTools">
       <Version>15.7.109</Version>
+    </PackageReference>
+    <PackageReference Include="Mono.HttpUtility">
+      <Version>1.0.0.1</Version>
     </PackageReference>
     <PackageReference Include="SimpleJson">
       <Version>0.38.0</Version>

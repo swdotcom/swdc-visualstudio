@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Task = System.Threading.Tasks.Task;
 
-namespace Software
+namespace SoftwareCo
 {
     /// <summary>
     /// Command handler
@@ -27,6 +27,8 @@ namespace Software
         /// </summary>
         private readonly Package package;
 
+        private SoftwareCoUtil _util;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SoftwareLaunchCommand"/> class.
         /// Adds our command handlers for menu (commands must exist in the command table file)
@@ -39,6 +41,8 @@ namespace Software
             {
                 throw new ArgumentNullException("package");
             }
+
+            _util = new SoftwareCoUtil();
 
             this.package = package;
 
@@ -89,7 +93,7 @@ namespace Software
         /// <param name="e">Event args.</param>
         private void Execute(object sender, EventArgs e)
         {
-            SoftwareCo.SoftwareCoPackage.launchSoftwareDashboard();
+            _util.launchSoftwareDashboard();
         }
     }
 }
