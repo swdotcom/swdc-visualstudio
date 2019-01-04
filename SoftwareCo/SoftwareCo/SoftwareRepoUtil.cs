@@ -284,6 +284,8 @@ namespace SoftwareCo
                                 string line = lines[i].Trim();
                                 if (line.Length > 0)
                                 {
+                                    bool hasPipe = line.IndexOf("|") != -1 ? true : false;
+                                    bool isBin = line.ToLower().IndexOf("bin") != -1 ? true : false;
                                     if (line.IndexOf("COMMIT:") == 0)
                                     {
                                         line = line.Substring("COMMIT:".Length);
@@ -314,44 +316,57 @@ namespace SoftwareCo
                                             currentRepoCommit.changes.Add("__sftwTotal__", changesObj);
                                         }
                                     }
-                                }
-                                else if (currentRepoCommit != null && line.IndexOf("|") != -1)
-                                {
-                                    // get the file and changes
-                                    // i.e. somefile.cs                             | 20 +++++++++---------
-                                    line = string.Join(" ", line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries ));
-                                    string[] lineInfos = line.Split('|');
-                                    if (lineInfos != null && lineInfos.Length > 1)
+                                    else if (currentRepoCommit != null && hasPipe && !isBin)
                                     {
-                                        string file = lineInfos[0].Trim();
-                                        string[] metricInfos = lineInfos[1].Trim().Split(' ');
-                                        if (metricInfos != null && metricInfos.Length > 1)
+                                        // get the file and changes
+                                        // i.e. somefile.cs                             | 20 +++++++++---------
+                                        line = string.Join(" ", line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+                                        string[] lineInfos = line.Split('|');
+                                        if (lineInfos != null && lineInfos.Length > 1)
                                         {
-                                            string addAndDeletes = metricInfos[1].Trim();
-                                            int len = addAndDeletes.Length;
-                                            int lastPlusIdx = addAndDeletes.LastIndexOf('+');
-                                            int insertions = 0;
-                                            int deletions = 0;
-                                            if (lastPlusIdx != -1)
+                                            string file = lineInfos[0].Trim();
+                                            string[] metricInfos = lineInfos[1].Trim().Split(' ');
+                                            if (metricInfos != null && metricInfos.Length > 1)
                                             {
-                                                insertions = lastPlusIdx + 1;
-                                                deletions = len - insertions;
-                                            } else if (len > 0)
-                                            {
-                                                // all deletions
-                                                deletions = len;
-                                            }
-                                            RepoCommitChanges changesObj = new RepoCommitChanges(insertions, deletions);
-                                            currentRepoCommit.changes.Add(file, changesObj);
+                                                string addAndDeletes = metricInfos[1].Trim();
+                                                int len = addAndDeletes.Length;
+                                                int lastPlusIdx = addAndDeletes.LastIndexOf('+');
+                                                int insertions = 0;
+                                                int deletions = 0;
+                                                if (lastPlusIdx != -1)
+                                                {
+                                                    insertions = lastPlusIdx + 1;
+                                                    deletions = len - insertions;
+                                                }
+                                                else if (len > 0)
+                                                {
+                                                    // all deletions
+                                                    deletions = len;
+                                                }
 
-                                            RepoCommitChanges totalRepoCommit;
-                                            currentRepoCommit.changes.TryGetValue("__sftwTotal__", out totalRepoCommit);
-                                            if (totalRepoCommit != null)
-                                            {
-                                                totalRepoCommit.deletions += deletions;
-                                                totalRepoCommit.insertions += insertions;
-                                                currentRepoCommit.changes.Add("__sftwTotal__", totalRepoCommit);
+                                                if (!currentRepoCommit.changes.ContainsKey(file))
+                                                {
+                                                    RepoCommitChanges changesObj = new RepoCommitChanges(insertions, deletions);
+                                                    currentRepoCommit.changes.Add(file, changesObj);
+                                                } else
+                                                {
+                                                    RepoCommitChanges fileCommitChanges;
+                                                    currentRepoCommit.changes.TryGetValue(file, out fileCommitChanges);
+                                                    if (fileCommitChanges != null)
+                                                    {
+                                                        fileCommitChanges.deletions += deletions;
+                                                        fileCommitChanges.insertions += insertions;
+                                                    }
+                                                }
+                                                
 
+                                                RepoCommitChanges totalRepoCommit;
+                                                currentRepoCommit.changes.TryGetValue("__sftwTotal__", out totalRepoCommit);
+                                                if (totalRepoCommit != null)
+                                                {
+                                                    totalRepoCommit.deletions += deletions;
+                                                    totalRepoCommit.insertions += insertions;
+                                                }
                                             }
                                         }
                                     }
