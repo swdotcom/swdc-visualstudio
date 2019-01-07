@@ -48,6 +48,7 @@ namespace SoftwareCo
             process.StartInfo.FileName = "cmd.exe";
             process.StartInfo.Arguments = "/c " + cmd;
             process.StartInfo.WorkingDirectory = dir;
+            process.StartInfo.CreateNoWindow = true;
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
