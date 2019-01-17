@@ -20,7 +20,7 @@ namespace SoftwareCo
     {
         private static bool _telemetryOn = true;
 
-        /**
+        /***
         private SpotifyLocalAPI _spotify = null;
 
         public IDictionary<string, string> getTrackInfo()
@@ -44,22 +44,29 @@ namespace SoftwareCo
 
         public string RunCommand(String cmd, String dir)
         {
-            Process process = new Process();
-            process.StartInfo.FileName = "cmd.exe";
-            process.StartInfo.Arguments = "/c " + cmd;
-            process.StartInfo.WorkingDirectory = dir;
-            process.StartInfo.CreateNoWindow = true;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.RedirectStandardError = true;
-            process.Start();
-            //* Read the output (or the error)
-            string output = process.StandardOutput.ReadToEnd();
-            string err = process.StandardError.ReadToEnd();
-            process.WaitForExit();
-            if (output != null)
+            try
             {
-                return output.Trim();
+                Process process = new Process();
+                process.StartInfo.FileName = "cmd.exe";
+                process.StartInfo.Arguments = "/c " + cmd;
+                process.StartInfo.WorkingDirectory = dir;
+                process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                process.StartInfo.CreateNoWindow = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.Start();
+                //* Read the output (or the error)
+                string output = process.StandardOutput.ReadToEnd();
+                string err = process.StandardError.ReadToEnd();
+                process.WaitForExit();
+                if (output != null)
+                {
+                    return output.Trim();
+                }
+            } catch (Exception e)
+            {
+                Logger.Error("Software.com: Unable to execute command, error: " + e.Message);
             }
             return "";
         }

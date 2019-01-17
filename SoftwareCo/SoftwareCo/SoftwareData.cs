@@ -11,7 +11,7 @@ namespace SoftwareCo
         // TODO: backend driven, we should look at getting a list of types at some point.
         public String type = "Events";
         // sublime = 1, vs code = 2, eclipse = 3, intellij = 4, visualstudio = 6, atom = 7
-        public int pluginId = 6;
+        public int pluginId = Constants.PluginId;
 
         // non-hardcoded attributes
         public JsonObject source = new JsonObject();

@@ -267,26 +267,6 @@ namespace SoftwareCo
         {
             InitializeSoftwareData();
 
-            if (_softwareData.project.identifier == null || _softwareData.project.identifier.Equals(""))
-            {
-                IDictionary<string, string> resourceInfo = _softwareRepoUtil.GetResourceInfo(_softwareData.project.directory);
-                if (resourceInfo.ContainsKey("identifier"))
-                {
-                    resourceInfo.TryGetValue("identifier", out string itentifierObj);
-                    String identifier = (itentifierObj == null) ? null : Convert.ToString(itentifierObj);
-                    if (identifier != null)
-                    {
-                        _softwareData.project.identifier = identifier;
-                        _softwareData.project.resource = resourceInfo;
-                    }
-                    
-                } else
-                {
-                    // fill it with the directory so we don't keep trying and causing latency
-                    _softwareData.project.identifier = _softwareData.project.directory;
-                }
-            }
-
             String fileName = ObjDte.ActiveWindow.Document.FullName;
 
             if (ObjDte.ActiveWindow.Document.Language != null)
@@ -295,7 +275,6 @@ namespace SoftwareCo
             }
             if (!String.IsNullOrEmpty(Keypress))
             {
-
                 long prevLen = _softwareData.getFileInfoDataForProperty(fileName, "length");
                 FileInfo fi = new FileInfo(fileName);
                 if (fi != null)
@@ -775,10 +754,16 @@ namespace SoftwareCo
 
             if (_softwareData == null || String.IsNullOrEmpty(_softwareData.project.directory))
             {
-                String projectName = (ObjDte.Solution != null) ? Path.GetFileNameWithoutExtension(ObjDte.Solution.FullName) : "None";
-                String solutionFileName = (ObjDte.Solution != null) ? ObjDte.Solution.FileName : "";
-
-                String directoryName = Path.GetDirectoryName(solutionFileName);
+                String projectName = "None";
+                String fileName = "Unknown";
+                String directoryName = "Unknown";
+                if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
+                {
+                    projectName = Path.GetFileNameWithoutExtension(ObjDte.Solution.FullName);
+                    fileName = ObjDte.Solution.FileName;
+                    directoryName = Path.GetDirectoryName(fileName);
+                }
+                
                 if (_softwareData == null)
                 {
                     ProjectInfo projectInfo = new ProjectInfo(projectName, directoryName);
