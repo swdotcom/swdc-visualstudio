@@ -284,7 +284,7 @@ namespace SoftwareCo
                     string email = "";
                     resourceInfo.TryGetValue("email", out email);
 
-                    RepoCommit latestCommit = null;// await this.GetLatestCommitAsync(projectDir);
+                    RepoCommit latestCommit = await this.GetLatestCommitAsync(projectDir);
 
                     string sinceOption = "";
                     if (latestCommit != null)
