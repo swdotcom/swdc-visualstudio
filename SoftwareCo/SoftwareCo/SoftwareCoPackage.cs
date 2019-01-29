@@ -9,11 +9,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System.IO;
 using System.Net.Http;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace SoftwareCo
 {
@@ -58,6 +54,7 @@ namespace SoftwareCo
         private Timer kpmTimer;
         private Timer repoMemberTimer;
         private Timer repoCommitsTimer;
+        private Timer musicTimer;
 
         // Used by Constants for version info
         public static DTE2 ObjDte;
@@ -69,8 +66,7 @@ namespace SoftwareCo
 
         private DateTime _lastPostTime = DateTime.UtcNow;
         private SoftwareData _softwareData;
-        private SoftwareCoUtil _softwareUtil;
-        private SoftwareRepoUtil _softwareRepoUtil;
+        private SoftwareRepoManager _softwareRepoUtil;
 
         private bool _isOnline = true;
         private bool _isAuthenticated = true;
@@ -139,14 +135,9 @@ namespace SoftwareCo
                 SoftwareEnableMetricsCommand.Initialize(this);
                 SoftwarePauseMetricsCommand.Initialize(this);
 
-                if (_softwareUtil == null)
-                {
-                    _softwareUtil = new SoftwareCoUtil();
-                }
-
                 if (_softwareRepoUtil == null)
                 {
-                    _softwareRepoUtil = new SoftwareRepoUtil();
+                    _softwareRepoUtil = new SoftwareRepoManager();
                 }
 
                 // Create an AutoResetEvent to signal the timeout threshold in the
@@ -190,6 +181,12 @@ namespace SoftwareCo
                     autoEvent,
                     delay,
                     ONE_HOUR);
+
+                musicTimer = new Timer(
+                    ProcessMusicTracks,
+                    autoEvent,
+                    1000 * 5,
+                    1000 * 30);
 
                 this.AuthenticationNotificationCheck();
             }
@@ -441,6 +438,11 @@ namespace SoftwareCo
             }
         }
 
+        private void ProcessMusicTracks(Object stateInfo)
+        {
+            SoftwareSpotifyManager.GetLocalSpotifyTrackInfoAsync();
+        }
+
         // This method is called by the timer delegate.
         private async void ProcessSoftwareDataTimerCallbackAsync(Object stateInfo)
         {
@@ -490,12 +492,12 @@ namespace SoftwareCo
                 }
                  **/
                 
-                if (_softwareUtil.isTelemetryOn())
+                if (SoftwareCoUtil.isTelemetryOn())
                 {
 
-                    HttpResponseMessage response = await _softwareUtil.SendRequestAsync(HttpMethod.Post, "/data", softwareDataContent);
+                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data", softwareDataContent);
 
-                    if (!_softwareUtil.IsOk(response))
+                    if (!SoftwareHttpManager.IsOk(response))
                     {
                         this.StorePayload(softwareDataContent);
                         this.AuthenticationNotificationCheck();
@@ -515,7 +517,7 @@ namespace SoftwareCo
 
         private void StorePayload(string softwareDataContent)
         {
-            string datastoreFile = _softwareUtil.getSoftwareDataStoreFile();
+            string datastoreFile = SoftwareCoUtil.getSoftwareDataStoreFile();
             // append to the file
             File.AppendAllText(datastoreFile, softwareDataContent + Environment.NewLine);
         }
@@ -529,21 +531,21 @@ namespace SoftwareCo
 
         private async void IsOnline()
         {
-            HttpResponseMessage response = await _softwareUtil.SendRequestAsync(HttpMethod.Get, "/ping", null);
-            this._isOnline = _softwareUtil.IsOk(response);
+            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/ping", null);
+            this._isOnline = SoftwareHttpManager.IsOk(response);
             this.UpdateStatus();
         }
 
         private async void IsAuthenticated()
         {
-            HttpResponseMessage response = await _softwareUtil.SendRequestAsync(HttpMethod.Get, "/users/ping", null);
-            this._isAuthenticated = _softwareUtil.IsOk(response);
+            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/users/ping", null);
+            this._isAuthenticated = SoftwareHttpManager.IsOk(response);
             this.UpdateStatus();
         }
 
         private bool HasJwt()
         {
-            object jwt = _softwareUtil.getItem("jwt");
+            object jwt = SoftwareCoUtil.getItem("jwt");
             this._hasJwt = (jwt != null && !((string)jwt).Equals(""));
             this.UpdateStatus();
             return this._hasJwt;
@@ -551,7 +553,7 @@ namespace SoftwareCo
 
         private bool HasToken()
         {
-            object token = _softwareUtil.getItem("token");
+            object token = SoftwareCoUtil.getItem("token");
             this._hasToken = (token != null && !((string)token).Equals(""));
             return this._hasToken;
         }
@@ -566,9 +568,9 @@ namespace SoftwareCo
 
         private void AuthenticationNotificationCheck()
         {
-            object lastUpdateTimeObj = _softwareUtil.getItem("vs_lastUpdateTime");
+            object lastUpdateTimeObj = SoftwareCoUtil.getItem("vs_lastUpdateTime");
             long lastUpdate = (lastUpdateTimeObj != null) ? (long)lastUpdateTimeObj : 0;
-            long nowInSec = _softwareUtil.getNowInSeconds();
+            long nowInSec = SoftwareCoUtil.getNowInSeconds();
 
             if ((this.HasJwt() && this._isAuthenticated) || !this._isOnline)
             {
@@ -594,7 +596,7 @@ namespace SoftwareCo
                 }
             }
 
-            _softwareUtil.setItem("vs_lastUpdateTime", nowInSec);
+            SoftwareCoUtil.setItem("vs_lastUpdateTime", nowInSec);
 
             string msg = "To see your coding data in Software.com, please log in to your account.";
 
@@ -618,13 +620,13 @@ namespace SoftwareCo
             if (result == 1)
             {
                 // launch the browser
-                _softwareUtil.launchSoftwareDashboard();
+                SoftwareCoUtil.launchSoftwareDashboard();
             }
         }
 
         private async void SendOfflineData()
         {
-            string datastoreFile = _softwareUtil.getSoftwareDataStoreFile();
+            string datastoreFile = SoftwareCoUtil.getSoftwareDataStoreFile();
             if (File.Exists(datastoreFile))
             {
                 // get the content
@@ -641,8 +643,8 @@ namespace SoftwareCo
                         }
                     }
                     string jsonContent = "[" + string.Join(",", jsonLines) + "]";
-                    HttpResponseMessage response = await _softwareUtil.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonContent);
-                    if (_softwareUtil.IsOk(response))
+                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonContent);
+                    if (SoftwareHttpManager.IsOk(response))
                     {
                         // delete the file
                         File.Delete(datastoreFile);
@@ -653,14 +655,14 @@ namespace SoftwareCo
 
         private async void ProcessFetchDailyKpmTimerCallbackAsync(Object stateInfo)
         {
-            if (!_softwareUtil.isTelemetryOn())
+            if (!SoftwareCoUtil.isTelemetryOn())
             {
                 Logger.Info("Software.com metrics are currently paused. Enable to update your metrics.");
                 return;
             }
-            long nowInSec = _softwareUtil.getNowInSeconds();
-            HttpResponseMessage response = await _softwareUtil.SendRequestAsync(HttpMethod.Get, "/sessions?summary=true&from=" + nowInSec, null);
-            if (_softwareUtil.IsOk(response))
+            long nowInSec = SoftwareCoUtil.getNowInSeconds();
+            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/sessions?summary=true&from=" + nowInSec, null);
+            if (SoftwareHttpManager.IsOk(response))
             {
                 // get the json data
                 string responseBody = await response.Content.ReadAsStringAsync();

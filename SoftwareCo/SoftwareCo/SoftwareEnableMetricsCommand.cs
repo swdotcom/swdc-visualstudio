@@ -1,11 +1,7 @@
 ﻿using System;
 using System.ComponentModel.Design;
-using System.Globalization;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using Task = System.Threading.Tasks.Task;
+
 
 namespace SoftwareCo
 {
@@ -29,8 +25,6 @@ namespace SoftwareCo
         /// </summary>
         private readonly Package package;
 
-        private SoftwareCoUtil _softwareUtil;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="SoftwareEnableMetricsCommand"/> class.
         /// Adds our command handlers for menu (commands must exist in the command table file)
@@ -43,8 +37,6 @@ namespace SoftwareCo
             {
                 throw new ArgumentNullException("package");
             }
-
-            _softwareUtil = new SoftwareCoUtil();
 
             this.package = package;
 
@@ -95,7 +87,7 @@ namespace SoftwareCo
         /// <param name="e">Event args.</param>
         private void Execute(object sender, EventArgs e)
         {
-            _softwareUtil.UpdateTelemetry(true);
+            SoftwareCoUtil.UpdateTelemetry(true);
         }
     }
 }

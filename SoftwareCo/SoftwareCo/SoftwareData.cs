@@ -1,7 +1,6 @@
+
 using System;
 using System.Collections.Generic;
-using System.Text;
-using Commons.Json;
 
 namespace SoftwareCo
 {
@@ -23,14 +22,11 @@ namespace SoftwareCo
         public String timezone;
         public int offset; // in minutes
 
-        private SoftwareCoUtil _softwareUtil;
-
         public ProjectInfo project;
 
         public SoftwareData(ProjectInfo projectInfo)
         {
-            _softwareUtil = new SoftwareCoUtil();
-            start = _softwareUtil.getNowInSeconds();
+            start = SoftwareCoUtil.getNowInSeconds();
             project = projectInfo;
         }
 
@@ -42,7 +38,7 @@ namespace SoftwareCo
             {
                 project.ResetData();
             }
-            start = _softwareUtil.getNowInSeconds();
+            start = SoftwareCoUtil.getNowInSeconds();
             local_start = 0L;
         }
 

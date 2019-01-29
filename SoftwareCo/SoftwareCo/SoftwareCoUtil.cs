@@ -1,14 +1,10 @@
 ﻿
-using Commons.Json;
+
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net;
 using System.Net.Http;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 // using SpotifyAPI.Local;
 // using SpotifyAPI.Local.Enums;
@@ -42,7 +38,7 @@ namespace SoftwareCo
         }
         **/
 
-        public string RunCommand(String cmd, String dir)
+        public static string RunCommand(String cmd, String dir)
         {
             try
             {
@@ -71,101 +67,17 @@ namespace SoftwareCo
             return "";
         }
 
-        public bool IsOk(HttpResponseMessage response)
-        {
-            return (response != null && response.StatusCode == HttpStatusCode.OK);
-        }
-
-        public async Task<HttpResponseMessage> SendRequestAsync(HttpMethod httpMethod, string uri, string optionalPayload)
-        {
-
-            if (!_telemetryOn)
-            {
-                return null;
-            }
-
-            HttpClient client = new HttpClient
-            {
-                Timeout = TimeSpan.FromSeconds(5)
-            };
-            var cts = new CancellationTokenSource();
-            HttpResponseMessage response = null;
-            object jwt = getItem("jwt");
-            if (jwt != null)
-            {
-                // add the authorizationn
-                client.DefaultRequestHeaders.Add("Authorization", (string)jwt);
-            }
-            HttpContent contentPost = null;
-            if (optionalPayload != null)
-            {
-                contentPost = new StringContent(optionalPayload, Encoding.UTF8, "application/json");
-            }
-            bool isPost = (httpMethod.Equals(HttpMethod.Post));
-            try
-            {
-                string endpoint = Constants.api_endpoint + "" + uri;
-                if (isPost)
-                {
-                    response = await client.PostAsync(endpoint, contentPost, cts.Token);
-                }
-                else
-                {
-                    response = await client.GetAsync(endpoint, cts.Token);
-                }
-            }
-            catch (HttpRequestException e)
-            {
-                if (isPost)
-                {
-                    NotifyPostException(e);
-                }
-            }
-            catch (TaskCanceledException e)
-            {
-                if (e.CancellationToken == cts.Token)
-                {
-                    // triggered by the caller
-                    if (isPost)
-                    {
-                        NotifyPostException(e);
-                    }
-                }
-                else
-                {
-                    // a web request timeout (possibly other things!?)
-                    Logger.Info("We are having trouble receiving a response from Software.com");
-                }
-            }
-            catch (Exception e)
-            {
-                if (isPost)
-                {
-                    NotifyPostException(e);
-                }
-            }
-            finally
-            {
-            }
-            return response;
-        }
-
-        private static void NotifyPostException(Exception e)
-        {
-            Logger.Error("We are having trouble sending data to Software.com, reason: " + e.Message);
-        }
-
-        public void UpdateTelemetry(bool isOn)
+        public static void UpdateTelemetry(bool isOn)
         {
             _telemetryOn = isOn;
         }
 
-        public bool isTelemetryOn()
+        public static bool isTelemetryOn()
         {
             return _telemetryOn;
         }
 
-        public object getItem(string key)
+        public static object getItem(string key)
         {
             // read the session json file
             string sessionFile = getSoftwareSessionFile();
@@ -184,7 +96,7 @@ namespace SoftwareCo
             return null;
         }
 
-        public void setItem(String key, object val)
+        public static void setItem(String key, object val)
         {
             string sessionFile = getSoftwareSessionFile();
             IDictionary<string, object> dict = new Dictionary<string, object>();
@@ -202,7 +114,7 @@ namespace SoftwareCo
             File.WriteAllText(sessionFile, content);
         }
         
-        public String getSoftwareDataDir()
+        public static String getSoftwareDataDir()
         {
             String userHomeDir = Environment.ExpandEnvironmentVariables("%HOMEPATH%");
             string softwareDataDir = userHomeDir + "\\.software";
@@ -214,27 +126,27 @@ namespace SoftwareCo
             return softwareDataDir;
         }
 
-        public String getSoftwareSessionFile()
+        public static String getSoftwareSessionFile()
         {
             return getSoftwareDataDir() + "\\session.json";
         }
 
-        public String getSoftwareDataStoreFile()
+        public static String getSoftwareDataStoreFile()
         {
             return getSoftwareDataDir() + "\\data.json";
         }
 
-        public void launchSoftwareDashboard()
+        public static void launchSoftwareDashboard()
         {
             string url = Constants.url_endpoint;
-            object tokenVal = this.getItem("token");
-            object jwtVal = this.getItem("jwt");
+            object tokenVal = getItem("token");
+            object jwtVal = getItem("jwt");
 
             bool addedToken = false;
             if (tokenVal == null || ((string)tokenVal).Equals(""))
             {
                 tokenVal = createToken();
-                this.setItem("token", tokenVal);
+                setItem("token", tokenVal);
                 addedToken = true;
             }
             else if (jwtVal == null || ((string)jwtVal).Equals(""))
@@ -248,26 +160,26 @@ namespace SoftwareCo
                 RetrieveAuthTokenTimeout(60000);
             }
 
-            System.Diagnostics.Process.Start(url);
+           Process.Start(url);
         }
 
-        public string createToken()
+        public static string createToken()
         {
             return System.Guid.NewGuid().ToString().Replace("-", "");
         }
 
-        public async void RetrieveAuthTokenTimeout(int millisToWait)
+        public static async void RetrieveAuthTokenTimeout(int millisToWait)
         {
             await Task.Delay(millisToWait);
             RetrieveAuthToken();
         }
 
-        public async void RetrieveAuthToken()
+        public static async void RetrieveAuthToken()
         {
-            object token = this.getItem("token");
+            object token = getItem("token");
             string jwt = null;
-            HttpResponseMessage response = await this.SendRequestAsync(HttpMethod.Get, "/users/plugin/confirm?token=" + token, null);
-            if (this.IsOk(response))
+            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/users/plugin/confirm?token=" + token, null);
+            if (SoftwareHttpManager.IsOk(response))
             {
                 string responseBody = await response.Content.ReadAsStringAsync();
                 IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
@@ -276,10 +188,10 @@ namespace SoftwareCo
 
                 if (jwt != null)
                 {
-                    this.setItem("jwt", jwt);
+                    setItem("jwt", jwt);
                 }
 
-                this.setItem("vs_lastUpdateTime", getNowInSeconds());
+                setItem("vs_lastUpdateTime", getNowInSeconds());
             }
 
             if (jwt == null)
@@ -288,7 +200,7 @@ namespace SoftwareCo
             }
         }
 
-        public long getNowInSeconds()
+        public static long getNowInSeconds()
         {
             long unixSeconds = DateTimeOffset.Now.ToUnixTimeSeconds();
             return unixSeconds;

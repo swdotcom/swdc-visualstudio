@@ -1,20 +1,13 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
-    class SoftwareRepoUtil
+    class SoftwareRepoManager
     {
-        private SoftwareCoUtil _util;
-
-        public SoftwareRepoUtil()
-        {
-            _util = new SoftwareCoUtil();
-        }
 
         public class RepoCommitChanges
         {
@@ -40,6 +33,26 @@ namespace SoftwareCo
                 this.commitId = commitId;
                 this.message = message;
                 this.timestamp = timestamp;
+            }
+
+            public JsonObject GetAsJsonObj()
+            {
+                JsonObject jsonObj = new JsonObject();
+                jsonObj.Add("commitId", this.commitId);
+                jsonObj.Add("message", this.message);
+                jsonObj.Add("timestamp", this.timestamp);
+
+                JsonObject changesJsonObj = new JsonObject();
+                foreach (string key in changes.Keys)
+                {
+                    RepoCommitChanges commitChanges = changes[key];
+                    JsonObject changesObj = new JsonObject();
+                    changesObj.Add("deletions", commitChanges.deletions);
+                    changesObj.Add("insertions", commitChanges.insertions);
+                    changesJsonObj.Add(key, changesObj);
+                }
+                jsonObj.Add("changes", changesJsonObj);
+                return jsonObj;
             }
         }
 
@@ -82,28 +95,43 @@ namespace SoftwareCo
                 this.branch = branch;
                 this.commits = commits;
             }
+
+            public string GetAsJson()
+            {
+                JsonObject jsonObj = new JsonObject();
+                jsonObj.Add("identifier", this.identifier);
+                jsonObj.Add("tag", this.tag);
+                jsonObj.Add("branch", this.branch);
+                JsonArray jsonArr = new JsonArray();
+                foreach (RepoCommit commit in commits)
+                {
+                    jsonArr.Add(commit.GetAsJsonObj());
+                }
+                jsonObj.Add("commits", jsonArr);
+                return jsonObj.ToString();
+            }
         }
 
         public IDictionary<string, string> GetResourceInfo(string projectDir)
         {
             IDictionary<string, string> dict = new Dictionary<string, string>();
-            string identifier = _util.RunCommand("git config remote.origin.url", projectDir);
+            string identifier = SoftwareCoUtil.RunCommand("git config remote.origin.url", projectDir);
             if (identifier != null && !identifier.Equals(""))
             {
                 dict.Add("identifier", identifier);
 
                 // only get these since identifier is available
-                string email = _util.RunCommand("git config user.email", projectDir);
+                string email = SoftwareCoUtil.RunCommand("git config user.email", projectDir);
                 if (email != null && !email.Equals(""))
                 {
                     dict.Add("email", email);
                 }
-                string branch = _util.RunCommand("git symbolic-ref --short HEAD", projectDir);
+                string branch = SoftwareCoUtil.RunCommand("git symbolic-ref --short HEAD", projectDir);
                 if (branch != null && !branch.Equals(""))
                 {
                     dict.Add("branch", branch);
                 }
-                string tag = _util.RunCommand("git describe --all", projectDir);
+                string tag = SoftwareCoUtil.RunCommand("git describe --all", projectDir);
 
                 if (tag != null && !tag.Equals(""))
                 {
@@ -134,7 +162,7 @@ namespace SoftwareCo
                     string branch = "";
                     resourceInfo.TryGetValue("branch", out branch);
 
-                    string gitLogData = _util.RunCommand("git log --pretty=%an,%ae | sort", projectDir);
+                    string gitLogData = SoftwareCoUtil.RunCommand("git log --pretty=%an,%ae | sort", projectDir);
 
                     IDictionary<string, string> memberMap = new Dictionary<string, string>();
 
@@ -168,13 +196,10 @@ namespace SoftwareCo
                         RepoData repoData = new RepoData(identifier, tag, branch, repoMembers);
                         string jsonContent = SimpleJson.SerializeObject(repoData);
                         // send the members
-                        HttpResponseMessage response = await _util.SendRequestAsync(
+                        HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
                             HttpMethod.Post, "/repo/members", jsonContent);
 
-                        if (!_util.IsOk(response))
-                        {
-                            Logger.Info(response.ToString());
-                        } else
+                        if (!SoftwareHttpManager.IsOk(response))
                         {
                             Logger.Error(response.ToString());
                         }
@@ -210,10 +235,10 @@ namespace SoftwareCo
                     qryString += "&tag=" + tag;
                     qryString += "&branch=" + branch;
 
-                    HttpResponseMessage response = await _util.SendRequestAsync(
+                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
                             HttpMethod.Get, "/commits/latest?" + qryString, null);
 
-                    if (_util.IsOk(response))
+                    if (SoftwareHttpManager.IsOk(response))
                     {
 
                         // get the json data
@@ -259,7 +284,7 @@ namespace SoftwareCo
                     string email = "";
                     resourceInfo.TryGetValue("email", out email);
 
-                    RepoCommit latestCommit = await this.GetLatestCommitAsync(projectDir);
+                    RepoCommit latestCommit = null;// await this.GetLatestCommitAsync(projectDir);
 
                     string sinceOption = "";
                     if (latestCommit != null)
@@ -269,7 +294,7 @@ namespace SoftwareCo
 
                     string cmd = "git log --stat --pretty=COMMIT:%H,%ct,%cI,%s --author=" + email + "" + sinceOption;
 
-                    string gitCommitData = _util.RunCommand(cmd, projectDir);
+                    string gitCommitData = SoftwareCoUtil.RunCommand(cmd, projectDir);
 
                     if (gitCommitData != null && !gitCommitData.Equals(""))
                     {
@@ -387,15 +412,15 @@ namespace SoftwareCo
                                 batch.Add(repoCommits[i]);
                                 if (i > 0 && i % 100 == 0)
                                 {
-                                    // send this batch
+                                    // send this batch.
                                     RepoCommitData commitData = new RepoCommitData(identifier, tag, branch, batch);
 
-                                    string jsonContent = SimpleJson.SerializeObject(commitData);
+                                    string jsonContent = commitData.GetAsJson();// SimpleJson.SerializeObject(commitData);
                                     // send the members
-                                    HttpResponseMessage response = await _util.SendRequestAsync(
+                                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
                                         HttpMethod.Post, "/commits", jsonContent);
 
-                                    if (_util.IsOk(response))
+                                    if (SoftwareHttpManager.IsOk(response))
                                     {
                                         Logger.Info(response.ToString());
                                     }
@@ -410,12 +435,12 @@ namespace SoftwareCo
                             {
                                 RepoCommitData commitData = new RepoCommitData(identifier, tag, branch, batch);
 
-                                string jsonContent = SimpleJson.SerializeObject(commitData);
+                                string jsonContent = commitData.GetAsJson();// SimpleJson.SerializeObject(commitData);
                                 // send the members
-                                HttpResponseMessage response = await _util.SendRequestAsync(
+                                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
                                     HttpMethod.Post, "/commits", jsonContent);
 
-                                if (_util.IsOk(response))
+                                if (SoftwareHttpManager.IsOk(response))
                                 {
                                     Logger.Info(response.ToString());
                                 }
