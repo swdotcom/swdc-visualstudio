@@ -16,6 +16,7 @@ namespace SoftwareCo
     {
         private static bool _telemetryOn = true;
 
+
         /***
         private SpotifyLocalAPI _spotify = null;
 
@@ -113,6 +114,11 @@ namespace SoftwareCo
             // write it back to the file
             File.WriteAllText(sessionFile, content);
         }
+
+        public static String getDashboardFile()
+        {
+            return getSoftwareDataDir() + "\\SoftwareDashboard";
+        }
         
         public static String getSoftwareDataDir()
         {
@@ -204,6 +210,93 @@ namespace SoftwareCo
         {
             long unixSeconds = DateTimeOffset.Now.ToUnixTimeSeconds();
             return unixSeconds;
+        }
+
+        public static long GetBeginningOfDay(DateTime now)
+        {
+            DateTime begOfToday = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0);
+            return ((DateTimeOffset)begOfToday).ToUnixTimeSeconds();
+        }
+
+        public static long GetEndOfDay(DateTime now)
+        {
+            DateTime begOfToday = new DateTime(now.Year, now.Month, now.Day, 23, 59, 59);
+            return ((DateTimeOffset)begOfToday).ToUnixTimeSeconds();
+        }
+
+        public static string FormatNumber(float number)
+        {
+            string numberStr = "";
+            if (number >= 1000 || number % 1 == 0)
+            {
+                numberStr = String.Format("{0:n0}", number);
+            }
+            else
+            {
+                numberStr = String.Format("{0:0.00}", number);
+            }
+            return numberStr;
+        }
+
+        public static string HumanizeMinutes(long minutes)
+        {
+            string minutesStr = "";
+            if (minutes == 60)
+            {
+                minutesStr = "1 hr";
+            }
+            else if (minutes > 60)
+            {
+                string formatedHrs;
+                float hours = (float)minutes / 60;
+                if (hours % 1 == 0)
+                {
+                    formatedHrs = String.Format("{0:n0}", hours);
+                } else
+                {
+                    formatedHrs = String.Format("{0:0.00}", hours);
+                }
+                minutesStr = formatedHrs + " hrs";
+            }
+            else if (minutes == 1)
+            {
+                minutesStr = "1 min";
+            }
+            else
+            {
+                minutesStr = minutes + " min";
+            }
+            return minutesStr;
+        }
+
+        public static string GetCurrentSessionIcon(double currentSessionGoalPercentVal)
+        {
+            string sessionTimeIcon = "";
+            if (currentSessionGoalPercentVal > 0)
+            {
+                if (currentSessionGoalPercentVal < 0.4)
+                {
+                    sessionTimeIcon = "🌘";
+                }
+                else if (currentSessionGoalPercentVal < 0.7)
+                {
+                    sessionTimeIcon = "🌗";
+                }
+                else if (currentSessionGoalPercentVal < 0.93)
+                {
+                    sessionTimeIcon = "🌖";
+                }
+                else if (currentSessionGoalPercentVal < 1.3)
+                {
+                    sessionTimeIcon = "🌕";
+                }
+                else
+                {
+                    sessionTimeIcon = "🌔";
+
+                }
+            }
+            return sessionTimeIcon;
         }
     }
 

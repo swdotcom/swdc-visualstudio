@@ -132,6 +132,7 @@ namespace SoftwareCo
 
                 // initialize the menu commands
                 SoftwareLaunchCommand.Initialize(this);
+                SoftwareDashboardLaunchCommand.Initialize(this);
                 SoftwareEnableMetricsCommand.Initialize(this);
                 SoftwarePauseMetricsCommand.Initialize(this);
 
@@ -236,16 +237,10 @@ namespace SoftwareCo
             InitializeSoftwareData();
             String fileName = document.FullName;
             FileInfo fi = new FileInfo(fileName);
-            /**
-            long prevLen = _softwareData.getFileInfoDataForProperty(fi.FullName, "length");
-            long diff = (fi != null && prevLen > 0) ? fi.Length - prevLen : 0;
-            if (diff > 1)
-            {
-                // register a copy and past event
-                _softwareData.UpdateData(fileName, "paste", 1);
-                Logger.Info("Software.com: Copy+Paste incremented");
-            }**/
+
             _softwareData.UpdateData(fileName, "length", fi.Length);
+
+            this.ProcessFetchDailyKpmTimerCallbackAsync(null);
         }
 
         private void DocEventsOnDocumentOpening(String docPath, Boolean readOnly)
@@ -332,6 +327,7 @@ namespace SoftwareCo
                     _softwareData.UpdateData(document.FullName, "open", 1);
                     Logger.Info("Software.com: File open incremented");
                 }
+                this.ProcessFetchDailyKpmTimerCallbackAsync(null);
             }
             catch (Exception ex)
             {
@@ -349,6 +345,7 @@ namespace SoftwareCo
                     _softwareData.UpdateData(document.FullName, "close", 1);
                     Logger.Info("Software.com: File close incremented");
                 }
+                this.ProcessFetchDailyKpmTimerCallbackAsync(null);
             }
             catch (Exception ex)
             {
@@ -562,7 +559,7 @@ namespace SoftwareCo
         {
             if (!this._hasJwt || !this._isAuthenticated || !this._isOnline)
             {
-                this.SetStatus("Software.com");
+                this.SetStatus("Code Time");
             }
         }
 
@@ -674,74 +671,32 @@ namespace SoftwareCo
                 jsonObj.TryGetValue("lastKpm", out object lastKpm);
                 long lastKpmVal = (lastKpm == null) ? 0 : Convert.ToInt64(lastKpm);
 
+                jsonObj.TryGetValue("currentDayMinutes", out object currentDayMinutes);
+                long currentDayMinutesVal = (currentDayMinutes == null) ? 0 : Convert.ToInt64(currentDayMinutes);
+
+                jsonObj.TryGetValue("averageDailyMinutes", out object averageDailyMinutes);
+                long averageDailyMinutesVal = (averageDailyMinutes == null) ? 0 : Convert.ToInt64(averageDailyMinutes);
+
                 jsonObj.TryGetValue("currentSessionGoalPercent", out object currentSessionGoalPercent);
                 double currentSessionGoalPercentVal = (currentSessionGoalPercent == null) ? 0.0 : Convert.ToDouble(currentSessionGoalPercent);
                     
                 jsonObj.TryGetValue("currentSessionMinutes", out object currentSessionMinutes);
                 long currentSessionMinutesVal = (currentSessionMinutes == null) ? 0 : Convert.ToInt64(currentSessionMinutes);
 
-                string sessionTimeIcon = "";
-                if (currentSessionGoalPercentVal > 0)
-                {
-                    if (currentSessionGoalPercentVal < 0.4)
-                    {
-                        sessionTimeIcon = "🌘";
-                    }
-                    else if (currentSessionGoalPercentVal < 0.7)
-                    {
-                        sessionTimeIcon = "🌗";
-                    }
-                    else if (currentSessionGoalPercentVal < 0.93)
-                    {
-                        sessionTimeIcon = "🌖";
-                    }
-                    else if (currentSessionGoalPercentVal < 1.3)
-                    {
-                        sessionTimeIcon = "🌕";
-                    }
-                    else
-                    {
-                        sessionTimeIcon = "🌔";
+                string sessionTimeIcon = SoftwareCoUtil.GetCurrentSessionIcon(currentSessionGoalPercentVal);
 
-                    }
-                }
+                string sessionTime = SoftwareCoUtil.HumanizeMinutes(currentSessionMinutesVal);
+                string currentDayMinutesTime = SoftwareCoUtil.HumanizeMinutes(currentDayMinutesVal);
+                string averageDailyMinutesTime = SoftwareCoUtil.HumanizeMinutes(averageDailyMinutesVal);
 
-                string sessionTime = "";
-                if (currentSessionMinutesVal == 60)
+                // Code time today:  4 hrs | Avg: 3 hrs 28 min
+                string inFlowIcon = currentDayMinutesVal > averageDailyMinutesVal ? "🚀" : "";
+                string msg = string.Format("Code time today: {0}{1}", inFlowIcon, currentDayMinutesTime);
+                if (averageDailyMinutesVal > 0)
                 {
-                    sessionTime = "1 hr";
+                    msg += string.Format(" | Avg: {0}", averageDailyMinutesTime);
                 }
-                else if (currentSessionMinutesVal > 60)
-                {
-                    string formatedHrs = String.Format("{0:0.00}", (currentSessionMinutesVal / 60));
-                    sessionTime = formatedHrs + " hrs";
-                }
-                else if (currentSessionMinutesVal == 1)
-                {
-                    sessionTime = "1 min";
-                }
-                else
-                {
-                    sessionTime = currentSessionMinutesVal + " min";
-                }
-                    
-                if (lastKpmVal > 0 || currentSessionMinutesVal > 0)
-                {
-                    string kpmMsg = lastKpmVal + " KPM";
-                    if (inFlow) {
-                        kpmMsg = "🚀" + " " + kpmMsg;
-                    }
-                    string sessionMsg = sessionTime;
-                    if (!sessionTimeIcon.Equals(""))
-                    {
-                        sessionMsg = sessionTimeIcon + " " + sessionTime;
-                    }
-                    this.SetStatus("<S> " + kpmMsg + ", " + sessionMsg);
-                }
-                else
-                {
-                    this.SetStatus("Software.com");
-                }
+                this.SetStatus(msg);
             }
             
         }
@@ -787,9 +742,38 @@ namespace SoftwareCo
         private void SetStatus(string msg)
         {
             IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
+            int frozen;
+            statusbar.IsFrozen(out frozen);
+            if (frozen != 0)
+            {
+                statusbar.FreezeOutput(0);
+            }
             statusbar.SetText(msg);
         }
 
-        #endregion
+        public void CloseDashboard()
+        {
+            
         }
+
+        public async Task LaunchDashboardAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            string dashboardFile = SoftwareCoUtil.getDashboardFile();
+            HttpResponseMessage resp =
+                await SoftwareHttpManager.SendDashboardRequestAsync(HttpMethod.Get, "/dashboard");
+            string content = await resp.Content.ReadAsStringAsync();
+
+            if (File.Exists(dashboardFile))
+            {
+                File.SetAttributes(dashboardFile, FileAttributes.Normal);
+            }
+            File.WriteAllText(dashboardFile, content);
+            File.SetAttributes(dashboardFile, FileAttributes.ReadOnly);
+            ObjDte.ItemOperations.OpenFile(dashboardFile);
+        }
+
+        #endregion
+    }
 }

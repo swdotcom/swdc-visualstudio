@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="Constants.cs" />
     <Compile Include="Guids.cs" />
+    <Compile Include="SoftwareDashboardLaunchCommand.cs" />
     <Compile Include="SoftwareHttpManager.cs" />
     <Compile Include="SoftwareSpotifyManager.cs" />
     <Compile Include="Logger.cs" />
@@ -94,6 +95,7 @@
     <VSCTCompile Include="SoftwareCoPackage.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
     </VSCTCompile>
+    <Content Include="Resources\SoftwareDashboardLaunchCommand.png" />
     <Content Include="Resources\SoftwareEnableMetricsCommand.png" />
     <Content Include="Resources\SoftwareLaunchCommand.png" />
     <Content Include="Resources\SoftwarePauseMetricsCommand.png" />
@@ -166,6 +168,9 @@
     <PackageReference Include="Microsoft.VisualStudio.OLE.Interop">
       <Version>7.10.6071</Version>
     </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers">
+      <Version>15.8.33</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.SDK.EmbedInteropTypes">
       <Version>15.0.17</Version>
     </PackageReference>
@@ -207,6 +212,9 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Threading">
       <Version>15.8.132</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers">
+      <Version>15.8.122</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Utilities">
       <Version>15.7.27703</Version>

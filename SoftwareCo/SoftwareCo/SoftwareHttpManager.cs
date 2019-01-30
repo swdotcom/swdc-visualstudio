@@ -22,7 +22,9 @@ namespace SoftwareCo
 
         public static bool HasSpotifyAccessToken()
         {
-            return token != null ? true : false;
+            DateTime dt = DateTime.Now;
+            // make sure we have a token and now is earlier than the expire date
+            return token != null && dt.CompareTo(token.Expire_date) < 0 ? true : false;
         }
 
         public static async Task InitializeSpotifyClientGrantAsync()
@@ -67,12 +69,17 @@ namespace SoftwareCo
             string access_token = (accessTokenObj == null) ? null : Convert.ToString(accessTokenObj);
             jsonObj.TryGetValue("token_type", out object tokenTypeObj);
             string token_type = (tokenTypeObj == null) ? null : Convert.ToString(tokenTypeObj);
+            // time period (in seconds) for which the access token is valid
             jsonObj.TryGetValue("expires_in", out object expiresInObj);
-            long expires_in = (expiresInObj == null) ? 0L : Convert.ToInt64(expiresInObj);
+            double expires_in = (expiresInObj == null) ? 0d : Convert.ToDouble(expiresInObj);
+
+            DateTime dt = DateTime.Now;
+            dt = dt.AddSeconds(expires_in);
 
             token.Access_token = access_token;
             token.Token_type = token_type;
             token.Expires_in = expires_in;
+            token.Expire_date = dt;
         }
 
         public static async Task GetSpotifyTrackInfoAsync(LocalSpotifyTrackInfo trackInfo)
@@ -145,7 +152,17 @@ namespace SoftwareCo
             }
         }
 
+        public static async Task<HttpResponseMessage> SendDashboardRequestAsync(HttpMethod httpMethod, string uri)
+        {
+            return await SendRequestAsync(httpMethod, uri, null, 60);
+        }
+
         public static async Task<HttpResponseMessage> SendRequestAsync(HttpMethod httpMethod, string uri, string optionalPayload)
+        {
+            return await SendRequestAsync(httpMethod, uri, optionalPayload, 5);
+        }
+
+        public static async Task<HttpResponseMessage> SendRequestAsync(HttpMethod httpMethod, string uri, string optionalPayload, int timeout)
         {
 
             if (!SoftwareCoUtil.isTelemetryOn())
@@ -155,7 +172,7 @@ namespace SoftwareCo
 
             HttpClient client = new HttpClient
             {
-                Timeout = TimeSpan.FromSeconds(5)
+                Timeout = TimeSpan.FromSeconds(timeout)
             };
             var cts = new CancellationTokenSource();
             HttpResponseMessage response = null;
@@ -229,6 +246,7 @@ namespace SoftwareCo
     {
         public string Access_token { get; set; }
         public string Token_type { get; set; }
-        public long Expires_in { get; set; }
+        public double Expires_in { get; set; }
+        public DateTime Expire_date { get; set; }
     }
 }

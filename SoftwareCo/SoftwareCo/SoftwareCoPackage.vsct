@@ -53,19 +53,25 @@
               <CommandFlag>DynamicVisibility</CommandFlag>
           If you do not want an image next to your command, remove the Icon node /> -->
 
-      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareLaunchCommand" priority="0x0000" type="Button">
+      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareDashboardLaunchCommand" priority="0x0000" type="Button">
+        <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
+        <Strings>
+          <ButtonText>Code time dashboard</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareLaunchCommand" priority="0x0100" type="Button">
         <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
         <Strings>
           <ButtonText>Go to software.com</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwarePauseMetricsCommand" priority="0x0100" type="Button">
+      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwarePauseMetricsCommand" priority="0x0200" type="Button">
         <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
         <Strings>
           <ButtonText>Pause metrics</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareEnableMetricsCommand" priority="0x0200" type="Button">
+      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareEnableMetricsCommand" priority="0x0300" type="Button">
         <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
         <Strings>
           <ButtonText>Enable metrics</ButtonText>
@@ -83,6 +89,7 @@
      <Bitmap guid="guidImages1" href="Resources\SoftwareLaunchCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
       <Bitmap guid="guidImages2" href="Resources\SoftwarePauseMetricsCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
       <Bitmap guid="guidImages3" href="Resources\SoftwareEnableMetricsCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
+      <Bitmap guid="guidImages4" href="Resources\SoftwareDashboardLaunchCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
     </Bitmaps>
   </Commands>
 
@@ -96,6 +103,7 @@
       <IDSymbol name="cmdidSoftwareLaunchCommand" value="4129" />
       <IDSymbol name="cmdidSoftwarePauseMetricsCommand" value="256" />
       <IDSymbol name="cmdidSoftwareEnableMetricsCommand" value="4130" />
+      <IDSymbol value="4131" name="cmdidSoftwareDashboardLaunchCommand" />
     </GuidSymbol>
 
     <GuidSymbol name="guidImages" value="{54614706-87de-4c00-b8f5-888955b7804d}">
@@ -126,6 +134,15 @@
     </GuidSymbol>
   
     <GuidSymbol value="{527c6b40-80a4-4a78-867c-c7f878a30721}" name="guidImages3">
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  
+    <GuidSymbol value="{a6ef2511-8ab0-40bd-8d74-d4af70adc4b4}" name="guidImages4">
       <IDSymbol name="bmpPic1" value="1" />
       <IDSymbol name="bmpPic2" value="2" />
       <IDSymbol name="bmpPicSearch" value="3" />
