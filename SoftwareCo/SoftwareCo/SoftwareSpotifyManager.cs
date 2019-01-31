@@ -62,7 +62,7 @@ namespace SoftwareCo
                     CurrentTrackInfo = null;
                 }
             } catch (Exception e) {
-                Logger.Error("Software.com: Unable to process track information, error: " + e.Message);
+                Logger.Error("Code Time: Unable to process track information, error: " + e.Message);
             }
 
             if (response != null && !SoftwareHttpManager.IsOk(response)) {

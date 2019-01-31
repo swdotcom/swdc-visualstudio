@@ -30,7 +30,7 @@ namespace SoftwareCo
             var outputPaneGuid = new Guid(Guids.GuidSoftwareCoOutputPane.ToByteArray());
             IVsOutputWindowPane windowPane;
 
-            outputWindow.CreatePane(ref outputPaneGuid, "SoftwareCo", 1, 1);
+            outputWindow.CreatePane(ref outputPaneGuid, "CodeTime", 1, 1);
             outputWindow.GetPane(ref outputPaneGuid, out windowPane);
 
             return windowPane;
@@ -63,7 +63,7 @@ namespace SoftwareCo
             var outputWindowPane = SoftwareCoOutputWindowPane;
             if (outputWindowPane == null) return;
 
-            var outputMessage = string.Format("[SoftwareCo {0} {1}] {2}{3}", Enum.GetName(level.GetType(), level),
+            var outputMessage = string.Format("[CodeTime {0} {1}] {2}{3}", Enum.GetName(level.GetType(), level),
                 DateTime.Now.ToString("hh:mm:ss tt", CultureInfo.InvariantCulture), message, Environment.NewLine);
 
             outputWindowPane.OutputString(outputMessage);

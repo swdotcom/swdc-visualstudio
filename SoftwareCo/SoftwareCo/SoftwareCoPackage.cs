@@ -114,7 +114,7 @@ namespace SoftwareCo
         {
             try
             {
-                Logger.Info(string.Format("Initializing SoftwareCo v{0}", Constants.PluginVersion));
+                Logger.Info(string.Format("Initializing Code Time v{0}", Constants.PluginVersion));
 
                 // VisualStudio Object
                 Events2 events = (Events2)ObjDte.Events;
@@ -287,7 +287,7 @@ namespace SoftwareCo
                 {
                     // register a delete event
                     _softwareData.UpdateData(fileName, "delete", 1);
-                    Logger.Info("Software.com: Delete character incremented");
+                    Logger.Info("Code Time: Delete character incremented");
                 }
                 else if (Keypress == "\r")
                 {
@@ -296,7 +296,7 @@ namespace SoftwareCo
                 else
                 {
                     _softwareData.UpdateData(fileName, "add", 1);
-                    Logger.Info("Software.com: KPM incremented");
+                    Logger.Info("Code Time: KPM incremented");
                 }
                 
 
@@ -325,7 +325,7 @@ namespace SoftwareCo
                 if (_softwareData != null)
                 {
                     _softwareData.UpdateData(document.FullName, "open", 1);
-                    Logger.Info("Software.com: File open incremented");
+                    Logger.Info("Code Time: File open incremented");
                 }
                 this.ProcessFetchDailyKpmTimerCallbackAsync(null);
             }
@@ -343,7 +343,7 @@ namespace SoftwareCo
                 if (_softwareData != null)
                 {
                     _softwareData.UpdateData(document.FullName, "close", 1);
-                    Logger.Info("Software.com: File close incremented");
+                    Logger.Info("Code Time: File close incremented");
                 }
                 this.ProcessFetchDailyKpmTimerCallbackAsync(null);
             }
@@ -472,7 +472,7 @@ namespace SoftwareCo
                 }
 
                 string softwareDataContent = _softwareData.GetAsJson();
-                Logger.Info("Software.com: sending: " + softwareDataContent);
+                Logger.Info("Code Time: sending: " + softwareDataContent);
 
                 /**
                  * the payload needs to look like this
@@ -502,7 +502,7 @@ namespace SoftwareCo
                 }
                 else
                 {
-                    Logger.Info("Software.com metrics are currently paused.");
+                    Logger.Info("Code Time metrics are currently paused.");
                     this.StorePayload(softwareDataContent);
                 }
 
@@ -595,7 +595,7 @@ namespace SoftwareCo
 
             SoftwareCoUtil.setItem("vs_lastUpdateTime", nowInSec);
 
-            string msg = "To see your coding data in Software.com, please log in to your account.";
+            string msg = "To see your coding data in Code Time, please log in to your account.";
 
             Guid clsid = Guid.Empty;
             int result;
@@ -654,11 +654,11 @@ namespace SoftwareCo
         {
             if (!SoftwareCoUtil.isTelemetryOn())
             {
-                Logger.Info("Software.com metrics are currently paused. Enable to update your metrics.");
+                Logger.Info("Code Time metrics are currently paused. Enable to update your metrics.");
                 return;
             }
-            long nowInSec = SoftwareCoUtil.getNowInSeconds();
-            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/sessions?summary=true&from=" + nowInSec, null);
+            long start = SoftwareCoUtil.GetBeginningOfDay(DateTime.Now);
+            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/sessions?summary=true&start=" + start, null);
             if (SoftwareHttpManager.IsOk(response))
             {
                 // get the json data

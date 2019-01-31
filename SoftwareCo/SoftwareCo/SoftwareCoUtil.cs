@@ -63,7 +63,7 @@ namespace SoftwareCo
                 }
             } catch (Exception e)
             {
-                Logger.Error("Software.com: Unable to execute command, error: " + e.Message);
+                Logger.Error("Code Time: Unable to execute command, error: " + e.Message);
             }
             return "";
         }
@@ -117,7 +117,7 @@ namespace SoftwareCo
 
         public static String getDashboardFile()
         {
-            return getSoftwareDataDir() + "\\SoftwareDashboard";
+            return getSoftwareDataDir() + "\\CodeTime";
         }
         
         public static String getSoftwareDataDir()
