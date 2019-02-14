@@ -6,8 +6,6 @@ using System.Net.Http;
 using System.Threading;
 using System.Collections.Generic;
 using System.IO;
-using Newtonsoft.Json;
-using System.Collections;
 
 namespace SoftwareCo
 {

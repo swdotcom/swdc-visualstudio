@@ -691,7 +691,7 @@ namespace SoftwareCo
 
                 // Code time today:  4 hrs | Avg: 3 hrs 28 min
                 string inFlowIcon = currentDayMinutesVal > averageDailyMinutesVal ? "🚀" : "";
-                string msg = string.Format("Code time today: {0}{1}", inFlowIcon, currentDayMinutesTime);
+                string msg = string.Format("Code time: {0}{1}", inFlowIcon, currentDayMinutesTime);
                 if (averageDailyMinutesVal > 0)
                 {
                     msg += string.Format(" | Avg: {0}", averageDailyMinutesTime);

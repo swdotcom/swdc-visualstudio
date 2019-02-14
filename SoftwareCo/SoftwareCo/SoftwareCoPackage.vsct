@@ -56,25 +56,13 @@
       <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareDashboardLaunchCommand" priority="0x0000" type="Button">
         <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
         <Strings>
-          <ButtonText>Code time metrics</ButtonText>
+          <ButtonText>Code Time Dashboard</ButtonText>
         </Strings>
       </Button>
       <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareLaunchCommand" priority="0x0100" type="Button">
         <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
         <Strings>
           <ButtonText>Go to software.com</ButtonText>
-        </Strings>
-      </Button>
-      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwarePauseMetricsCommand" priority="0x0200" type="Button">
-        <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
-        <Strings>
-          <ButtonText>Pause code time metrics</ButtonText>
-        </Strings>
-      </Button>
-      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareEnableMetricsCommand" priority="0x0300" type="Button">
-        <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
-        <Strings>
-          <ButtonText>Enable code time metrics</ButtonText>
         </Strings>
       </Button>
     </Buttons>
@@ -87,8 +75,6 @@
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
      <Bitmap guid="guidImages1" href="Resources\SoftwareLaunchCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
-      <Bitmap guid="guidImages2" href="Resources\SoftwarePauseMetricsCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
-      <Bitmap guid="guidImages3" href="Resources\SoftwareEnableMetricsCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
       <Bitmap guid="guidImages4" href="Resources\SoftwareDashboardLaunchCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
     </Bitmaps>
   </Commands>

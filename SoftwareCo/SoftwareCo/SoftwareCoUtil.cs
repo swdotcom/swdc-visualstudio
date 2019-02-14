@@ -117,7 +117,7 @@ namespace SoftwareCo
 
         public static String getDashboardFile()
         {
-            return getSoftwareDataDir() + "\\CodeTime";
+            return getSoftwareDataDir() + "\\CodeTime.txt";
         }
         
         public static String getSoftwareDataDir()
