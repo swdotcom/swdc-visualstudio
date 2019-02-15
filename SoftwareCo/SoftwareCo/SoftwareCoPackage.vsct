@@ -65,6 +65,13 @@
           <ButtonText>Go to software.com</ButtonText>
         </Strings>
       </Button>
+      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareTopFortyCommand" priority="0x0100" type="Button">
+        <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
+        <Icon guid="guidImages6" id="bmpPic1" />
+        <Strings>
+          <ButtonText>Software top 40</ButtonText>
+        </Strings>
+      </Button>
     </Buttons>
 
     <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
@@ -76,6 +83,7 @@
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
      <Bitmap guid="guidImages1" href="Resources\SoftwareLaunchCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
       <Bitmap guid="guidImages4" href="Resources\SoftwareDashboardLaunchCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
+      <Bitmap guid="guidImages6" href="Resources\SoftwareTopFortyCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
     </Bitmaps>
   </Commands>
 
@@ -89,7 +97,8 @@
       <IDSymbol name="cmdidSoftwareLaunchCommand" value="4129" />
       <IDSymbol name="cmdidSoftwarePauseMetricsCommand" value="256" />
       <IDSymbol name="cmdidSoftwareEnableMetricsCommand" value="4130" />
-      <IDSymbol value="4131" name="cmdidSoftwareDashboardLaunchCommand" />
+      <IDSymbol name="cmdidSoftwareDashboardLaunchCommand" value="4131"/>
+      <IDSymbol name="cmdidSoftwareTopFortyCommand" value="4132" />
     </GuidSymbol>
 
     <GuidSymbol name="guidImages" value="{54614706-87de-4c00-b8f5-888955b7804d}">
@@ -129,6 +138,24 @@
     </GuidSymbol>
   
     <GuidSymbol value="{a6ef2511-8ab0-40bd-8d74-d4af70adc4b4}" name="guidImages4">
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  
+    <GuidSymbol value="{e8cc419a-c9e9-4748-8e37-9b790da3b0c1}" name="guidImages5">
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  
+    <GuidSymbol value="{355a7c72-a57d-4bb0-8ae7-f6978b59b11e}" name="guidImages6">
       <IDSymbol name="bmpPic1" value="1" />
       <IDSymbol name="bmpPic2" value="2" />
       <IDSymbol name="bmpPicSearch" value="3" />

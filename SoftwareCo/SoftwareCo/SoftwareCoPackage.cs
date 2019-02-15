@@ -135,6 +135,7 @@ namespace SoftwareCo
                 SoftwareDashboardLaunchCommand.Initialize(this);
                 SoftwareEnableMetricsCommand.Initialize(this);
                 SoftwarePauseMetricsCommand.Initialize(this);
+                SoftwareTopFortyCommand.Initialize(this);
 
                 if (_softwareRepoUtil == null)
                 {

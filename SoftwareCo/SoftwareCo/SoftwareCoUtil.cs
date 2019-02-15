@@ -142,6 +142,12 @@ namespace SoftwareCo
             return getSoftwareDataDir() + "\\data.json";
         }
 
+        public static void launchSoftwareTopForty()
+        {
+            string url = "https://api.software.com/music/top40";
+            Process.Start(url);
+        }
+
         public static void launchSoftwareDashboard()
         {
             string url = Constants.url_endpoint;

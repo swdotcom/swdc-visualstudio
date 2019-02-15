@@ -1,18 +1,23 @@
 ﻿using System;
 using System.ComponentModel.Design;
+using System.Globalization;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using Task = System.Threading.Tasks.Task;
 
 namespace SoftwareCo
 {
     /// <summary>
     /// Command handler
     /// </summary>
-    internal sealed class SoftwareDashboardLaunchCommand
+    internal sealed class SoftwareTopFortyCommand
     {
         /// <summary>
         /// Command ID.
         /// </summary>
-        public const int CommandId = 4131;
+        public const int CommandId = 4132;
 
         /// <summary>
         /// Command menu group (command set GUID).
@@ -25,12 +30,12 @@ namespace SoftwareCo
         private readonly Package package;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SoftwareDashboardLaunchCommand"/> class.
+        /// Initializes a new instance of the <see cref="SoftwareTopFortyCommand"/> class.
         /// Adds our command handlers for menu (commands must exist in the command table file)
         /// </summary>
         /// <param name="package">Owner package, not null.</param>
         /// <param name="commandService">Command service to add command to, not null.</param>
-        private SoftwareDashboardLaunchCommand(Package package)
+        private SoftwareTopFortyCommand(Package package)
         {
             if (package == null)
             {
@@ -51,7 +56,7 @@ namespace SoftwareCo
         /// <summary>
         /// Gets the instance of the command.
         /// </summary>
-        public static SoftwareDashboardLaunchCommand Instance
+        public static SoftwareTopFortyCommand Instance
         {
             get;
             private set;
@@ -74,7 +79,7 @@ namespace SoftwareCo
         /// <param name="package">Owner package, not null.</param>
         public static void Initialize(Package package)
         {
-            Instance = new SoftwareDashboardLaunchCommand(package);
+            Instance = new SoftwareTopFortyCommand(package);
         }
 
         /// <summary>
@@ -86,7 +91,7 @@ namespace SoftwareCo
         /// <param name="e">Event args.</param>
         private void Execute(object sender, EventArgs e)
         {
-            ((SoftwareCoPackage)package).LaunchDashboardAsync();
+            SoftwareCoUtil.launchSoftwareTopForty();
         }
     }
 }
