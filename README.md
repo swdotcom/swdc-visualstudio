@@ -1,25 +1,57 @@
-# *Software* for Visual Studio
+[![](https://vsmarketplacebadge.apphb.com/version-short/softwaredotcom.swdc-visualstudio.svg)](https://marketplace.visualstudio.com/items?itemName=softwaredotcom.swdc-visualstudio) [![](https://vsmarketplacebadge.apphb.com/installs-short/softwaredotcom.swdc-visualstudio.svg)](https://marketplace.visualstudio.com/items?itemName=softwaredotcom.swdc-visualstudio) [![](https://vsmarketplacebadge.apphb.com/rating-short/softwaredotcom.swdc-visualstudio.svg)](https://marketplace.visualstudio.com/items?itemName=softwaredotcom.swdc-visualstudio)
 
-## Measure your coding activity in real time 
+# Code Time for Visual Studio Code
 
-*Software* shows you your coding activity to help you increase flow, decrease interrupts, and improve work-life balance. 
+> Programming metrics right in Visual Studio.
 
-It takes just a minute to install our plugin for Visual Studio (see the [setup instructions](https://www.software.com/text-editors-and-ides/visual-studio)).
+<!-- <p align="center" style="margin: 0 10%">
+  <img src="" alt="Code Time for Visual Studio" />
+</p> -->
 
-### See your coding intensity
+## Power up your development
 
-Our plugin for Visual Studio features a status bar that shows your keystrokes per minute (KPM) for your last minute of activity. We show a rocket icon if your KPM is equal to or above your average KPM per day for the last 90 days--a subtle reminder of your relative coding focus and intensity. 
+**In-editor dashboard**
+Get daily and weekly reports of your programming activity right in your code editor.
 
-![Visual Studio status bar](https://uploads-ssl.webflow.com/5b589ab81371d7c6ffc8d17a/5b8cc51b902f3d48e8a7f822_vs-code-status-bar.png)
+**Status bar metrics**
+After installing our plugin, your status bar will show real-time metrics about time coded per day.
 
-### Time tracking
+**Weekly email reports**
+Get a weekly report delivered right to your email inbox.
 
-Longer sessions are generally more productive because we can maintain context and more easily retain logical constructs related to our code. In the status bar, we show a circle with a partial fill (either 25%, 50%, 75%, or 100%) to indicate the duration of your current session vs. your average over the last 90 days.
+**Data visualizations**
+Go to our web app to get simple data visualizations, such as a rolling heatmap of your best programming times by hour of the day.
 
-### Quantify your coding
+**Calendar integration**
+Integrate with Google Calendar to automatically set calendar events to protect your best programming times from meetings and interrupts.
 
-In addition to KPM and time, we also measure time spent by project, lines of code, characters added/deleted, and your current Spotify or iTunes track. We distill this data into interesting "datagrams" that you can view in your account at [app.software.com](https://app.software.com).
+**More stats**
+See your best music for coding and the speed, frequency, and top files across your commits.
 
-### Safe, secure, and free
+## Why you should try it out
 
-All of our plugins are safe, secure, and free. We do not process, send, or store your proprietary code. We only track productivity-related data, and we make it easy to see the data we collect.
+-   Automatic time reports by project
+-   See what time you code your best—find your “flow”
+-   Defend your best code times against meetings and interrupts
+-   Find out what you can learn from your data
+
+## It’s safe, secure, and free
+
+**We never access your code**
+We do not process, send, or store your proprietary code. We only provide metrics about programming, and we make it easy to see the data we collect. 
+
+**Your data is private**
+We will never share your individually identifiable data with your boss. In the future, we will roll up data into groups and teams but we will keep your data anonymized.
+
+**Free for you, forever**
+We provide 90 days of data history for free, forever. In the future, we will provide premium plans for advanced features and historical data access.
+
+<!--- Begin: setup --->
+
+## Getting started
+
+1. [Install the Code Time plugin](https://marketplace.visualstudio.com/items?itemName=softwaredotcom.swdc-visualstudio) from the Visual Studio Marketplace.
+
+2. After installing Code Time, an alert will appear prompting you to login (you can also click on "Code Time" in the status bar of Visual Studio.
+
+<!--- End: setup --->
