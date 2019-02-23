@@ -106,11 +106,11 @@ namespace SoftwareCo
 
             Task.Run(() =>
             {
-                InitializeAsync();
+                InitializeListeners();
             });
         }
 
-        public void InitializeAsync()
+        public void InitializeListeners()
         {
             try
             {
@@ -757,15 +757,13 @@ namespace SoftwareCo
             
         }
 
-        public async Task LaunchDashboardAsync()
+        public static async void LaunchDashboardAsync()
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
             string dashboardFile = SoftwareCoUtil.getDashboardFile();
             HttpResponseMessage resp =
                 await SoftwareHttpManager.SendDashboardRequestAsync(HttpMethod.Get, "/dashboard");
             string content = await resp.Content.ReadAsStringAsync();
-
+            
             if (File.Exists(dashboardFile))
             {
                 File.SetAttributes(dashboardFile, FileAttributes.Normal);
