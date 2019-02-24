@@ -10,6 +10,7 @@ using Microsoft.VisualStudio.Shell.Interop;
 using System.IO;
 using System.Net.Http;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace SoftwareCo
 {
@@ -114,7 +115,8 @@ namespace SoftwareCo
         {
             try
             {
-                Logger.Info(string.Format("Initializing Code Time v{0}", Constants.PluginVersion));
+                string PluginVersion = string.Format("{0}.{1}.{2}", CodeTimeAssembly.Version.Major, CodeTimeAssembly.Version.Minor, CodeTimeAssembly.Version.Build);
+                Logger.Info(string.Format("Initializing Code Time v{0}", PluginVersion));
 
                 // VisualStudio Object
                 Events2 events = (Events2)ObjDte.Events;
@@ -235,8 +237,9 @@ namespace SoftwareCo
 
         private void DocEventsOnDocumentSaved(Document document)
         {
-            InitializeSoftwareData();
             String fileName = document.FullName;
+            InitializeSoftwareData(fileName);
+            
             FileInfo fi = new FileInfo(fileName);
 
             _softwareData.UpdateData(fileName, "length", fi.Length);
@@ -246,8 +249,10 @@ namespace SoftwareCo
 
         private void DocEventsOnDocumentOpening(String docPath, Boolean readOnly)
         {
-            InitializeSoftwareData();
             FileInfo fi = new FileInfo(docPath);
+            String fileName = fi.FullName;
+            InitializeSoftwareData(fileName);
+            
             // update the length of this 
             if (_softwareData != null && fi != null)
             {
@@ -258,9 +263,8 @@ namespace SoftwareCo
         private void AfterKeyPressed(
             string Keypress, TextSelection Selection, bool InStatementCompletion)
         {
-            InitializeSoftwareData();
-
             String fileName = ObjDte.ActiveWindow.Document.FullName;
+            InitializeSoftwareData(fileName);
 
             if (ObjDte.ActiveWindow.Document.Language != null)
             {
@@ -391,7 +395,7 @@ namespace SoftwareCo
 
             _lastDocument = currentFile;
 
-            InitializeSoftwareData();
+            InitializeSoftwareData(currentFile);
         }
 
         private void CheckFileLengthUpdates(Object stateInfo)
@@ -401,7 +405,7 @@ namespace SoftwareCo
                 String fileName = ObjDte.ActiveWindow.Document.FullName;
                 if (fileName != null && !fileName.Equals(""))
                 {
-                    InitializeSoftwareData();
+                    InitializeSoftwareData(fileName);
 
                     // update the length for this file so we can correctly compute the paste diff
                     FileInfo fi = new FileInfo(fileName);
@@ -416,23 +420,22 @@ namespace SoftwareCo
 
         private void ProcessRepoMembers(Object stateInfo)
         {
-            InitializeSoftwareData();
-
-            if (_softwareData != null && _softwareData.project.directory != null)
+            string dir = getSolutionDirectory();
+            if (dir != null)
             {
 
-                _softwareRepoUtil.GetRepoUsers(_softwareData.project.directory);
+                _softwareRepoUtil.GetRepoUsers(dir);
             }
         }
 
         private void ProcessRepoCommits(Object stateInfo)
         {
-            InitializeSoftwareData();
+            string dir = getSolutionDirectory();
 
-            if (_softwareData != null && _softwareData.project.directory != null)
+            if (dir != null)
             {
 
-                _softwareRepoUtil.GetHistoricalCommitsAsync(_softwareData.project.directory);
+                _softwareRepoUtil.GetHistoricalCommitsAsync(dir);
             }
         }
 
@@ -707,31 +710,45 @@ namespace SoftwareCo
             return _lastPostTime < now.AddMinutes(postFrequency);
         }
 
-        private void InitializeSoftwareData()
+        private string getSolutionDirectory()
         {
-
-            if (_softwareData == null || String.IsNullOrEmpty(_softwareData.project.directory))
+            if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
             {
-                String projectName = "None";
-                String fileName = "Unknown";
-                String directoryName = "Unknown";
-                if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
-                {
-                    projectName = Path.GetFileNameWithoutExtension(ObjDte.Solution.FullName);
-                    fileName = ObjDte.Solution.FileName;
-                    directoryName = Path.GetDirectoryName(fileName);
-                }
-                
-                if (_softwareData == null)
-                {
-                    ProjectInfo projectInfo = new ProjectInfo(projectName, directoryName);
-                    _softwareData = new SoftwareData(projectInfo);
-                } else
-                {
-                    _softwareData.project.name = projectName;
-                    _softwareData.project.directory = directoryName;
-                }
+                return Path.GetDirectoryName(ObjDte.Solution.FileName);
             }
+            return null;
+        }
+
+        private void InitializeSoftwareData(string fileName)
+        {
+            if (_softwareData != null && _softwareData.initialized)
+            {
+                return;
+            }
+
+            // get the project name
+            String projectName = "Untitled";
+            String directoryName = "Unknown";
+            if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
+            {
+                projectName = Path.GetFileNameWithoutExtension(ObjDte.Solution.FullName);
+                fileName = ObjDte.Solution.FileName;
+                directoryName = Path.GetDirectoryName(fileName);
+            } else
+            {
+                directoryName = Path.GetDirectoryName(fileName);
+            }
+                
+            if (_softwareData == null)
+            {
+                ProjectInfo projectInfo = new ProjectInfo(projectName, directoryName);
+                _softwareData = new SoftwareData(projectInfo);
+            } else
+            {
+                _softwareData.project.name = projectName;
+                _softwareData.project.directory = directoryName;
+            }
+            _softwareData.initialized = true;
          
         }
 
@@ -743,6 +760,10 @@ namespace SoftwareCo
         private void SetStatus(string msg)
         {
             IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
+            if (statusbar == null)
+            {
+                return;
+            }
             int frozen;
             statusbar.IsFrozen(out frozen);
             if (frozen != 0)
@@ -774,5 +795,11 @@ namespace SoftwareCo
         }
 
         #endregion
+
+        public static class CodeTimeAssembly
+        {
+            static readonly Assembly Reference = typeof(CodeTimeAssembly).Assembly;
+            public static readonly Version Version = Reference.GetName().Version;
+        }
     }
 }

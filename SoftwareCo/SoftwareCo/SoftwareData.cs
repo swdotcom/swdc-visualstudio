@@ -9,6 +9,7 @@ namespace SoftwareCo
 
         // TODO: backend driven, we should look at getting a list of types at some point.
         public String type = "Events";
+        public bool initialized = false;
         // sublime = 1, vs code = 2, eclipse = 3, intellij = 4, visualstudio = 6, atom = 7
         public int pluginId = Constants.PluginId;
 
@@ -40,6 +41,7 @@ namespace SoftwareCo
             }
             start = SoftwareCoUtil.getNowInSeconds();
             local_start = 0L;
+            initialized = false;
         }
 
         public IDictionary<string, object> GetAsDictionary()

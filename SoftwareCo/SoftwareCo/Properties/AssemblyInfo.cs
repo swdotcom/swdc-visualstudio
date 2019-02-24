@@ -4,11 +4,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Software")]
+[assembly: AssemblyTitle("Code Time")]
 [assembly: AssemblyDescription("Insight into how you code.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Software.com")]
-[assembly: AssemblyProduct("Software")]
+[assembly: AssemblyProduct("Code Time")]
 [assembly: AssemblyCopyright("Copyright (c) 2018 Software.co Technologies, Inc. All Rights Reserved")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -28,5 +28,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyVersion("1.1.34.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
