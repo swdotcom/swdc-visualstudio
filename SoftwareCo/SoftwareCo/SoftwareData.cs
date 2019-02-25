@@ -94,7 +94,7 @@ namespace SoftwareCo
 
         public Boolean HasData()
         {
-            if (this.keystrokes > 0) {
+            if (this.initialized && this.keystrokes > 0 && this.project != null && this.project.name != null) {
                 return true;
             }
             return false;

@@ -46,7 +46,10 @@ namespace SoftwareCo
                 Process process = new Process();
                 process.StartInfo.FileName = "cmd.exe";
                 process.StartInfo.Arguments = "/c " + cmd;
-                process.StartInfo.WorkingDirectory = dir;
+                if (dir != null)
+                {
+                    process.StartInfo.WorkingDirectory = dir;
+                }
                 process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 process.StartInfo.CreateNoWindow = true;
                 process.StartInfo.UseShellExecute = false;
@@ -306,5 +309,19 @@ namespace SoftwareCo
         }
     }
 
-    
+    struct Date
+    {
+        public static double GetTime(DateTime dateTime)
+        {
+            return dateTime.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
+        }
+
+        public static DateTime DateTimeParse(double milliseconds)
+        {
+            return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(milliseconds).ToLocalTime();
+        }
+
+    }
+
+
 }

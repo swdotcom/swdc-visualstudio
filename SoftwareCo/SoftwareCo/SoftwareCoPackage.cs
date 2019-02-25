@@ -11,6 +11,7 @@ using System.IO;
 using System.Net.Http;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
@@ -51,11 +52,10 @@ namespace SoftwareCo
         private TextDocumentKeyPressEvents _textDocKeyEvent;
 
         private Timer timer;
-        private Timer docChangeTimer;
         private Timer kpmTimer;
-        private Timer repoMemberTimer;
         private Timer repoCommitsTimer;
         private Timer musicTimer;
+        private Timer statusMsgTimer;
 
         // Used by Constants for version info
         public static DTE2 ObjDte;
@@ -68,11 +68,13 @@ namespace SoftwareCo
         private DateTime _lastPostTime = DateTime.UtcNow;
         private SoftwareData _softwareData;
         private SoftwareRepoManager _softwareRepoUtil;
+        private SoftwareUserSession _softwareUserSession;
 
         private bool _isOnline = true;
         private bool _isAuthenticated = true;
         private bool _hasJwt = true;
         private bool _hasToken = false;
+        private string _lastStatusMsg = "";
 
         private static int THIRTY_SECONDS = 1000 * 30;
         private static int ONE_MINUTE = THIRTY_SECONDS * 2;
@@ -105,13 +107,13 @@ namespace SoftwareCo
             _dteEvents = ObjDte.Events.DTEEvents;
             _dteEvents.OnStartupComplete += OnOnStartupComplete;
 
-            Task.Run(() =>
+            Task.Run(async() =>
             {
-                InitializeListeners();
+                await InitializeListenersAsync();
             });
         }
 
-        public void InitializeListeners()
+        public async Task InitializeListenersAsync()
         {
             try
             {
@@ -144,6 +146,11 @@ namespace SoftwareCo
                     _softwareRepoUtil = new SoftwareRepoManager();
                 }
 
+                if (_softwareUserSession == null)
+                {
+                    _softwareUserSession = new SoftwareUserSession();
+                }
+
                 // Create an AutoResetEvent to signal the timeout threshold in the
                 // timer callback has been reached.
                 var autoEvent = new AutoResetEvent(false);
@@ -154,13 +161,6 @@ namespace SoftwareCo
                     autoEvent,
                     ONE_MINUTE,
                     ONE_MINUTE);
-
-                // every 30 seconds
-                docChangeTimer = new Timer(
-                    CheckFileLengthUpdates,
-                    autoEvent,
-                    ONE_MINUTE,
-                    1000 * 30);
 
                 this.SendOfflineData();
 
@@ -173,11 +173,6 @@ namespace SoftwareCo
                     ONE_MINUTE);
 
                 delay = 1000 * 45;
-                repoMemberTimer = new Timer(
-                    ProcessRepoMembers,
-                    autoEvent,
-                    delay,
-                    ONE_HOUR);
 
                 delay = ONE_MINUTE + (1000 * 10);
                 repoCommitsTimer = new Timer(
@@ -187,10 +182,16 @@ namespace SoftwareCo
                     ONE_HOUR);
 
                 musicTimer = new Timer(
-                    ProcessMusicTracks,
+                    ProcessMusicTracksAsync,
                     autoEvent,
                     1000 * 5,
                     1000 * 30);
+
+                statusMsgTimer = new Timer(
+                    UpdateStatusMsg,
+                    autoEvent,
+                    1000 * 30,
+                    1000 * 10);
 
                 this.AuthenticationNotificationCheck();
             }
@@ -237,14 +238,16 @@ namespace SoftwareCo
 
         private void DocEventsOnDocumentSaved(Document document)
         {
+            if (document == null || document.FullName == null)
+            {
+                return;
+            }
             String fileName = document.FullName;
             InitializeSoftwareData(fileName);
             
             FileInfo fi = new FileInfo(fileName);
 
             _softwareData.UpdateData(fileName, "length", fi.Length);
-
-            this.ProcessFetchDailyKpmTimerCallbackAsync(null);
         }
 
         private void DocEventsOnDocumentOpening(String docPath, Boolean readOnly)
@@ -252,12 +255,6 @@ namespace SoftwareCo
             FileInfo fi = new FileInfo(docPath);
             String fileName = fi.FullName;
             InitializeSoftwareData(fileName);
-            
-            // update the length of this 
-            if (_softwareData != null && fi != null)
-            {
-                _softwareData.UpdateData(fi.FullName, "length", fi.Length);
-            }
         }
 
         private void AfterKeyPressed(
@@ -272,20 +269,7 @@ namespace SoftwareCo
             }
             if (!String.IsNullOrEmpty(Keypress))
             {
-                long prevLen = _softwareData.getFileInfoDataForProperty(fileName, "length");
                 FileInfo fi = new FileInfo(fileName);
-                if (fi != null)
-                {
-                    // update the file length
-                    if (fi.Length != prevLen)
-                    {
-                        _softwareData.addOrUpdateFileInfo(fileName, "length", fi.Length);
-                    } else
-                    {
-                        long newLen = prevLen + 1;
-                        _softwareData.addOrUpdateFileInfo(fileName, "length", newLen);
-                    }
-                }
 
                 bool isNewLine = false;
                 if (Keypress == "\b")
@@ -304,18 +288,18 @@ namespace SoftwareCo
                     Logger.Info("Code Time: KPM incremented");
                 }
                 
-
                 if (isNewLine)
                 {
                     _softwareData.addOrUpdateFileInfo(fileName, "linesAdded", 1);
                 }
-
+                /**
                 long lineCount = _softwareData.getFileInfoDataForProperty(fileName, "lines");
                 if (lineCount == 0 || isNewLine)
                 {
                     lineCount = this.getLineCount(fileName);
                     _softwareData.addOrUpdateFileInfo(fileName, "lines", lineCount);
                 }
+                **/
 
                 _softwareData.keystrokes += 1;
 
@@ -324,6 +308,10 @@ namespace SoftwareCo
 
         private void DocEventsOnDocumentOpened(Document document)
         {
+            if (document == null || document.FullName == null)
+            {
+                return;
+            }
             try
             {
                 HandleDocumentEventActivity(document.FullName, false);
@@ -332,7 +320,6 @@ namespace SoftwareCo
                     _softwareData.UpdateData(document.FullName, "open", 1);
                     Logger.Info("Code Time: File open incremented");
                 }
-                this.ProcessFetchDailyKpmTimerCallbackAsync(null);
             }
             catch (Exception ex)
             {
@@ -342,6 +329,10 @@ namespace SoftwareCo
 
         private void DocEventsOnDocumentClosed(Document document)
         {
+            if (document == null || document.FullName == null)
+            {
+                return;
+            }
             try
             {
                 HandleDocumentEventActivity(document.FullName, true);
@@ -350,7 +341,6 @@ namespace SoftwareCo
                     _softwareData.UpdateData(document.FullName, "close", 1);
                     Logger.Info("Code Time: File close incremented");
                 }
-                this.ProcessFetchDailyKpmTimerCallbackAsync(null);
             }
             catch (Exception ex)
             {
@@ -384,11 +374,6 @@ namespace SoftwareCo
         private void HandleDocumentEventActivity(string currentFile, bool isWrite)
         {
             if (currentFile == null)
-            {
-                return;
-            }
-
-            if (currentFile.Equals(_lastDocument))
             {
                 return;
             }
@@ -437,11 +422,13 @@ namespace SoftwareCo
 
                 _softwareRepoUtil.GetHistoricalCommitsAsync(dir);
             }
+
+            this.ProcessRepoMembers(null);
         }
 
-        private void ProcessMusicTracks(Object stateInfo)
+        private async void ProcessMusicTracksAsync(Object stateInfo)
         {
-            SoftwareSpotifyManager.GetLocalSpotifyTrackInfoAsync();
+            await SoftwareSpotifyManager.GetLocalSpotifyTrackInfoAsync();
         }
 
         // This method is called by the timer delegate.
@@ -449,21 +436,11 @@ namespace SoftwareCo
         {
             AutoResetEvent autoEvent = (AutoResetEvent)stateInfo;
 
-            this.CheckAuthStatus();
             this.SendOfflineData();
 
             DateTime now = DateTime.UtcNow;
             if (_softwareData != null && _softwareData.HasData() && (EnoughTimePassed(now) || timer == null))
             {
-                //
-                // Ensure the doc name is added in case we're in the middle of capturing
-                // keystrokes and the user hasn't save the doc to trigger this yet
-                //
-                var document = ObjDte.ActiveWindow.Document;
-                if (document != null)
-                {
-                    HandleDocumentEventActivity(document.FullName, false);
-                }
                 double offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
                 _softwareData.local_start = _softwareData.start + ((int)offset * 60);
                 _softwareData.offset = Math.Abs((int)offset);
@@ -477,21 +454,6 @@ namespace SoftwareCo
 
                 string softwareDataContent = _softwareData.GetAsJson();
                 Logger.Info("Code Time: sending: " + softwareDataContent);
-
-                /**
-                 * the payload needs to look like this
-                 {
-                  "start":1529683309,"end":1529683369,"data":9,"pluginId":6,
-                  "source":{
-  	                "C:\\Users\\Xavier Luiz\\source\\repos\\UnitTestProject3\\UnitTestProject3\\UnitTest1.cs":{
-    	                "paste":0,"open":0,"close":0,"delete":0,"keys":9,"add":9,
-                                "netkeys":9,"length":569,"lines":0,"linesAdded":0,"linesRemoved":0,"syntax":""
-  	                }
-                  },
-                  "type":"Events",
-                  "project":{"name":"UnitTestProject3","directory":"C:\\Users\\Xavier Luiz\\source\\repos"}
-                }
-                 **/
                 
                 if (SoftwareCoUtil.isTelemetryOn())
                 {
@@ -523,35 +485,6 @@ namespace SoftwareCo
             File.AppendAllText(datastoreFile, softwareDataContent + Environment.NewLine);
         }
 
-        private void CheckAuthStatus()
-        {
-            this.HasJwt();
-            this.IsOnline();
-            this.IsAuthenticated();
-        }
-
-        private async void IsOnline()
-        {
-            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/ping", null);
-            this._isOnline = SoftwareHttpManager.IsOk(response);
-            this.UpdateStatus();
-        }
-
-        private async void IsAuthenticated()
-        {
-            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/users/ping", null);
-            this._isAuthenticated = SoftwareHttpManager.IsOk(response);
-            this.UpdateStatus();
-        }
-
-        private bool HasJwt()
-        {
-            object jwt = SoftwareCoUtil.getItem("jwt");
-            this._hasJwt = (jwt != null && !((string)jwt).Equals(""));
-            this.UpdateStatus();
-            return this._hasJwt;
-        }
-
         private bool HasToken()
         {
             object token = SoftwareCoUtil.getItem("token");
@@ -567,13 +500,16 @@ namespace SoftwareCo
             }
         }
 
-        private void AuthenticationNotificationCheck()
+        private async void AuthenticationNotificationCheck()
         {
             object lastUpdateTimeObj = SoftwareCoUtil.getItem("vs_lastUpdateTime");
             long lastUpdate = (lastUpdateTimeObj != null) ? (long)lastUpdateTimeObj : 0;
             long nowInSec = SoftwareCoUtil.getNowInSeconds();
 
-            if ((this.HasJwt() && this._isAuthenticated) || !this._isOnline)
+            bool isAuth = await _softwareUserSession.IsAuthenticatedAsync();
+            bool online = await _softwareUserSession.IsOnlineAsync();
+
+            if ((_softwareUserSession.HasJwt() && isAuth) || !online)
             {
                 // we're already authenticated or we're not online to begin with
                 return;
@@ -757,6 +693,14 @@ namespace SoftwareCo
             return Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         }
 
+        public void UpdateStatusMsg(Object stateInfo)
+        {
+            if (this._lastStatusMsg != null)
+            {
+                this.SetStatus(this._lastStatusMsg);
+            }
+        }
+
         private void SetStatus(string msg)
         {
             IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
@@ -764,13 +708,8 @@ namespace SoftwareCo
             {
                 return;
             }
-            int frozen;
-            statusbar.IsFrozen(out frozen);
-            if (frozen != 0)
-            {
-                statusbar.FreezeOutput(0);
-            }
             statusbar.SetText(msg);
+            this._lastStatusMsg = msg;
         }
 
         public void CloseDashboard()
