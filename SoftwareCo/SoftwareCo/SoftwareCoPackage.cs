@@ -11,7 +11,6 @@ using System.IO;
 using System.Net.Http;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
@@ -56,25 +55,24 @@ namespace SoftwareCo
         private Timer repoCommitsTimer;
         private Timer musicTimer;
         private Timer statusMsgTimer;
+        private Timer userStatusTimer;
 
         // Used by Constants for version info
         public static DTE2 ObjDte;
 
         // this is the solution full name
         private string _solutionName = string.Empty;
-        private string _lastDocument;
         private int postFrequency = 1; // every minute
 
         private DateTime _lastPostTime = DateTime.UtcNow;
         private SoftwareData _softwareData;
         private SoftwareRepoManager _softwareRepoUtil;
-        private SoftwareUserSession _softwareUserSession;
+        private static SoftwareStatus _softwareStatus;
 
         private bool _isOnline = true;
         private bool _isAuthenticated = true;
         private bool _hasJwt = true;
         private bool _hasToken = false;
-        private string _lastStatusMsg = "";
 
         private static int THIRTY_SECONDS = 1000 * 30;
         private static int ONE_MINUTE = THIRTY_SECONDS * 2;
@@ -113,18 +111,27 @@ namespace SoftwareCo
             });
         }
 
+        public static string GetVersion()
+        {
+            return string.Format("{0}.{1}.{2}", CodeTimeAssembly.Version.Major, CodeTimeAssembly.Version.Minor, CodeTimeAssembly.Version.Build);
+        }
+
+        public static string GetOs()
+        {
+            return System.Environment.OSVersion.VersionString;
+        }
+
         public async Task InitializeListenersAsync()
         {
             try
             {
-                string PluginVersion = string.Format("{0}.{1}.{2}", CodeTimeAssembly.Version.Major, CodeTimeAssembly.Version.Minor, CodeTimeAssembly.Version.Build);
+                string PluginVersion = GetVersion();
                 Logger.Info(string.Format("Initializing Code Time v{0}", PluginVersion));
 
                 // VisualStudio Object
                 Events2 events = (Events2)ObjDte.Events;
                 _textDocKeyEvent = events.TextDocumentKeyPressEvents;
                 _docEvents = ObjDte.Events.DocumentEvents;
-                _windowEvents = ObjDte.Events.WindowEvents;
 
                 // setup event handlers
                 _textDocKeyEvent.AfterKeyPress += AfterKeyPressed;
@@ -132,7 +139,6 @@ namespace SoftwareCo
                 _docEvents.DocumentClosing += DocEventsOnDocumentClosed;
                 _docEvents.DocumentSaved += DocEventsOnDocumentSaved;
                 _docEvents.DocumentOpening += DocEventsOnDocumentOpening;
-                _windowEvents.WindowActivated += WindowEventsOnWindowActivated;
 
                 // initialize the menu commands
                 SoftwareLaunchCommand.Initialize(this);
@@ -140,15 +146,19 @@ namespace SoftwareCo
                 SoftwareEnableMetricsCommand.Initialize(this);
                 SoftwarePauseMetricsCommand.Initialize(this);
                 SoftwareTopFortyCommand.Initialize(this);
+                SoftwareLoginCommand.Initialize(this);
+                SoftwareLogoutCommand.Initialize(this);
+                SoftwareSignupCommand.Initialize(this);
 
                 if (_softwareRepoUtil == null)
                 {
                     _softwareRepoUtil = new SoftwareRepoManager();
                 }
 
-                if (_softwareUserSession == null)
+                if (_softwareStatus == null)
                 {
-                    _softwareUserSession = new SoftwareUserSession();
+                    IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
+                    _softwareStatus = new SoftwareStatus(statusbar);
                 }
 
                 // Create an AutoResetEvent to signal the timeout threshold in the
@@ -193,7 +203,13 @@ namespace SoftwareCo
                     1000 * 30,
                     1000 * 10);
 
-                this.AuthenticationNotificationCheck();
+                userStatusTimer = new Timer(
+                    UpdateUserStatus,
+                    autoEvent,
+                    ONE_MINUTE,
+                    1000 * 90);
+
+                this.initializeUserInfo();
             }
             catch (Exception ex)
             {
@@ -210,7 +226,6 @@ namespace SoftwareCo
                 _docEvents.DocumentClosing -= DocEventsOnDocumentClosed;
                 _docEvents.DocumentSaved -= DocEventsOnDocumentSaved;
                 _docEvents.DocumentOpening -= DocEventsOnDocumentOpening;
-                _windowEvents.WindowActivated -= WindowEventsOnWindowActivated;
 
                 timer.Dispose();
                 timer = null;
@@ -223,19 +238,6 @@ namespace SoftwareCo
 
         #region Event Handlers
 
-        private int getLineCount(string fileName)
-        {
-            int counter = 0;
-            using (var file = new StreamReader(fileName))
-            {
-                while (file.ReadLine() != null)
-                {
-                    counter++;
-                }
-            }
-            return counter;
-        }
-
         private void DocEventsOnDocumentSaved(Document document)
         {
             if (document == null || document.FullName == null)
@@ -243,6 +245,11 @@ namespace SoftwareCo
                 return;
             }
             String fileName = document.FullName;
+            if (_softwareData == null || !_softwareData.source.ContainsKey(fileName))
+            {
+                return;
+            }
+            
             InitializeSoftwareData(fileName);
             
             FileInfo fi = new FileInfo(fileName);
@@ -292,17 +299,8 @@ namespace SoftwareCo
                 {
                     _softwareData.addOrUpdateFileInfo(fileName, "linesAdded", 1);
                 }
-                /**
-                long lineCount = _softwareData.getFileInfoDataForProperty(fileName, "lines");
-                if (lineCount == 0 || isNewLine)
-                {
-                    lineCount = this.getLineCount(fileName);
-                    _softwareData.addOrUpdateFileInfo(fileName, "lines", lineCount);
-                }
-                **/
 
                 _softwareData.keystrokes += 1;
-
             }
         }
 
@@ -312,14 +310,15 @@ namespace SoftwareCo
             {
                 return;
             }
+            String fileName = document.FullName;
+            if (_softwareData == null || !_softwareData.source.ContainsKey(fileName))
+            {
+                return;
+            }
             try
             {
-                HandleDocumentEventActivity(document.FullName, false);
-                if (_softwareData != null)
-                {
-                    _softwareData.UpdateData(document.FullName, "open", 1);
-                    Logger.Info("Code Time: File open incremented");
-                }
+                _softwareData.UpdateData(fileName, "open", 1);
+                Logger.Info("Code Time: File open incremented");
             }
             catch (Exception ex)
             {
@@ -333,34 +332,19 @@ namespace SoftwareCo
             {
                 return;
             }
+            String fileName = document.FullName;
+            if (_softwareData == null || !_softwareData.source.ContainsKey(fileName))
+            {
+                return;
+            }
             try
             {
-                HandleDocumentEventActivity(document.FullName, true);
-                if (_softwareData != null)
-                {
-                    _softwareData.UpdateData(document.FullName, "close", 1);
-                    Logger.Info("Code Time: File close incremented");
-                }
+                _softwareData.UpdateData(fileName, "close", 1);
+                Logger.Info("Code Time: File close incremented");
             }
             catch (Exception ex)
             {
                 Logger.Error("DocEventsOnDocumentClosed", ex);
-            }
-        }
-
-        private void WindowEventsOnWindowActivated(Window gotFocus, Window lostFocus)
-        {
-            try
-            {
-                var document = ObjDte.ActiveWindow.Document;
-                if (document != null)
-                {
-                    HandleDocumentEventActivity(document.FullName, false);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("WindowEventsOnWindowActivated", ex);
             }
         }
 
@@ -371,37 +355,6 @@ namespace SoftwareCo
         #endregion
 
         #region Methods
-        private void HandleDocumentEventActivity(string currentFile, bool isWrite)
-        {
-            if (currentFile == null)
-            {
-                return;
-            }
-
-            _lastDocument = currentFile;
-
-            InitializeSoftwareData(currentFile);
-        }
-
-        private void CheckFileLengthUpdates(Object stateInfo)
-        {
-            if (ObjDte.ActiveDocument != null && ObjDte.ActiveWindow.Document != null)
-            {
-                String fileName = ObjDte.ActiveWindow.Document.FullName;
-                if (fileName != null && !fileName.Equals(""))
-                {
-                    InitializeSoftwareData(fileName);
-
-                    // update the length for this file so we can correctly compute the paste diff
-                    FileInfo fi = new FileInfo(fileName);
-                    if (fi != null)
-                    {
-                        _softwareData.UpdateData(fileName, "length", fi.Length);
-                    }
-                }
-            }
-            
-        }
 
         private void ProcessRepoMembers(Object stateInfo)
         {
@@ -463,7 +416,6 @@ namespace SoftwareCo
                     if (!SoftwareHttpManager.IsOk(response))
                     {
                         this.StorePayload(softwareDataContent);
-                        this.AuthenticationNotificationCheck();
                     }
                 }
                 else
@@ -474,7 +426,6 @@ namespace SoftwareCo
 
                 _softwareData.ResetData();
                 _lastPostTime = now;
-                _lastDocument = null;
             }
         }
 
@@ -496,7 +447,7 @@ namespace SoftwareCo
         {
             if (!this._hasJwt || !this._isAuthenticated || !this._isOnline)
             {
-                this.SetStatus("Code Time");
+                _softwareStatus.SetStatus("Code Time");
             }
         }
 
@@ -506,58 +457,43 @@ namespace SoftwareCo
             long lastUpdate = (lastUpdateTimeObj != null) ? (long)lastUpdateTimeObj : 0;
             long nowInSec = SoftwareCoUtil.getNowInSeconds();
 
-            bool isAuth = await _softwareUserSession.IsAuthenticatedAsync();
-            bool online = await _softwareUserSession.IsOnlineAsync();
+            SoftwareUserSession.UserStatus userStatus = await SoftwareUserSession.GetUserStatusAsync(null);
+            bool online = await SoftwareUserSession.IsOnlineAsync();
 
-            if ((_softwareUserSession.HasJwt() && isAuth) || !online)
+            bool isInitialCheck = false;
+            if (lastUpdate > 0 && nowInSec - lastUpdate < 10)
             {
-                // we're already authenticated or we're not online to begin with
-                return;
+                isInitialCheck = true;
             }
 
-            if (this.HasToken())
+            if (online && isInitialCheck && !userStatus.hasUserAccounts)
             {
-                // we have a token so only update every 4 hours
-                if ((nowInSec - lastUpdate) < (60 * 60 * 4))
+
+                SoftwareCoUtil.setItem("vs_lastUpdateTime", nowInSec);
+
+                string msg = "To see your coding data in Code Time, please log in to your account.";
+
+                Guid clsid = Guid.Empty;
+                int result;
+                IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
+                uiShell.ShowMessageBox(
+                    0,
+                    ref clsid,
+                    string.Empty,
+                    msg,
+                    string.Empty,
+                    0,
+                    OLEMSGBUTTON.OLEMSGBUTTON_OKCANCEL,
+                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST,
+                    OLEMSGICON.OLEMSGICON_INFO,
+                    0,
+                    out result);
+                // ok_cancel = 1
+                if (result == 1)
                 {
-                    // not over 4 hours yet
-                    return;
+                    // launch the browser
+                    SoftwareCoUtil.launchSignup();
                 }
-            } else
-            {
-                // no token, update after 5 minutes
-                if ((nowInSec - lastUpdate) < (60 * 5))
-                {
-                    // not over 5 minutes yet
-                    return;
-                }
-            }
-
-            SoftwareCoUtil.setItem("vs_lastUpdateTime", nowInSec);
-
-            string msg = "To see your coding data in Code Time, please log in to your account.";
-
-            Guid clsid = Guid.Empty;
-            int result;
-            IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
-            uiShell.ShowMessageBox(
-                0,
-                ref clsid,
-                string.Empty,
-                msg,
-                string.Empty,
-                0,
-                OLEMSGBUTTON.OLEMSGBUTTON_OKCANCEL,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST,
-                OLEMSGICON.OLEMSGICON_INFO,
-                0,
-                out result);
-            // ok_cancel = 1
-            Logger.Info("Selected result: " + result);
-            if (result == 1)
-            {
-                // launch the browser
-                SoftwareCoUtil.launchSoftwareDashboard();
             }
         }
 
@@ -590,7 +526,7 @@ namespace SoftwareCo
             }
         }
 
-        private async void ProcessFetchDailyKpmTimerCallbackAsync(Object stateInfo)
+        public static async void ProcessFetchDailyKpmTimerCallbackAsync(Object stateInfo)
         {
             if (!SoftwareCoUtil.isTelemetryOn())
             {
@@ -636,7 +572,11 @@ namespace SoftwareCo
                 {
                     msg += string.Format(" | Avg: {0}", averageDailyMinutesTime);
                 }
-                this.SetStatus(msg);
+                _softwareStatus.SetStatus(msg);
+
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                FetchCodeTimeDashboardAsync();
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             }
             
         }
@@ -657,35 +597,55 @@ namespace SoftwareCo
 
         private void InitializeSoftwareData(string fileName)
         {
-            if (_softwareData != null && _softwareData.initialized)
+            if (_softwareData == null || !_softwareData.initialized)
             {
-                return;
+
+                // get the project name
+                String projectName = "Untitled";
+                String directoryName = "Unknown";
+                if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
+                {
+                    projectName = Path.GetFileNameWithoutExtension(ObjDte.Solution.FullName);
+                    string solutionFile = ObjDte.Solution.FullName;
+                    directoryName = Path.GetDirectoryName(solutionFile);
+                }
+                else
+                {
+                    directoryName = Path.GetDirectoryName(fileName);
+                }
+
+                if (_softwareData == null)
+                {
+                    ProjectInfo projectInfo = new ProjectInfo(projectName, directoryName);
+                    _softwareData = new SoftwareData(projectInfo);
+                }
+                else
+                {
+                    _softwareData.project.name = projectName;
+                    _softwareData.project.directory = directoryName;
+                }
+                _softwareData.initialized = true;
+            }
+            _softwareData.EnsureFileInfoDataIsPresent(fileName);
+        }
+
+        private async void initializeUserInfo()
+        {
+            bool requiresAnonAcct = await SoftwareUserSession.RequiresUserCreationAsync();
+            if (requiresAnonAcct)
+            {
+                await SoftwareUserSession.CreateAnonymousUserAsync();
             }
 
-            // get the project name
-            String projectName = "Untitled";
-            String directoryName = "Unknown";
-            if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
+            SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(null);
+            SoftwareLaunchCommand.UpdateEnabledState(status);
+            SoftwareLoginCommand.UpdateEnabledState(status);
+            SoftwareLogoutCommand.UpdateEnabledState(status);
+            SoftwareSignupCommand.UpdateEnabledState(status);
+            if (!status.hasAccounts)
             {
-                projectName = Path.GetFileNameWithoutExtension(ObjDte.Solution.FullName);
-                fileName = ObjDte.Solution.FileName;
-                directoryName = Path.GetDirectoryName(fileName);
-            } else
-            {
-                directoryName = Path.GetDirectoryName(fileName);
+                this.AuthenticationNotificationCheck();
             }
-                
-            if (_softwareData == null)
-            {
-                ProjectInfo projectInfo = new ProjectInfo(projectName, directoryName);
-                _softwareData = new SoftwareData(projectInfo);
-            } else
-            {
-                _softwareData.project.name = projectName;
-                _softwareData.project.directory = directoryName;
-            }
-            _softwareData.initialized = true;
-         
         }
 
         private String getDownloadDestinationDirectory()
@@ -695,41 +655,43 @@ namespace SoftwareCo
 
         public void UpdateStatusMsg(Object stateInfo)
         {
-            if (this._lastStatusMsg != null)
-            {
-                this.SetStatus(this._lastStatusMsg);
-            }
+            _softwareStatus.ReloadStatus();
         }
 
-        private void SetStatus(string msg)
+        public async void UpdateUserStatus(Object stateInfo)
         {
-            IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
-            if (statusbar == null)
-            {
-                return;
-            }
-            statusbar.SetText(msg);
-            this._lastStatusMsg = msg;
+            SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(null);
+            SoftwareLaunchCommand.UpdateEnabledState(status);
+            SoftwareLoginCommand.UpdateEnabledState(status);
+            SoftwareLogoutCommand.UpdateEnabledState(status);
+            SoftwareSignupCommand.UpdateEnabledState(status);
         }
 
-        public void CloseDashboard()
-        {
-            
-        }
+        private static string NO_DATA = "CODE TIME\n\nNo data available\n";
 
-        public static async void LaunchDashboardAsync()
+        public static async Task FetchCodeTimeDashboardAsync()
         {
             string dashboardFile = SoftwareCoUtil.getDashboardFile();
             HttpResponseMessage resp =
                 await SoftwareHttpManager.SendDashboardRequestAsync(HttpMethod.Get, "/dashboard");
-            string content = await resp.Content.ReadAsStringAsync();
-            
+            string content = NO_DATA;
+            if (SoftwareHttpManager.IsOk(resp))
+            {
+                content = await resp.Content.ReadAsStringAsync();
+            }
+
             if (File.Exists(dashboardFile))
             {
                 File.SetAttributes(dashboardFile, FileAttributes.Normal);
             }
             File.WriteAllText(dashboardFile, content);
             File.SetAttributes(dashboardFile, FileAttributes.ReadOnly);
+        }
+
+        public static async void LaunchCodeTimeDashboardAsync()
+        {
+            await FetchCodeTimeDashboardAsync();
+            string dashboardFile = SoftwareCoUtil.getDashboardFile();
             ObjDte.ItemOperations.OpenFile(dashboardFile);
         }
 

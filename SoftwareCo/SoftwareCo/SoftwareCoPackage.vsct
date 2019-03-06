@@ -56,20 +56,37 @@
       <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareDashboardLaunchCommand" priority="0x0000" type="Button">
         <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
         <Strings>
-          <ButtonText>Code Time Dashboard</ButtonText>
+          <ButtonText>Code time dashboard</ButtonText>
         </Strings>
       </Button>
       <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareLaunchCommand" priority="0x0100" type="Button">
         <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
         <Strings>
-          <ButtonText>Go to software.com</ButtonText>
+          <ButtonText>Web dashboard</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareTopFortyCommand" priority="0x0100" type="Button">
+      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareTopFortyCommand" priority="0x0200" type="Button">
         <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
-        <Icon guid="guidImages6" id="bmpPic1" />
         <Strings>
           <ButtonText>Software top 40</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareLoginCommand" priority="0x0300" type="Button">
+        <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
+        <Strings>
+          <ButtonText>Login in to see your coding data</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareLogoutCommand" priority="0x0400" type="Button">
+        <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
+        <Strings>
+          <ButtonText>Log out of Code Time</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareSignupCommand" priority="0x0500" type="Button">
+        <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
+        <Strings>
+          <ButtonText>Sign up a new account</ButtonText>
         </Strings>
       </Button>
     </Buttons>
@@ -99,6 +116,9 @@
       <IDSymbol name="cmdidSoftwareEnableMetricsCommand" value="4130" />
       <IDSymbol name="cmdidSoftwareDashboardLaunchCommand" value="4131"/>
       <IDSymbol name="cmdidSoftwareTopFortyCommand" value="4132" />
+      <IDSymbol name="cmdidSoftwareLoginCommand" value="4133" />
+      <IDSymbol name="cmdidSoftwareLogoutCommand" value="4134" />
+      <IDSymbol name="cmdidSoftwareSignupCommand" value="4135" />
     </GuidSymbol>
 
     <GuidSymbol name="guidImages" value="{54614706-87de-4c00-b8f5-888955b7804d}">

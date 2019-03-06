@@ -12,6 +12,8 @@ namespace SoftwareCo
         public bool initialized = false;
         // sublime = 1, vs code = 2, eclipse = 3, intellij = 4, visualstudio = 6, atom = 7
         public int pluginId = Constants.PluginId;
+        public String version = "";
+        public String os = "";
 
         // non-hardcoded attributes
         public JsonObject source = new JsonObject();
@@ -29,6 +31,8 @@ namespace SoftwareCo
         {
             start = SoftwareCoUtil.getNowInSeconds();
             project = projectInfo;
+            version = SoftwareCoPackage.GetVersion();
+            os = SoftwareCoPackage.GetOs();
         }
 
         public void ResetData()
@@ -71,6 +75,8 @@ namespace SoftwareCo
             jsonObj.Add("project", this.project.GetAsJson());
             jsonObj.Add("timezone", this.timezone);
             jsonObj.Add("offset", this.offset);
+            jsonObj.Add("version", this.version);
+            jsonObj.Add("os", this.os);
             return jsonObj.ToString();
         }
 
@@ -167,33 +173,30 @@ namespace SoftwareCo
                     dataCount = Convert.ToInt64(fileInfoData[property]) + count;
                 }
                 
-                
                 fileInfoData.Remove(property);
                 fileInfoData.Add(property, dataCount);
                 return;
             }
+        }
 
-            //
-            // not found, add it
-
-            fileInfoData = new JsonObject();
-            fileInfoData.Add("paste", 0);
-            fileInfoData.Add("open", 0);
-            fileInfoData.Add("close", 0);
-            fileInfoData.Add("delete", 0);
-            fileInfoData.Add("add", 0);
-            fileInfoData.Add("netkeys", 0);
-            fileInfoData.Add("length", 0);
-            fileInfoData.Add("lines", 0);
-            fileInfoData.Add("linesAdded", 0);
-            fileInfoData.Add("linesRemoved", 0);
-            fileInfoData.Add("syntax", "");
-            if (property != null && count > 0)
+        public void EnsureFileInfoDataIsPresent(string fileName)
+        {
+            if (!source.ContainsKey(fileName))
             {
-                fileInfoData.Remove(property);
-                fileInfoData.Add(property, count);
+                JsonObject fileInfoData = new JsonObject();
+                fileInfoData.Add("paste", 0);
+                fileInfoData.Add("open", 0);
+                fileInfoData.Add("close", 0);
+                fileInfoData.Add("delete", 0);
+                fileInfoData.Add("add", 0);
+                fileInfoData.Add("netkeys", 0);
+                fileInfoData.Add("length", 0);
+                fileInfoData.Add("lines", 0);
+                fileInfoData.Add("linesAdded", 0);
+                fileInfoData.Add("linesRemoved", 0);
+                fileInfoData.Add("syntax", "");
+                source.Add(fileName, fileInfoData);
             }
-            source.Add(fileName, fileInfoData);
         }
         
         private JsonObject getFileInfoFromSource(String sourceVal)
@@ -210,8 +213,6 @@ namespace SoftwareCo
     {
         public String name;
         public String directory;
-        public String identifier;
-        public IDictionary<string, string> resource;
 
         public ProjectInfo(String nameVal, String directoryVal)
         {
@@ -224,8 +225,6 @@ namespace SoftwareCo
             IDictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("name", this.name);
             dict.Add("directory", this.directory);
-            dict.Add("identifier", this.identifier);
-            dict.Add("resource", this.resource);
             return dict;
         }
 
@@ -234,8 +233,6 @@ namespace SoftwareCo
             JsonObject jsonObj = new JsonObject();
             jsonObj.Add("name", this.name);
             jsonObj.Add("directory", this.directory);
-            jsonObj.Add("identifier", this.identifier);
-            jsonObj.Add("resource", this.resource);
             return jsonObj;
         }
 

@@ -57,6 +57,9 @@
     <Compile Include="Guids.cs" />
     <Compile Include="SoftwareDashboardLaunchCommand.cs" />
     <Compile Include="SoftwareHttpManager.cs" />
+    <Compile Include="SoftwareLoginCommand.cs" />
+    <Compile Include="SoftwareLogoutCommand.cs" />
+    <Compile Include="SoftwareSignupCommand.cs" />
     <Compile Include="SoftwareSpotifyManager.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -68,6 +71,7 @@
     <Compile Include="SoftwareLaunchCommand.cs" />
     <Compile Include="SoftwarePauseMetricsCommand.cs" />
     <Compile Include="SoftwareRepoManager.cs" />
+    <Compile Include="SoftwareStatus.cs" />
     <Compile Include="SoftwareTopFortyCommand.cs" />
     <Compile Include="SoftwareUserSession.cs" />
   </ItemGroup>
@@ -106,6 +110,8 @@
     <Content Include="Resources\SoftwareEnableMetricsCommand.png" />
     <Content Include="Resources\SoftwareLaunchCommand.png" />
     <Content Include="Resources\SoftwarePauseMetricsCommand.png" />
+    <Content Include="Resources\SoftwareLoginCommand.png" />
+    <Content Include="Resources\SoftwareLogoutCommandy.png" />
     <Content Include="Resources\SoftwareTopFortyCommand.png" />
     <Content Include="stylesheet.css" />
   </ItemGroup>

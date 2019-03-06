@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.Shell;
 namespace SoftwareCo
 {
     /// <summary>
-    /// Command handler
+    /// Command handler for the web dashboard
     /// </summary>
     internal sealed class SoftwareLaunchCommand
     {
@@ -23,6 +23,8 @@ namespace SoftwareCo
         /// VS Package that provides this command, not null.
         /// </summary>
         private readonly Package package;
+
+        private static MenuCommand menuItem;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SoftwareLaunchCommand"/> class.
@@ -43,8 +45,23 @@ namespace SoftwareCo
             if (commandService != null)
             {
                 var menuCommandID = new CommandID(CommandSet, CommandId);
-                var menuItem = new MenuCommand(this.Execute, menuCommandID);
+                menuItem = new MenuCommand(this.Execute, menuCommandID);
                 commandService.AddCommand(menuItem);
+            }
+        }
+
+        public static async void UpdateEnabledState(SoftwareUserSession.UserStatus userStatus)
+        {
+            if (menuItem != null)
+            {
+                if (userStatus.loggedInUser != null)
+                {
+                    menuItem.Enabled = true;
+                }
+                else
+                {
+                    menuItem.Enabled = false;
+                }
             }
         }
 
@@ -86,7 +103,7 @@ namespace SoftwareCo
         /// <param name="e">Event args.</param>
         private void Execute(object sender, EventArgs e)
         {
-            SoftwareCoUtil.launchSoftwareDashboard();
+            SoftwareCoUtil.launchWebDashboard();
         }
     }
 }

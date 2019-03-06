@@ -157,10 +157,15 @@ namespace SoftwareCo
 
         public static async Task<HttpResponseMessage> SendRequestAsync(HttpMethod httpMethod, string uri, string optionalPayload)
         {
-            return await SendRequestAsync(httpMethod, uri, optionalPayload, 5);
+            return await SendRequestAsync(httpMethod, uri, optionalPayload, 10);
         }
 
-        public static async Task<HttpResponseMessage> SendRequestAsync(HttpMethod httpMethod, string uri, string optionalPayload, int timeout)
+        public static async Task<HttpResponseMessage> SendRequestAsync(HttpMethod httpMethod, string uri, string optionalPayload, string jwt)
+        {
+            return await SendRequestAsync(httpMethod, uri, optionalPayload, 10, jwt);
+        }
+
+        public static async Task<HttpResponseMessage> SendRequestAsync(HttpMethod httpMethod, string uri, string optionalPayload, int timeout, string jwt = null)
         {
 
             if (!SoftwareCoUtil.isTelemetryOn())
@@ -174,16 +179,29 @@ namespace SoftwareCo
             };
             var cts = new CancellationTokenSource();
             HttpResponseMessage response = null;
-            object jwt = SoftwareCoUtil.getItem("jwt");
+            if (jwt == null)
+            {
+                object jwtObj = SoftwareCoUtil.getItem("jwt");
+                if (jwtObj != null)
+                {
+                    jwt = (string)jwtObj;
+                }
+            }
             if (jwt != null)
             {
                 // add the authorizationn
-                client.DefaultRequestHeaders.Add("Authorization", (string)jwt);
+                client.DefaultRequestHeaders.Add("Authorization", jwt);
             }
             HttpContent contentPost = null;
-            if (optionalPayload != null)
+            try
             {
-                contentPost = new StringContent(optionalPayload, Encoding.UTF8, "application/json");
+                if (optionalPayload != null)
+                {
+                    contentPost = new StringContent(optionalPayload, Encoding.UTF8, "application/json");
+                }
+            } catch (Exception e)
+            {
+                NotifyPostException(e);
             }
             bool isPost = (httpMethod.Equals(HttpMethod.Post));
             try

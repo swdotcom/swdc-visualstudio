@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 // using SpotifyAPI.Local;
@@ -151,68 +152,48 @@ namespace SoftwareCo
             Process.Start(url);
         }
 
-        public static void launchSoftwareDashboard()
+        public static string GetNewOrExistingToken()
         {
-            string url = Constants.url_endpoint;
             object tokenVal = getItem("token");
-            object jwtVal = getItem("jwt");
-
-            bool addedToken = false;
+            string token = "";
             if (tokenVal == null || ((string)tokenVal).Equals(""))
             {
-                tokenVal = createToken();
-                setItem("token", tokenVal);
-                addedToken = true;
-            }
-            else if (jwtVal == null || ((string)jwtVal).Equals(""))
+                token = createToken();
+                setItem("token", token);
+            } else
             {
-                addedToken = true;
+                token = (string)tokenVal;
             }
+            return token;
+        }
 
-            if (addedToken)
-            {
-                url += "/login?token=" + (string)tokenVal;
-                RetrieveAuthTokenTimeout(60000);
-            }
+        public static void launchWebDashboard()
+        {
+            string url = Constants.url_endpoint;
+            Process.Start(url);
+        }
 
-           Process.Start(url);
+        public static void launchLogin()
+        {
+            string macAddress = SoftwareUserSession.GetMacAddress();
+            string url = Constants.url_endpoint + "/login?addr=" + WebUtility.UrlEncode(macAddress);
+            Process.Start(url);
+
+            SoftwareUserSession.RefetchUserStatusLazily(4);
+        }
+
+        public static void launchSignup()
+        {
+            string macAddress = SoftwareUserSession.GetMacAddress();
+            string url = Constants.url_endpoint + "/onboarding?addr=" + WebUtility.UrlEncode(macAddress);
+            Process.Start(url);
+
+            SoftwareUserSession.RefetchUserStatusLazily(6);
         }
 
         public static string createToken()
         {
             return System.Guid.NewGuid().ToString().Replace("-", "");
-        }
-
-        public static async void RetrieveAuthTokenTimeout(int millisToWait)
-        {
-            await Task.Delay(millisToWait);
-            RetrieveAuthToken();
-        }
-
-        public static async void RetrieveAuthToken()
-        {
-            object token = getItem("token");
-            string jwt = null;
-            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/users/plugin/confirm?token=" + token, null);
-            if (SoftwareHttpManager.IsOk(response))
-            {
-                string responseBody = await response.Content.ReadAsStringAsync();
-                IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
-                jsonObj.TryGetValue("jwt", out object jwtObj);
-                jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
-
-                if (jwt != null)
-                {
-                    setItem("jwt", jwt);
-                }
-
-                setItem("vs_lastUpdateTime", getNowInSeconds());
-            }
-
-            if (jwt == null)
-            {
-                RetrieveAuthTokenTimeout(120000);
-            }
         }
 
         public static long getNowInSeconds()
