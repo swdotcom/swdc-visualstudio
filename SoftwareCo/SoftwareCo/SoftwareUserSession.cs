@@ -15,11 +15,13 @@ namespace SoftwareCo
 
         private static Regex macAddrRegex = new Regex("^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$");
 
+        private static long lastRegisterUserCheck = 0;
+        private static UserStatus currentUserStatus = null;
+
         public class UserStatus
         {
             public User loggedInUser;
             public string email;
-            public bool hasAccounts;
             public bool hasUserAccounts;
         }
 
@@ -32,19 +34,10 @@ namespace SoftwareCo
             public string mac_addr_share;
         }
 
-        public static async Task<bool> RequiresUserCreationAsync()
+        public static void clearUserStatusCache()
         {
-            string sessionFile = SoftwareCoUtil.getSoftwareSessionFile();
-            bool hasSessionFile = (File.Exists(sessionFile)) ? true : false;
-            bool hasJwt = HasJwt();
-            bool online = await IsOnlineAsync();
-
-            if (online && (!hasSessionFile || !hasJwt))
-            {
-                return true;
-            }
-
-            return false;
+            lastRegisterUserCheck = 0;
+            currentUserStatus = null;
         }
 
         public static async Task<bool> IsOnlineAsync()
@@ -260,37 +253,38 @@ namespace SoftwareCo
             string macAddress = GetMacAddress();
             if (authAccounts != null && authAccounts.Count > 0)
             {
-                User loggedInUser = null;
-                User secondaryUser = null;
-                User anonAccount = null;
                 foreach (User user in authAccounts)
                 {
-                    string userMacAddr = user.mac_addr;
-                    string userEmail = user.email;
-                    string userMacAddrShare = user.mac_addr_share;
-                    if (userMacAddr != null && userEmail != null && !userEmail.Equals(userMacAddr) && userMacAddr.Equals(macAddress))
+                    string userMacAddr = (user.mac_addr != null) ? user.mac_addr : "";
+                    string userEmail = (user.email != null) ? user.email : "";
+                    string userMacAddrShare = (user.mac_addr_share != null) ? user.mac_addr_share : "";
+                    if (!userEmail.Equals(userMacAddr) &&
+                        !userEmail.Equals(macAddress) &&
+                        !userEmail.Equals(userMacAddrShare) &&
+                        userMacAddr.Equals(macAddress))
                     {
-                        loggedInUser = user;
-                        break;
-                    } else if (!userEmail.Equals(userMacAddrShare))
-                    {
-                        secondaryUser = user;
-                    } else if (anonAccount == null && (userEmail.Equals(userMacAddr) || userEmail.Equals(macAddress)))
-                    {
-                        anonAccount = user;
+                        return user;
                     }
                 }
+            }
 
-                if (loggedInUser != null)
+            return null;
+        }
+
+        private static User GetAnonymousInUser(List<User> authAccounts)
+        {
+            string macAddress = GetMacAddress();
+            if (authAccounts != null && authAccounts.Count > 0)
+            {
+                foreach (User user in authAccounts)
                 {
-                    updateSessionUserInfo(loggedInUser);
-                    return loggedInUser;
-                } else if (anonAccount != null)
-                {
-                    updateSessionUserInfo(anonAccount);
-                } else if (secondaryUser != null)
-                {
-                    updateSessionUserInfo(secondaryUser);
+                    string userMacAddr = (user.mac_addr != null) ? user.mac_addr : "";
+                    string userEmail = (user.email != null) ? user.email : "";
+                    string userMacAddrShare = (user.mac_addr_share != null) ? user.mac_addr_share : "";
+                    if (userEmail.Equals(userMacAddr) || userEmail.Equals(macAddress) || userEmail.Equals(userMacAddrShare))
+                    {
+                        return user;
+                    }
                 }
             }
 
@@ -306,46 +300,51 @@ namespace SoftwareCo
             SoftwareCoUtil.setItem("vs_lastUpdateTime", SoftwareCoUtil.getNowInSeconds());
         }
 
-        private static bool HasRegisteredAccounts(List<User> authAccounts)
-        {
-            string macAddress = GetMacAddress();
-            if (authAccounts != null && authAccounts.Count > 0)
-            {
-                foreach (User user in authAccounts)
-                {
-                    if (!user.email.Equals(macAddress) && !user.email.Equals(user.mac_addr))
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
-        private static bool HasPluginAccounts(List<User> authAccounts)
-        {
-            if (authAccounts != null && authAccounts.Count > 0)
-            {
-                return true;
-            }
-            return false;
-        }
-
 
         public static async Task<UserStatus> GetUserStatusAsync(string token)
         {
-            UserStatus userStatus = new UserStatus();
+            long nowInSec = SoftwareCoUtil.getNowInSeconds();
+            if (currentUserStatus != null && lastRegisterUserCheck > 0)
+            {
+                if (nowInSec - lastRegisterUserCheck <= 5)
+                {
+                    return currentUserStatus;
+                }
+            }
+
+            // make sure we have an app jwt
+            string app_jwt = await GetAppJwtAsync();
+
+            if (currentUserStatus == null)
+            {
+                currentUserStatus = new UserStatus();
+            }
             List<User> authAccounts = await GetAuthenticatedPluginAccountsAsync(token);
             User loggedInUser = GetLoggedInUser(authAccounts);
-            bool hasUserAccounts = HasRegisteredAccounts(authAccounts);
-            bool hasAccounts = HasPluginAccounts(authAccounts);
+            User anonUser = GetAnonymousInUser(authAccounts);
+            if(anonUser == null)
+            {
+                await CreateAnonymousUserAsync();
+                authAccounts = await GetAuthenticatedPluginAccountsAsync(token);
+                anonUser = GetAnonymousInUser(authAccounts);
+            }
+            bool hasUserAccounts = (loggedInUser != null) ? true : false;
+            if (loggedInUser != null)
+            {
+                updateSessionUserInfo(loggedInUser);
+            } else if (anonUser != null)
+            {
+                updateSessionUserInfo(anonUser);
+            }
 
-            userStatus.email = (loggedInUser != null) ? loggedInUser.email : null;
-            userStatus.loggedInUser = loggedInUser;
-            userStatus.hasAccounts = hasAccounts;
-            userStatus.hasUserAccounts = hasUserAccounts;
+            currentUserStatus.loggedInUser = loggedInUser;
+            currentUserStatus.hasUserAccounts = hasUserAccounts;
+            currentUserStatus.email = (loggedInUser != null) ? loggedInUser.email : null;
 
-            return userStatus;
+            lastRegisterUserCheck = SoftwareCoUtil.getNowInSeconds();
+
+
+            return currentUserStatus;
         }
 
         public static async void RefetchUserStatusLazily(int tryCountUntilFoundUser)
@@ -356,7 +355,7 @@ namespace SoftwareCo
                 tryCountUntilFoundUser -= 1;
                 Thread t = new Thread(() =>
                 {
-                    Thread.Sleep(1000 * 10);
+                    Thread.Sleep(1000 * 8);
                     RefetchUserStatusLazily(tryCountUntilFoundUser);
                 });
             } else

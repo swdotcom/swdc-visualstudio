@@ -1,16 +1,11 @@
 ﻿using System;
 using System.ComponentModel.Design;
-using System.Globalization;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using Task = System.Threading.Tasks.Task;
 
 namespace SoftwareCo
 {
     /// <summary>
-    /// Command handler
+    /// Command handler for launching the software top 40
     /// </summary>
     internal sealed class SoftwareTopFortyCommand
     {

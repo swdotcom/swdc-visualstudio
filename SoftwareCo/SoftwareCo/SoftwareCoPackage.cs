@@ -631,21 +631,12 @@ namespace SoftwareCo
 
         private async void initializeUserInfo()
         {
-            bool requiresAnonAcct = await SoftwareUserSession.RequiresUserCreationAsync();
-            if (requiresAnonAcct)
-            {
-                await SoftwareUserSession.CreateAnonymousUserAsync();
-            }
 
             SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(null);
             SoftwareLaunchCommand.UpdateEnabledState(status);
             SoftwareLoginCommand.UpdateEnabledState(status);
             SoftwareLogoutCommand.UpdateEnabledState(status);
             SoftwareSignupCommand.UpdateEnabledState(status);
-            if (!status.hasAccounts)
-            {
-                this.AuthenticationNotificationCheck();
-            }
         }
 
         private String getDownloadDestinationDirectory()

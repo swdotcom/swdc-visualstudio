@@ -179,7 +179,7 @@ namespace SoftwareCo
             string url = Constants.url_endpoint + "/login?addr=" + WebUtility.UrlEncode(macAddress);
             Process.Start(url);
 
-            SoftwareUserSession.RefetchUserStatusLazily(4);
+            SoftwareUserSession.RefetchUserStatusLazily(6);
         }
 
         public static void launchSignup()
@@ -188,7 +188,7 @@ namespace SoftwareCo
             string url = Constants.url_endpoint + "/onboarding?addr=" + WebUtility.UrlEncode(macAddress);
             Process.Start(url);
 
-            SoftwareUserSession.RefetchUserStatusLazily(6);
+            SoftwareUserSession.RefetchUserStatusLazily(10);
         }
 
         public static string createToken()

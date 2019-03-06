@@ -6,6 +6,7 @@ namespace SoftwareCo
 {
     /// <summary>
     /// Command handler for the code time dashboard
+    /// 
     /// </summary>
     internal sealed class SoftwareDashboardLaunchCommand
     {
