@@ -271,6 +271,28 @@ namespace SoftwareCo
             return null;
         }
 
+        private static bool HasRegisteredUserAccount(List<User> authAccounts)
+        {
+            string macAddress = GetMacAddress();
+            if (authAccounts != null && authAccounts.Count > 0)
+            {
+                foreach (User user in authAccounts)
+                {
+                    string userMacAddr = (user.mac_addr != null) ? user.mac_addr : "";
+                    string userEmail = (user.email != null) ? user.email : "";
+                    string userMacAddrShare = (user.mac_addr_share != null) ? user.mac_addr_share : "";
+                    if (!userEmail.Equals(userMacAddr) &&
+                        !userEmail.Equals(macAddress) &&
+                        !userEmail.Equals(userMacAddrShare))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         private static User GetAnonymousInUser(List<User> authAccounts)
         {
             string macAddress = GetMacAddress();
@@ -328,7 +350,7 @@ namespace SoftwareCo
                 authAccounts = await GetAuthenticatedPluginAccountsAsync(token);
                 anonUser = GetAnonymousInUser(authAccounts);
             }
-            bool hasUserAccounts = (loggedInUser != null) ? true : false;
+            bool hasUserAccounts = HasRegisteredUserAccount(authAccounts);
             if (loggedInUser != null)
             {
                 updateSessionUserInfo(loggedInUser);
