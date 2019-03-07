@@ -178,9 +178,6 @@ namespace SoftwareCo
         private static async Task<List<User>> GetAuthenticatedPluginAccountsAsync(string token)
         {
             List<User> users = new List<User>();
-            object jwtObj = SoftwareCoUtil.getItem("jwt");
-            object appJwt = SoftwareCoUtil.getItem("app_jwt");
-            string authenticatingJwt = (jwtObj != null) ? (string)jwtObj : (string)appJwt;
             string macAddress = GetMacAddress();
             string tokenQryStr = "";
             if (token == null)
@@ -193,7 +190,7 @@ namespace SoftwareCo
             }
 
             bool online = await IsOnlineAsync();
-            if (authenticatingJwt != null && online)
+            if (online)
             {
                 string api = "/users/plugin/accounts" + tokenQryStr;
                 HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, null);
