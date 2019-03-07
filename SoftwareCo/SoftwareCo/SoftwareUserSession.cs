@@ -64,11 +64,9 @@ namespace SoftwareCo
         {
             // get the app jwt
             string app_jwt = await GetAppJwtAsync();
-            // get the jwt
-            string jwt = GetJwt();
             // get the mac addr
             string macAddr = GetMacAddress();
-            if (app_jwt != null && jwt == null && macAddr != null)
+            if (app_jwt != null &&  macAddr != null)
             {
                 string token = SoftwareCoUtil.GetNewOrExistingToken();
                 string email = macAddr;
@@ -97,7 +95,7 @@ namespace SoftwareCo
                     string responseBody = await response.Content.ReadAsStringAsync();
                     IDictionary<string, object> respObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
                     respObj.TryGetValue("jwt", out object jwtObj);
-                    jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
+                    string jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
                     if (jwt != null)
                     {
                         SoftwareCoUtil.setItem("jwt", jwt);
@@ -118,9 +116,6 @@ namespace SoftwareCo
         public static string GetMacAddress()
         {
             string osUsername = Environment.UserName;
-
-            String userHomeDir = Environment.ExpandEnvironmentVariables("%HOMEPATH%");
-            DateTime userHomeDirCreateTime = Directory.GetCreationTime(userHomeDir);
 
             const int MIN_MAC_ADDR_LENGTH = 12;
             string macAddr = string.Empty;
@@ -145,16 +140,15 @@ namespace SoftwareCo
             }
             
 
-            string identifier = osUsername + "_" + macAddr + "_" + Date.GetTime(userHomeDirCreateTime);
+            string identifier = osUsername + "_" + macAddr;
             return identifier;
         }
         public static async Task<string> GetAppJwtAsync()
         {
-            object appJwt = SoftwareCoUtil.getItem("app_jwt");
-            bool hasAppJwt = (appJwt != null && !((string)appJwt).Equals(""));
+            SoftwareCoUtil.setItem("app_jwt", null);
             bool online = await IsOnlineAsync();
 
-            if (!hasAppJwt && online)
+            if (online)
             {
                 string macAddress = GetMacAddress();
                 if (macAddress != null)
@@ -173,14 +167,11 @@ namespace SoftwareCo
                         {
                             SoftwareCoUtil.setItem("app_jwt", app_jwt);
                         }
+                        return app_jwt;
                     }
                 }
             }
-            appJwt = SoftwareCoUtil.getItem("app_jwt");
-            if (appJwt != null)
-            {
-                return (string)appJwt;
-            }
+
             return null;
         }
 
@@ -333,9 +324,6 @@ namespace SoftwareCo
                     return currentUserStatus;
                 }
             }
-
-            // make sure we have an app jwt
-            string app_jwt = await GetAppJwtAsync();
 
             if (currentUserStatus == null)
             {
