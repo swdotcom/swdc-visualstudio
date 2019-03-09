@@ -207,7 +207,7 @@ namespace SoftwareCo
                     UpdateUserStatus,
                     autoEvent,
                     ONE_MINUTE,
-                    1000 * 90);
+                    1000 * 120);
 
                 this.initializeUserInfo();
             }

@@ -13,7 +13,9 @@ namespace SoftwareCo
     class SoftwareUserSession
     {
 
-        private static Regex macAddrRegex = new Regex("^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$");
+        private static Regex MAC_PATTERN = new Regex("([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})");
+        private static Regex MAC_PAIR_PATTERN = new Regex("([a-fA-F0-9]{2}[:\\.-]?){5}[a-fA-F0-9]{2}");
+        private static Regex MAC_TRIPLE_PATTERN = new Regex("([a-fA-F0-9]{3}[:\\.-]?){3}[a-fA-F0-9]{3}");
 
         private static long lastRegisterUserCheck = 0;
         private static UserStatus currentUserStatus = null;
@@ -66,7 +68,7 @@ namespace SoftwareCo
             string app_jwt = await GetAppJwtAsync();
             // get the mac addr
             string macAddr = GetMacAddress();
-            if (app_jwt != null &&  macAddr != null)
+            if (app_jwt != null && macAddr != null)
             {
                 string token = SoftwareCoUtil.GetNewOrExistingToken();
                 string email = macAddr;
@@ -236,6 +238,26 @@ namespace SoftwareCo
             return users;
         }
 
+        private static bool IsMacEmail(string email)
+        {
+            if (email.Contains("_"))
+            {
+                string[] parts = email.Split('_');
+                foreach (string part in parts)
+                {
+                    if (MAC_PAIR_PATTERN.IsMatch(part) || MAC_PATTERN.IsMatch(part) || MAC_TRIPLE_PATTERN.IsMatch(part))
+                    {
+                        return true;
+                    }
+                }
+            }
+            else if (MAC_PAIR_PATTERN.IsMatch(email) || MAC_PATTERN.IsMatch(email) || MAC_TRIPLE_PATTERN.IsMatch(email))
+            {
+                return true;
+            }
+            return false;
+        }
+
         private static User GetLoggedInUser(List<User> authAccounts)
         {
             string macAddress = GetMacAddress();
@@ -261,17 +283,11 @@ namespace SoftwareCo
 
         private static bool HasRegisteredUserAccount(List<User> authAccounts)
         {
-            string macAddress = GetMacAddress();
             if (authAccounts != null && authAccounts.Count > 0)
             {
                 foreach (User user in authAccounts)
                 {
-                    string userMacAddr = (user.mac_addr != null) ? user.mac_addr : "";
-                    string userEmail = (user.email != null) ? user.email : "";
-                    string userMacAddrShare = (user.mac_addr_share != null) ? user.mac_addr_share : "";
-                    if (!userEmail.Equals(userMacAddr) &&
-                        !userEmail.Equals(macAddress) &&
-                        !userEmail.Equals(userMacAddrShare))
+                    if (user.email != null && !IsMacEmail(user.email))
                     {
                         return true;
                     }
@@ -283,15 +299,11 @@ namespace SoftwareCo
 
         private static User GetAnonymousInUser(List<User> authAccounts)
         {
-            string macAddress = GetMacAddress();
             if (authAccounts != null && authAccounts.Count > 0)
             {
                 foreach (User user in authAccounts)
                 {
-                    string userMacAddr = (user.mac_addr != null) ? user.mac_addr : "";
-                    string userEmail = (user.email != null) ? user.email : "";
-                    string userMacAddrShare = (user.mac_addr_share != null) ? user.mac_addr_share : "";
-                    if (userEmail.Equals(userMacAddr) || userEmail.Equals(macAddress) || userEmail.Equals(userMacAddrShare))
+                    if (user.email != null && IsMacEmail(user.email))
                     {
                         return user;
                     }
