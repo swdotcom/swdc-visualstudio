@@ -44,7 +44,7 @@ namespace SoftwareCo
         /// SoftwareCoPackage GUID string.
         /// </summary>
         public const string PackageGuidString = "0ae38c4e-1ac5-4457-bdca-bb2dfc342a1c";
-        
+
         private DTEEvents _dteEvents;
         private DocumentEvents _docEvents;
         private WindowEvents _windowEvents;
@@ -72,7 +72,6 @@ namespace SoftwareCo
         private bool _isOnline = true;
         private bool _isAuthenticated = true;
         private bool _hasJwt = true;
-        private bool _hasToken = false;
 
         private static int THIRTY_SECONDS = 1000 * 30;
         private static int ONE_MINUTE = THIRTY_SECONDS * 2;
@@ -105,7 +104,7 @@ namespace SoftwareCo
             _dteEvents = ObjDte.Events.DTEEvents;
             _dteEvents.OnStartupComplete += OnOnStartupComplete;
 
-            Task.Run(async() =>
+            Task.Run(async () =>
             {
                 await InitializeListenersAsync();
             });
@@ -143,12 +142,8 @@ namespace SoftwareCo
                 // initialize the menu commands
                 SoftwareLaunchCommand.Initialize(this);
                 SoftwareDashboardLaunchCommand.Initialize(this);
-                SoftwareEnableMetricsCommand.Initialize(this);
-                SoftwarePauseMetricsCommand.Initialize(this);
                 SoftwareTopFortyCommand.Initialize(this);
                 SoftwareLoginCommand.Initialize(this);
-                SoftwareLogoutCommand.Initialize(this);
-                SoftwareSignupCommand.Initialize(this);
 
                 if (_softwareRepoUtil == null)
                 {
@@ -249,9 +244,9 @@ namespace SoftwareCo
             {
                 return;
             }
-            
+
             InitializeSoftwareData(fileName);
-            
+
             FileInfo fi = new FileInfo(fileName);
 
             _softwareData.UpdateData(fileName, "length", fi.Length);
@@ -294,7 +289,7 @@ namespace SoftwareCo
                     _softwareData.UpdateData(fileName, "add", 1);
                     Logger.Info("Code Time: KPM incremented");
                 }
-                
+
                 if (isNewLine)
                 {
                     _softwareData.addOrUpdateFileInfo(fileName, "linesAdded", 1);
@@ -401,13 +396,15 @@ namespace SoftwareCo
                     && TimeZone.CurrentTimeZone.DaylightName != TimeZone.CurrentTimeZone.StandardName)
                 {
                     _softwareData.timezone = TimeZone.CurrentTimeZone.DaylightName;
-                } else {
+                }
+                else
+                {
                     _softwareData.timezone = TimeZone.CurrentTimeZone.StandardName;
                 }
 
                 string softwareDataContent = _softwareData.GetAsJson();
                 Logger.Info("Code Time: sending: " + softwareDataContent);
-                
+
                 if (SoftwareCoUtil.isTelemetryOn())
                 {
 
@@ -436,41 +433,12 @@ namespace SoftwareCo
             File.AppendAllText(datastoreFile, softwareDataContent + Environment.NewLine);
         }
 
-        private bool HasToken()
+        private async void LaunchLoginPrompt()
         {
-            object token = SoftwareCoUtil.getItem("token");
-            this._hasToken = (token != null && !((string)token).Equals(""));
-            return this._hasToken;
-        }
-
-        private void UpdateStatus()
-        {
-            if (!this._hasJwt || !this._isAuthenticated || !this._isOnline)
-            {
-                _softwareStatus.SetStatus("Code Time");
-            }
-        }
-
-        private async void AuthenticationNotificationCheck()
-        {
-            object lastUpdateTimeObj = SoftwareCoUtil.getItem("vs_lastUpdateTime");
-            long lastUpdate = (lastUpdateTimeObj != null) ? (long)lastUpdateTimeObj : 0;
-            long nowInSec = SoftwareCoUtil.getNowInSeconds();
-
-            SoftwareUserSession.UserStatus userStatus = await SoftwareUserSession.GetUserStatusAsync(null);
             bool online = await SoftwareUserSession.IsOnlineAsync();
 
-            bool isInitialCheck = false;
-            if (lastUpdate > 0 && nowInSec - lastUpdate < 10)
+            if (online)
             {
-                isInitialCheck = true;
-            }
-
-            if (online && isInitialCheck && !userStatus.hasUserAccounts)
-            {
-
-                SoftwareCoUtil.setItem("vs_lastUpdateTime", nowInSec);
-
                 string msg = "To see your coding data in Code Time, please log in to your account.";
 
                 Guid clsid = Guid.Empty;
@@ -492,7 +460,7 @@ namespace SoftwareCo
                 if (result == 1)
                 {
                     // launch the browser
-                    SoftwareCoUtil.launchSignup();
+                    SoftwareCoUtil.launchLogin();
                 }
             }
         }
@@ -543,7 +511,7 @@ namespace SoftwareCo
 
                 jsonObj.TryGetValue("inFlow", out object inFlowObj);
                 bool inFlow = (inFlowObj == null) ? true : Convert.ToBoolean(inFlowObj);
-                    
+
                 jsonObj.TryGetValue("lastKpm", out object lastKpm);
                 long lastKpmVal = (lastKpm == null) ? 0 : Convert.ToInt64(lastKpm);
 
@@ -555,7 +523,7 @@ namespace SoftwareCo
 
                 jsonObj.TryGetValue("currentSessionGoalPercent", out object currentSessionGoalPercent);
                 double currentSessionGoalPercentVal = (currentSessionGoalPercent == null) ? 0.0 : Convert.ToDouble(currentSessionGoalPercent);
-                    
+
                 jsonObj.TryGetValue("currentSessionMinutes", out object currentSessionMinutes);
                 long currentSessionMinutesVal = (currentSessionMinutes == null) ? 0 : Convert.ToInt64(currentSessionMinutes);
 
@@ -578,7 +546,7 @@ namespace SoftwareCo
                 FetchCodeTimeDashboardAsync();
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             }
-            
+
         }
 
         private bool EnoughTimePassed(DateTime now)
@@ -631,12 +599,27 @@ namespace SoftwareCo
 
         private async void initializeUserInfo()
         {
+            string jwt = SoftwareCoUtil.getItem("jwt");
+            bool initializingPlugin = false;
+            if (jwt == null)
+            {
+                initializingPlugin = true;
+            }
 
             SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(null);
             SoftwareLaunchCommand.UpdateEnabledState(status);
             SoftwareLoginCommand.UpdateEnabledState(status);
-            SoftwareLogoutCommand.UpdateEnabledState(status);
-            SoftwareSignupCommand.UpdateEnabledState(status);
+
+            if (initializingPlugin)
+            {
+                LaunchLoginPrompt();
+            }
+
+            Thread t = new Thread(() =>
+            {
+                Thread.Sleep(1000);
+                ProcessFetchDailyKpmTimerCallbackAsync(null);
+            });
         }
 
         private String getDownloadDestinationDirectory()

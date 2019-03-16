@@ -55,13 +55,15 @@ namespace SoftwareCo
         {
             if (menuItem != null)
             {
-                if (userStatus.loggedInUser != null)
+                if (userStatus.loggedIn)
                 {
                     menuItem.Enabled = false;
+                    menuItem.Visible = false;
                 }
                 else
                 {
                     menuItem.Enabled = true;
+                    menuItem.Visible = true;
                 }
             }
         }

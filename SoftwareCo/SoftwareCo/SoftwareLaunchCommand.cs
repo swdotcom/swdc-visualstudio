@@ -54,7 +54,7 @@ namespace SoftwareCo
         {
             if (menuItem != null)
             {
-                if (userStatus.loggedInUser != null)
+                if (userStatus.loggedIn)
                 {
                     menuItem.Enabled = true;
                 }

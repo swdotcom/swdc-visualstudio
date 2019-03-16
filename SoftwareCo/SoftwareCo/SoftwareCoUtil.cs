@@ -7,6 +7,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 // using SpotifyAPI.Local;
 // using SpotifyAPI.Local.Enums;
 // using SpotifyAPI.Local.Models;
@@ -65,7 +66,8 @@ namespace SoftwareCo
                 {
                     return output.Trim();
                 }
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 Logger.Error("Code Time: Unable to execute command, error: " + e.Message);
             }
@@ -119,11 +121,44 @@ namespace SoftwareCo
             File.WriteAllText(sessionFile, content);
         }
 
+        public static void CleanSessionInfo()
+        {
+            string sessionFile = getSoftwareSessionAsJson();
+            IDictionary<string, object> dict = new Dictionary<string, object>();
+            string content = "";
+            if (File.Exists(sessionFile))
+            {
+                content = File.ReadAllText(sessionFile);
+                // conver to dictionary
+                dict = (IDictionary<string, object>)SimpleJson.DeserializeObject(content);
+            }
+
+            for (int i = dict.Count - 1; i >= 0; i--)
+            {
+                KeyValuePair<string, object> kvp = dict.ElementAt(i);
+                string key = kvp.Key;
+                if (!key.Equals("jwt") && !key.Equals("name"))
+                {
+                    // remove it
+                    dict.Remove(key);
+                }
+            }
+
+            content = SimpleJson.SerializeObject(dict);
+            // write it back to the file
+            File.WriteAllText(sessionFile, content);
+        }
+
+        public static bool IsValidEmail(string email)
+        {
+            return new EmailAddressAttribute().IsValid(email);
+        }
+
         public static String getDashboardFile()
         {
             return getSoftwareDataDir() + "\\CodeTime.txt";
         }
-        
+
         public static String getSoftwareDataDir()
         {
             String userHomeDir = Environment.ExpandEnvironmentVariables("%HOMEPATH%");
@@ -152,21 +187,6 @@ namespace SoftwareCo
             Process.Start(url);
         }
 
-        public static string GetNewOrExistingToken()
-        {
-            object tokenVal = getItem("token");
-            string token = "";
-            if (tokenVal == null || ((string)tokenVal).Equals(""))
-            {
-                token = createToken();
-                setItem("token", token);
-            } else
-            {
-                token = (string)tokenVal;
-            }
-            return token;
-        }
-
         public static void launchWebDashboard()
         {
             string url = Constants.url_endpoint;
@@ -175,25 +195,11 @@ namespace SoftwareCo
 
         public static void launchLogin()
         {
-            string macAddress = SoftwareUserSession.GetMacAddress();
-            string url = Constants.url_endpoint + "/login?addr=" + WebUtility.UrlEncode(macAddress);
-            Process.Start(url);
-
-            SoftwareUserSession.RefetchUserStatusLazily(8);
-        }
-
-        public static void launchSignup()
-        {
-            string macAddress = SoftwareUserSession.GetMacAddress();
-            string url = Constants.url_endpoint + "/onboarding?addr=" + WebUtility.UrlEncode(macAddress);
+            string jwt = getItem("jwt");
+            string url = Constants.url_endpoint + "/onboarding?token=" + WebUtility.UrlEncode(jwt);
             Process.Start(url);
 
             SoftwareUserSession.RefetchUserStatusLazily(12);
-        }
-
-        public static string createToken()
-        {
-            return System.Guid.NewGuid().ToString().Replace("-", "");
         }
 
         public static long getNowInSeconds()
@@ -242,7 +248,8 @@ namespace SoftwareCo
                 if (hours % 1 == 0)
                 {
                     formatedHrs = String.Format("{0:n0}", hours);
-                } else
+                }
+                else
                 {
                     formatedHrs = String.Format("{0:0.00}", hours);
                 }

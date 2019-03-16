@@ -77,18 +77,7 @@
           <ButtonText>Login in to see your coding data</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareLogoutCommand" priority="0x0400" type="Button">
-        <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
-        <Strings>
-          <ButtonText>Log out of Code Time</ButtonText>
-        </Strings>
-      </Button>
-      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareSignupCommand" priority="0x0500" type="Button">
-        <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
-        <Strings>
-          <ButtonText>Sign up a new account</ButtonText>
-        </Strings>
-      </Button>
+
     </Buttons>
 
     <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
@@ -112,13 +101,9 @@
     <GuidSymbol name="guidSoftwareCoPackageCmdSet" value="{76eda5aa-cf64-4fb5-9d52-06c48a00adbd}">
       <IDSymbol name="SoftwareToolsGroup" value="0x1020" />
       <IDSymbol name="cmdidSoftwareLaunchCommand" value="4129" />
-      <IDSymbol name="cmdidSoftwarePauseMetricsCommand" value="256" />
-      <IDSymbol name="cmdidSoftwareEnableMetricsCommand" value="4130" />
       <IDSymbol name="cmdidSoftwareDashboardLaunchCommand" value="4131"/>
       <IDSymbol name="cmdidSoftwareTopFortyCommand" value="4132" />
       <IDSymbol name="cmdidSoftwareLoginCommand" value="4133" />
-      <IDSymbol name="cmdidSoftwareLogoutCommand" value="4134" />
-      <IDSymbol name="cmdidSoftwareSignupCommand" value="4135" />
     </GuidSymbol>
 
     <GuidSymbol name="guidImages" value="{54614706-87de-4c00-b8f5-888955b7804d}">
