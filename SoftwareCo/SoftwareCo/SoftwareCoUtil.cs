@@ -209,7 +209,7 @@ namespace SoftwareCo
         public static void launchLogin()
         {
             string jwt = SoftwareUserSession.GetJwt();
-            string url = Constants.url_endpoint + "/onboarding?token=" + WebUtility.UrlEncode(jwt);
+            string url = Constants.url_endpoint + "/onboarding?token=" + jwt;
             Process.Start(url);
 
             SoftwareUserSession.RefetchUserStatusLazily(12);
