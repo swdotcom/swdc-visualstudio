@@ -599,7 +599,7 @@ namespace SoftwareCo
 
         private async void initializeUserInfo()
         {
-            string jwt = SoftwareCoUtil.getItem("jwt");
+            string jwt = SoftwareUserSession.GetJwt();
             bool initializingPlugin = false;
             if (jwt == null)
             {
@@ -615,11 +615,7 @@ namespace SoftwareCo
                 LaunchLoginPrompt();
             }
 
-            Thread t = new Thread(() =>
-            {
-                Thread.Sleep(1000);
-                ProcessFetchDailyKpmTimerCallbackAsync(null);
-            });
+            ProcessFetchDailyKpmTimerCallbackAsync(null);
         }
 
         private String getDownloadDestinationDirectory()
@@ -637,8 +633,6 @@ namespace SoftwareCo
             SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(null);
             SoftwareLaunchCommand.UpdateEnabledState(status);
             SoftwareLoginCommand.UpdateEnabledState(status);
-            SoftwareLogoutCommand.UpdateEnabledState(status);
-            SoftwareSignupCommand.UpdateEnabledState(status);
         }
 
         private static string NO_DATA = "CODE TIME\n\nNo data available\n";

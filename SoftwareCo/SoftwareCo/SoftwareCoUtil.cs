@@ -5,9 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
-using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 // using SpotifyAPI.Local;
 // using SpotifyAPI.Local.Enums;
 // using SpotifyAPI.Local.Models;
@@ -123,7 +121,7 @@ namespace SoftwareCo
 
         public static void CleanSessionInfo()
         {
-            string sessionFile = getSoftwareSessionAsJson();
+            string sessionFile = getSoftwareSessionFile();
             IDictionary<string, object> dict = new Dictionary<string, object>();
             string content = "";
             if (File.Exists(sessionFile))
@@ -133,13 +131,20 @@ namespace SoftwareCo
                 dict = (IDictionary<string, object>)SimpleJson.DeserializeObject(content);
             }
 
-            for (int i = dict.Count - 1; i >= 0; i--)
+            List<string> keys = new List<string>(dict.Keys);
+            List<string> keysToRemove = new List<string>();
+            foreach (string key in keys)
             {
-                KeyValuePair<string, object> kvp = dict.ElementAt(i);
-                string key = kvp.Key;
                 if (!key.Equals("jwt") && !key.Equals("name"))
                 {
                     // remove it
+                    keysToRemove.Add(key);
+                }
+            }
+            if (keysToRemove.Count > 0)
+            {
+                foreach (string key in keysToRemove)
+                {
                     dict.Remove(key);
                 }
             }
@@ -151,7 +156,15 @@ namespace SoftwareCo
 
         public static bool IsValidEmail(string email)
         {
-            return new EmailAddressAttribute().IsValid(email);
+            try
+            {
+                return Regex.IsMatch(email, @"\S+@\S+\.\S+",
+                    RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(250));
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                return false;
+            }
         }
 
         public static String getDashboardFile()
@@ -195,7 +208,7 @@ namespace SoftwareCo
 
         public static void launchLogin()
         {
-            string jwt = getItem("jwt");
+            string jwt = SoftwareUserSession.GetJwt();
             string url = Constants.url_endpoint + "/onboarding?token=" + WebUtility.UrlEncode(jwt);
             Process.Start(url);
 

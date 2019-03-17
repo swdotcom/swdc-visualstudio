@@ -58,8 +58,6 @@
     <Compile Include="SoftwareDashboardLaunchCommand.cs" />
     <Compile Include="SoftwareHttpManager.cs" />
     <Compile Include="SoftwareLoginCommand.cs" />
-    <Compile Include="SoftwareLogoutCommand.cs" />
-    <Compile Include="SoftwareSignupCommand.cs" />
     <Compile Include="SoftwareSpotifyManager.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -67,9 +65,7 @@
     <Compile Include="SoftwareCoPackage.cs" />
     <Compile Include="SoftwareCoUtil.cs" />
     <Compile Include="SoftwareData.cs" />
-    <Compile Include="SoftwareEnableMetricsCommand.cs" />
     <Compile Include="SoftwareLaunchCommand.cs" />
-    <Compile Include="SoftwarePauseMetricsCommand.cs" />
     <Compile Include="SoftwareRepoManager.cs" />
     <Compile Include="SoftwareStatus.cs" />
     <Compile Include="SoftwareTopFortyCommand.cs" />
@@ -107,11 +103,8 @@
       <SubType>Designer</SubType>
     </VSCTCompile>
     <Content Include="Resources\SoftwareDashboardLaunchCommand.png" />
-    <Content Include="Resources\SoftwareEnableMetricsCommand.png" />
     <Content Include="Resources\SoftwareLaunchCommand.png" />
-    <Content Include="Resources\SoftwarePauseMetricsCommand.png" />
     <Content Include="Resources\SoftwareLoginCommand.png" />
-    <Content Include="Resources\SoftwareLogoutCommandy.png" />
     <Content Include="Resources\SoftwareTopFortyCommand.png" />
     <Content Include="stylesheet.css" />
   </ItemGroup>

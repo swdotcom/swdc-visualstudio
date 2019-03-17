@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Threading;
@@ -97,7 +95,7 @@ namespace SoftwareCo
             return null;
         }
 
-        private static async User GetUserAsync(bool online)
+        private static async Task<User> GetUserAsync(bool online)
         {
             string jwt = GetJwt();
             if (jwt != null && online)
@@ -134,7 +132,7 @@ namespace SoftwareCo
             return null;
         }
 
-        private static async bool IsLoggedOn(bool online)
+        private static async Task<bool> IsLoggedOn(bool online)
         {
             string jwt = GetJwt();
             if (online && jwt != null)
@@ -147,7 +145,7 @@ namespace SoftwareCo
                     return true;
                 }
 
-                string api = "/usrs/plugin/state";
+                string api = "/users/plugin/state";
                 HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, jwt);
                 if (SoftwareHttpManager.IsOk(response))
                 {
@@ -174,6 +172,9 @@ namespace SoftwareCo
                             SoftwareCoUtil.setItem("jwt", null);
                         }
                     }
+                } else
+                {
+                    SoftwareCoUtil.setItem("jwt", null);
                 }
 
             }
@@ -223,7 +224,7 @@ namespace SoftwareCo
         public static async void RefetchUserStatusLazily(int tryCountUntilFoundUser)
         {
             UserStatus userStatus = await GetUserStatusAsync(null);
-            if (userStatus.loggedInUser == null && tryCountUntilFoundUser > 0)
+            if (!userStatus.loggedIn && tryCountUntilFoundUser > 0)
             {
                 tryCountUntilFoundUser -= 1;
                 Thread t = new Thread(() =>
