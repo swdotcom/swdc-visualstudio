@@ -11,6 +11,7 @@ using System.IO;
 using System.Net.Http;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.VisualStudio;
 
 namespace SoftwareCo
 {
@@ -31,13 +32,13 @@ namespace SoftwareCo
     /// To get loaded into VS, the package must be referred by &lt;Asset Type="Microsoft.VisualStudio.VsPackage" ...&gt; in .vsixmanifest file.
     /// </para>
     /// </remarks>
-    [PackageRegistration(UseManagedResourcesOnly = true)]
+    [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
     [Guid(SoftwareCoPackage.PackageGuidString)]
-    [ProvideAutoLoad(UIContextGuids80.SolutionExists)]
+    [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     [ProvideMenuResource("Menus.ctmenu", 1)]
-    public sealed class SoftwareCoPackage : Package
+    public sealed class SoftwareCoPackage : AsyncPackage
     {
         #region fields
         /// <summary>
@@ -96,18 +97,15 @@ namespace SoftwareCo
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
         /// where you can put all the initialization code that rely on services provided by VisualStudio.
         /// </summary>
-        protected override void Initialize()
+        protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
             base.Initialize();
 
-            ObjDte = (DTE2)GetService(typeof(DTE));
+            ObjDte = await GetServiceAsync(typeof(DTE)) as DTE2;
             _dteEvents = ObjDte.Events.DTEEvents;
             _dteEvents.OnStartupComplete += OnOnStartupComplete;
 
-            Task.Run(async () =>
-            {
-                await InitializeListenersAsync();
-            });
+            await InitializeListenersAsync();
         }
 
         public static string GetVersion()
