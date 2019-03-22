@@ -46,7 +46,6 @@ obj/
 FakesAssemblies/
 *.plg
 *.opt
-*.vsix
 bin/
 
 # User-specific files
