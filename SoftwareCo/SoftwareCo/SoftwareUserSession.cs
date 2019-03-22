@@ -10,6 +10,7 @@ namespace SoftwareCo
     {
 
         private static bool loggedInCacheState = false;
+        private static string lastJwt = null;
 
         public class UserStatus
         {
@@ -31,8 +32,12 @@ namespace SoftwareCo
 
         public static string GetJwt()
         {
-            object jwt = SoftwareCoUtil.getItem("jwt");
-            return (jwt != null && !((string)jwt).Equals("")) ? (string)jwt : null;
+            if (lastJwt == null)
+            {
+                object jwt = SoftwareCoUtil.getItem("jwt");
+                lastJwt = (jwt != null && !((string)jwt).Equals("")) ? (string)jwt : null;
+            }
+            return lastJwt;
         }
 
         public static async Task CreateAnonymousUserAsync(bool online)
@@ -70,6 +75,7 @@ namespace SoftwareCo
                     if (jwt != null)
                     {
                         SoftwareCoUtil.setItem("jwt", jwt);
+                        lastJwt = jwt;
                     }
                 }
             }
@@ -142,6 +148,7 @@ namespace SoftwareCo
                 {
                     SoftwareCoUtil.setItem("name", user.email);
                     SoftwareCoUtil.setItem("jwt", user.plugin_jwt);
+                    lastJwt = user.plugin_jwt;
                     return true;
                 }
 
@@ -166,15 +173,14 @@ namespace SoftwareCo
                                 SoftwareCoUtil.setItem("name", name);
                             }
                             SoftwareCoUtil.setItem("jwt", pluginJwt);
+                            lastJwt = pluginJwt;
                         }
-                        else if (!state.Equals("ANONYMOUS"))
+                        else if (state.Equals("NOT_FOUND"))
                         {
                             SoftwareCoUtil.setItem("jwt", null);
+                            lastJwt = null;
                         }
                     }
-                } else
-                {
-                    SoftwareCoUtil.setItem("jwt", null);
                 }
 
             }
@@ -209,11 +215,17 @@ namespace SoftwareCo
 
             if (loggedInCacheState != loggedIn)
             {
-                Thread t = new Thread(() =>
+                // change in logged in state, send heatbeat and fetch kpm
+                SendHeartbeat();
+
+                try
                 {
                     Thread.Sleep(1000);
                     SoftwareCoPackage.ProcessFetchDailyKpmTimerCallbackAsync(null);
-                });
+                } catch (ThreadInterruptedException e)
+                {
+                    //
+                }
             }
 
             loggedInCacheState = loggedIn;
@@ -224,14 +236,18 @@ namespace SoftwareCo
         public static async void RefetchUserStatusLazily(int tryCountUntilFoundUser)
         {
             UserStatus userStatus = await GetUserStatusAsync(null);
+
             if (!userStatus.loggedIn && tryCountUntilFoundUser > 0)
             {
                 tryCountUntilFoundUser -= 1;
-                Thread t = new Thread(() =>
+                try
                 {
                     Thread.Sleep(1000 * 10);
                     RefetchUserStatusLazily(tryCountUntilFoundUser);
-                });
+                } catch (ThreadInterruptedException e)
+                {
+                    //
+                }
             }
             else
             {
@@ -239,5 +255,30 @@ namespace SoftwareCo
             }
         }
 
+        public static async void SendHeartbeat()
+        {
+            string jwt = GetJwt();
+            bool online = await IsOnlineAsync();
+            if (online && jwt != null)
+            {
+
+                string version = Constants.EditorVersion;
+
+                JsonObject jsonObj = new JsonObject();
+                jsonObj.Add("version", SoftwareCoPackage.GetVersion());
+                jsonObj.Add("os", SoftwareCoPackage.GetOs());
+                jsonObj.Add("pluginId", Constants.PluginId);
+                jsonObj.Add("start", SoftwareCoUtil.getNowInSeconds());
+
+                string api = "/data/heartbeat";
+                string jsonData = jsonObj.ToString();
+                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, api, jsonData, jwt);
+
+                if (!SoftwareHttpManager.IsOk(response))
+                {
+                    Logger.Warning("Code Time: Unable to send heartbeat");
+                }
+            }
+        }
     }
 }

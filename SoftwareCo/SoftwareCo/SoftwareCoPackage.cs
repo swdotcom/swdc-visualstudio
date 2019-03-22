@@ -181,7 +181,7 @@ namespace SoftwareCo
 
                 delay = ONE_MINUTE + (1000 * 10);
                 repoCommitsTimer = new Timer(
-                    ProcessRepoCommits,
+                    ProcessHourlyJobs,
                     autoEvent,
                     delay,
                     ONE_HOUR);
@@ -351,27 +351,17 @@ namespace SoftwareCo
 
         #region Methods
 
-        private void ProcessRepoMembers(Object stateInfo)
+        private void ProcessHourlyJobs(Object stateInfo)
         {
+            SoftwareUserSession.SendHeartbeat();
+
             string dir = getSolutionDirectory();
+
             if (dir != null)
             {
-
+                _softwareRepoUtil.GetHistoricalCommitsAsync(dir);
                 _softwareRepoUtil.GetRepoUsers(dir);
             }
-        }
-
-        private void ProcessRepoCommits(Object stateInfo)
-        {
-            string dir = getSolutionDirectory();
-
-            if (dir != null)
-            {
-
-                _softwareRepoUtil.GetHistoricalCommitsAsync(dir);
-            }
-
-            this.ProcessRepoMembers(null);
         }
 
         private async void ProcessMusicTracksAsync(Object stateInfo)
@@ -456,7 +446,7 @@ namespace SoftwareCo
                     OLEMSGICON.OLEMSGICON_INFO,
                     0,
                     out result);
-                // ok_cancel = 1
+                // ok = 1
                 if (result == 1)
                 {
                     // launch the browser
@@ -501,8 +491,7 @@ namespace SoftwareCo
                 Logger.Info("Code Time metrics are currently paused. Enable to update your metrics.");
                 return;
             }
-            long start = SoftwareCoUtil.GetBeginningOfDay(DateTime.Now);
-            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/sessions?summary=true&start=" + start, null);
+            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/sessions?summary=true", null);
             if (SoftwareHttpManager.IsOk(response))
             {
                 // get the json data
@@ -616,6 +605,9 @@ namespace SoftwareCo
             }
 
             ProcessFetchDailyKpmTimerCallbackAsync(null);
+
+            // send heartbeat
+            SoftwareUserSession.SendHeartbeat();
         }
 
         private String getDownloadDestinationDirectory()

@@ -181,7 +181,7 @@ namespace SoftwareCo
             HttpResponseMessage response = null;
             if (jwt == null)
             {
-                object jwtObj = SoftwareCoUtil.getItem("jwt");
+                object jwtObj = SoftwareUserSession.GetJwt();
                 if (jwtObj != null)
                 {
                     jwt = (string)jwtObj;
