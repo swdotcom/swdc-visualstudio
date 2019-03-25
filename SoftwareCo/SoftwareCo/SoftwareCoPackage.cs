@@ -99,6 +99,7 @@ namespace SoftwareCo
         /// </summary>
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
+            await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
             base.Initialize();
 
             ObjDte = await GetServiceAsync(typeof(DTE)) as DTE2;
@@ -120,6 +121,7 @@ namespace SoftwareCo
 
         public async Task InitializeListenersAsync()
         {
+            await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
             try
             {
                 string PluginVersion = GetVersion();
@@ -423,6 +425,7 @@ namespace SoftwareCo
 
         private async void LaunchLoginPrompt()
         {
+            await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
             bool online = await SoftwareUserSession.IsOnlineAsync();
 
             if (online)
