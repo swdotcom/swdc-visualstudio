@@ -138,10 +138,10 @@ namespace SoftwareCo
                 _docEvents.DocumentOpening += DocEventsOnDocumentOpening;
 
                 // initialize the menu commands
-                SoftwareLaunchCommand.Initialize(this);
-                SoftwareDashboardLaunchCommand.Initialize(this);
-                SoftwareTopFortyCommand.Initialize(this);
-                SoftwareLoginCommand.Initialize(this);
+                SoftwareLaunchCommand.InitializeAsync(this);
+                SoftwareDashboardLaunchCommand.InitializeAsync(this);
+                SoftwareTopFortyCommand.InitializeAsync(this);
+                SoftwareLoginCommand.InitializeAsync(this);
 
                 if (_softwareRepoUtil == null)
                 {

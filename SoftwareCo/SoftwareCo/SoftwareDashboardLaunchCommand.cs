@@ -23,7 +23,7 @@ namespace SoftwareCo
         /// <summary>
         /// VS Package that provides this command, not null.
         /// </summary>
-        private readonly Package package;
+        private readonly AsyncPackage package;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SoftwareDashboardLaunchCommand"/> class.
@@ -31,16 +31,9 @@ namespace SoftwareCo
         /// </summary>
         /// <param name="package">Owner package, not null.</param>
         /// <param name="commandService">Command service to add command to, not null.</param>
-        private SoftwareDashboardLaunchCommand(Package package)
+        private SoftwareDashboardLaunchCommand(AsyncPackage package, OleMenuCommandService commandService)
         {
-            if (package == null)
-            {
-                throw new ArgumentNullException("package");
-            }
-
-            this.package = package;
-
-            MenuCommandService commandService = this.ServiceProvider.GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
+            this.package = package ?? throw new ArgumentNullException("package");
             if (commandService != null)
             {
                 var menuCommandID = new CommandID(CommandSet, CommandId);
@@ -61,7 +54,7 @@ namespace SoftwareCo
         /// <summary>
         /// Gets the service provider from the owner package.
         /// </summary>
-        private IServiceProvider ServiceProvider
+        private IAsyncServiceProvider ServiceProvider
         {
             get
             {
@@ -73,9 +66,10 @@ namespace SoftwareCo
         /// Initializes the singleton instance of the command.
         /// </summary>
         /// <param name="package">Owner package, not null.</param>
-        public static void Initialize(Package package)
+        public static async void InitializeAsync(AsyncPackage package)
         {
-            Instance = new SoftwareDashboardLaunchCommand(package);
+            OleMenuCommandService commandService = await package.GetServiceAsync((typeof(IMenuCommandService))) as OleMenuCommandService;
+            Instance = new SoftwareDashboardLaunchCommand(package, commandService);
         }
 
         /// <summary>
