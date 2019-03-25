@@ -150,7 +150,7 @@ namespace SoftwareCo
 
                 if (_softwareStatus == null)
                 {
-                    IVsStatusbar statusbar = GetService(typeof(SVsStatusbar)) as IVsStatusbar;
+                    IVsStatusbar statusbar = GetServiceAsync(typeof(SVsStatusbar)) as IVsStatusbar;
                     _softwareStatus = new SoftwareStatus(statusbar);
                 }
 
@@ -431,7 +431,7 @@ namespace SoftwareCo
 
                 Guid clsid = Guid.Empty;
                 int result;
-                IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
+                IVsUIShell uiShell = (IVsUIShell)GetServiceAsync(typeof(SVsUIShell));
                 uiShell.ShowMessageBox(
                     0,
                     ref clsid,
