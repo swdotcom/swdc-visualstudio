@@ -40,12 +40,13 @@ namespace SoftwareCo
             return lastJwt;
         }
 
-        public static async Task CreateAnonymousUserAsync(bool online)
+        public static async Task<string> CreateAnonymousUserAsync(bool online)
         {
             // get the app jwt
             string app_jwt = await GetAppJwtAsync(online);
             if (app_jwt != null && online)
             {
+                string creation_annotation = "NO_SESSION_FILE";
                 string osUsername = Environment.UserName;
                 string timezone = "";
                 if (TimeZone.CurrentTimeZone.DaylightName != null
@@ -61,6 +62,8 @@ namespace SoftwareCo
                 JsonObject jsonObj = new JsonObject();
                 jsonObj.Add("timezone", timezone);
                 jsonObj.Add("username", osUsername);
+                jsonObj.Add("hostname", SoftwareCoUtil.getHostname());
+                jsonObj.Add("creation_annotation", creation_annotation);
 
                 string api = "/data/onboard";
                 string jsonData = jsonObj.ToString();
@@ -75,10 +78,12 @@ namespace SoftwareCo
                     if (jwt != null)
                     {
                         SoftwareCoUtil.setItem("jwt", jwt);
-                        lastJwt = jwt;
+                        return jwt;
                     }
                 }
             }
+
+            return null;
         }
 
         public static async Task<string> GetAppJwtAsync(bool online)
@@ -190,25 +195,9 @@ namespace SoftwareCo
 
         public static async Task<UserStatus> GetUserStatusAsync(string token)
         {
-            SoftwareCoUtil.CleanSessionInfo();
-
-            string jwt = GetJwt();
-
             bool online = await IsOnlineAsync();
 
-            if (jwt == null)
-            {
-                await CreateAnonymousUserAsync(online);
-            }
-
             bool loggedIn = await IsLoggedOn(online);
-
-            // the jwt may have been nulled out
-            jwt = GetJwt();
-            if (jwt == null)
-            {
-                await CreateAnonymousUserAsync(online);
-            }
 
             UserStatus currentUserStatus = new UserStatus();
             currentUserStatus.loggedIn = loggedIn;
@@ -216,7 +205,7 @@ namespace SoftwareCo
             if (loggedInCacheState != loggedIn)
             {
                 // change in logged in state, send heatbeat and fetch kpm
-                SendHeartbeat();
+                SendHeartbeat("STATE_CHANGE:LOGGED_IN:" + loggedIn);
 
                 try
                 {
@@ -255,7 +244,7 @@ namespace SoftwareCo
             }
         }
 
-        public static async void SendHeartbeat()
+        public static async void SendHeartbeat(string reason)
         {
             string jwt = GetJwt();
             bool online = await IsOnlineAsync();
@@ -269,6 +258,8 @@ namespace SoftwareCo
                 jsonObj.Add("os", SoftwareCoPackage.GetOs());
                 jsonObj.Add("pluginId", Constants.PluginId);
                 jsonObj.Add("start", SoftwareCoUtil.getNowInSeconds());
+                jsonObj.Add("trigger_annotation", reason);
+                jsonObj.Add("hostname", SoftwareCoUtil.getHostname());
 
                 string api = "/data/heartbeat";
                 string jsonData = jsonObj.ToString();

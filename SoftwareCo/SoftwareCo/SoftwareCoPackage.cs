@@ -9,9 +9,11 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System.IO;
 using System.Net.Http;
+using System.Timers;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.VisualStudio;
+using System.Windows.Forms;
 
 namespace SoftwareCo
 {
@@ -51,12 +53,12 @@ namespace SoftwareCo
         private WindowEvents _windowEvents;
         private TextDocumentKeyPressEvents _textDocKeyEvent;
 
-        private Timer timer;
-        private Timer kpmTimer;
-        private Timer repoCommitsTimer;
-        private Timer musicTimer;
-        private Timer statusMsgTimer;
-        private Timer userStatusTimer;
+        private System.Threading.Timer timer;
+        private System.Threading.Timer kpmTimer;
+        private System.Threading.Timer repoCommitsTimer;
+        private System.Threading.Timer musicTimer;
+        private System.Threading.Timer statusMsgTimer;
+        private System.Threading.Timer userStatusTimer;
 
         // Used by Constants for version info
         public static DTE2 ObjDte;
@@ -106,7 +108,58 @@ namespace SoftwareCo
             _dteEvents = ObjDte.Events.DTEEvents;
             _dteEvents.OnStartupComplete += OnOnStartupComplete;
 
-            await InitializeListenersAsync();
+            InitializeUserAsync(0);
+        }
+
+        protected async Task InitializeUserAsync(int tryCount)
+        {
+            bool softwareSessionFileExists = SoftwareCoUtil.softwareSessionFileExists();
+            if (!softwareSessionFileExists)
+            {
+                bool online = await SoftwareUserSession.IsOnlineAsync();
+                if (!online)
+                {
+                    if (tryCount == 0)
+                    {
+                        ShowOfflinePromptAsync();
+                    }
+                    try
+                    {
+                        System.Threading.Thread.Sleep(ONE_MINUTE * 10);
+                        tryCount++;
+                        InitializeUserAsync(tryCount);
+                    }
+                    catch (ThreadInterruptedException e)
+                    {
+                        //
+                    }
+                } else
+                {
+                    string result = await SoftwareUserSession.CreateAnonymousUserAsync(online);
+                    if (result == null) {
+                        if (tryCount == 0)
+                        {
+                            ShowOfflinePromptAsync();
+                        }
+                        try
+                        {
+                            System.Threading.Thread.Sleep(ONE_MINUTE * 10);
+                            tryCount++;
+                            InitializeUserAsync(tryCount);
+                        }
+                        catch (ThreadInterruptedException e)
+                        {
+                            //
+                        }
+                    } else
+                    {
+                        InitializeListenersAsync(true);
+                    }
+                }
+            } else
+            {
+                InitializeListenersAsync(false);
+            }
         }
 
         public static string GetVersion()
@@ -119,7 +172,7 @@ namespace SoftwareCo
             return System.Environment.OSVersion.VersionString;
         }
 
-        public async Task InitializeListenersAsync()
+        public async Task InitializeListenersAsync(bool initializedUser)
         {
             await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
             try
@@ -161,7 +214,7 @@ namespace SoftwareCo
                 var autoEvent = new AutoResetEvent(false);
 
                 // setup timer to process events every 1 minute
-                timer = new Timer(
+                timer = new System.Threading.Timer(
                     ProcessSoftwareDataTimerCallbackAsync,
                     autoEvent,
                     ONE_MINUTE,
@@ -171,7 +224,7 @@ namespace SoftwareCo
 
                 // start in 5 seconds every 1 min
                 int delay = 1000 * 5;
-                kpmTimer = new Timer(
+                kpmTimer = new System.Threading.Timer(
                     ProcessFetchDailyKpmTimerCallbackAsync,
                     autoEvent,
                     delay,
@@ -180,31 +233,31 @@ namespace SoftwareCo
                 delay = 1000 * 45;
 
                 delay = ONE_MINUTE + (1000 * 10);
-                repoCommitsTimer = new Timer(
+                repoCommitsTimer = new System.Threading.Timer(
                     ProcessHourlyJobs,
                     autoEvent,
                     delay,
                     ONE_HOUR);
 
-                musicTimer = new Timer(
+                musicTimer = new System.Threading.Timer(
                     ProcessMusicTracksAsync,
                     autoEvent,
                     1000 * 5,
                     1000 * 30);
 
-                statusMsgTimer = new Timer(
+                statusMsgTimer = new System.Threading.Timer(
                     UpdateStatusMsg,
                     autoEvent,
                     1000 * 30,
                     1000 * 10);
 
-                userStatusTimer = new Timer(
+                userStatusTimer = new System.Threading.Timer(
                     UpdateUserStatus,
                     autoEvent,
                     ONE_MINUTE,
                     1000 * 120);
 
-                this.initializeUserInfo();
+                this.initializeUserInfo(initializedUser);
             }
             catch (Exception ex)
             {
@@ -353,7 +406,7 @@ namespace SoftwareCo
 
         private void ProcessHourlyJobs(Object stateInfo)
         {
-            SoftwareUserSession.SendHeartbeat();
+            SoftwareUserSession.SendHeartbeat("HOURLY");
 
             string dir = getSolutionDirectory();
 
@@ -431,24 +484,13 @@ namespace SoftwareCo
             if (online)
             {
                 string msg = "To see your coding data in Code Time, please log in to your account.";
+                const string caption = "Code Time";
+                var result = MessageBox.Show(msg, caption,
+                                             MessageBoxButtons.YesNo,
+                                             MessageBoxIcon.Question);
 
-                Guid clsid = Guid.Empty;
-                int result;
-                IVsUIShell uiShell = (IVsUIShell)GetServiceAsync(typeof(SVsUIShell));
-                uiShell.ShowMessageBox(
-                    0,
-                    ref clsid,
-                    string.Empty,
-                    msg,
-                    string.Empty,
-                    0,
-                    OLEMSGBUTTON.OLEMSGBUTTON_OKCANCEL,
-                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST,
-                    OLEMSGICON.OLEMSGICON_INFO,
-                    0,
-                    out result);
-                // ok = 1
-                if (result == 1)
+                // If the no button was pressed ...
+                if (result == DialogResult.Yes)
                 {
                     // launch the browser
                     SoftwareCoUtil.launchLogin();
@@ -587,20 +629,15 @@ namespace SoftwareCo
             _softwareData.EnsureFileInfoDataIsPresent(fileName);
         }
 
-        private async void initializeUserInfo()
+        private async void initializeUserInfo(bool initializedUser)
         {
-            string jwt = SoftwareUserSession.GetJwt();
-            bool initializingPlugin = false;
-            if (jwt == null)
-            {
-                initializingPlugin = true;
-            }
 
             SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(null);
             SoftwareLaunchCommand.UpdateEnabledState(status);
+
             SoftwareLoginCommand.UpdateEnabledState(status);
 
-            if (initializingPlugin)
+            if (initializedUser)
             {
                 LaunchLoginPrompt();
             }
@@ -608,7 +645,7 @@ namespace SoftwareCo
             ProcessFetchDailyKpmTimerCallbackAsync(null);
 
             // send heartbeat
-            SoftwareUserSession.SendHeartbeat();
+            SoftwareUserSession.SendHeartbeat("INITIALIZED");
         }
 
         private String getDownloadDestinationDirectory()
@@ -654,6 +691,15 @@ namespace SoftwareCo
             await FetchCodeTimeDashboardAsync();
             string dashboardFile = SoftwareCoUtil.getDashboardFile();
             ObjDte.ItemOperations.OpenFile(dashboardFile);
+        }
+
+        protected async Task ShowOfflinePromptAsync() {
+            string msg = "Our service is temporarily unavailable. We will try to reconnect again in 10 minutes. Your status bar will not update at this time.";
+            string caption = "Code Time";
+            MessageBoxButtons buttons = MessageBoxButtons.OK;
+
+            // Displays the MessageBox.
+            MessageBox.Show(msg, caption, buttons);
         }
 
         #endregion

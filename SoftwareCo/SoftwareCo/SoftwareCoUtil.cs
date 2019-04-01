@@ -15,6 +15,7 @@ namespace SoftwareCo
     class SoftwareCoUtil
     {
         private static bool _telemetryOn = true;
+        private static IDictionary<string, string> sessionMap = new Dictionary<string, string>();
 
 
         /***
@@ -82,8 +83,21 @@ namespace SoftwareCo
             return _telemetryOn;
         }
 
+        public static string getHostname()
+        {
+            string hostname = SoftwareCoUtil.RunCommand("hostname", null);
+            return hostname;
+        }
+
         public static object getItem(string key)
         {
+            sessionMap.TryGetValue(key, out string valObject);
+            string val = (valObject == null) ? null : valObject;
+            if (val != null)
+            {
+                return val;
+            }
+
             // read the session json file
             string sessionFile = getSoftwareSessionFile();
             if (File.Exists(sessionFile))
@@ -91,18 +105,30 @@ namespace SoftwareCo
                 string content = File.ReadAllText(sessionFile);
                 if (content != null)
                 {
-                    object val = SimpleJson.GetValue(content, key);
-                    if (val != null)
+                    object jsonVal = SimpleJson.GetValue(content, key);
+                    if (jsonVal != null)
                     {
-                        return val;
+                        return jsonVal;
                     }
                 }
             }
             return null;
         }
 
-        public static void setItem(String key, object val)
+        public static void setItem(String key, string val)
         {
+            if (sessionMap.TryGetValue(key, out string outval))
+            {
+                // yay, value exists!
+                sessionMap[key] = val;
+            }
+            else
+            {
+                // darn, lets add the value
+                sessionMap.Add(key, val);
+            }
+
+
             string sessionFile = getSoftwareSessionFile();
             IDictionary<string, object> dict = new Dictionary<string, object>();
             string content = "";
@@ -114,41 +140,6 @@ namespace SoftwareCo
                 dict.Remove(key);
             }
             dict.Add(key, val);
-            content = SimpleJson.SerializeObject(dict);
-            // write it back to the file
-            File.WriteAllText(sessionFile, content);
-        }
-
-        public static void CleanSessionInfo()
-        {
-            string sessionFile = getSoftwareSessionFile();
-            IDictionary<string, object> dict = new Dictionary<string, object>();
-            string content = "";
-            if (File.Exists(sessionFile))
-            {
-                content = File.ReadAllText(sessionFile);
-                // conver to dictionary
-                dict = (IDictionary<string, object>)SimpleJson.DeserializeObject(content);
-            }
-
-            List<string> keys = new List<string>(dict.Keys);
-            List<string> keysToRemove = new List<string>();
-            foreach (string key in keys)
-            {
-                if (!key.Equals("jwt") && !key.Equals("name"))
-                {
-                    // remove it
-                    keysToRemove.Add(key);
-                }
-            }
-            if (keysToRemove.Count > 0)
-            {
-                foreach (string key in keysToRemove)
-                {
-                    dict.Remove(key);
-                }
-            }
-
             content = SimpleJson.SerializeObject(dict);
             // write it back to the file
             File.WriteAllText(sessionFile, content);
@@ -169,14 +160,14 @@ namespace SoftwareCo
 
         public static String getDashboardFile()
         {
-            return getSoftwareDataDir() + "\\CodeTime.txt";
+            return getSoftwareDataDir(true) + "\\CodeTime.txt";
         }
 
-        public static String getSoftwareDataDir()
+        public static String getSoftwareDataDir(bool autoCreate)
         {
             String userHomeDir = Environment.ExpandEnvironmentVariables("%HOMEPATH%");
             string softwareDataDir = userHomeDir + "\\.software";
-            if (!Directory.Exists(softwareDataDir))
+            if (autoCreate && !Directory.Exists(softwareDataDir))
             {
                 // create it
                 Directory.CreateDirectory(softwareDataDir);
@@ -184,14 +175,20 @@ namespace SoftwareCo
             return softwareDataDir;
         }
 
+        public static bool softwareSessionFileExists()
+        {
+            string file = getSoftwareDataDir(false) + "\\session.json";
+            return File.Exists(file);
+        }
+
         public static String getSoftwareSessionFile()
         {
-            return getSoftwareDataDir() + "\\session.json";
+            return getSoftwareDataDir(true) + "\\session.json";
         }
 
         public static String getSoftwareDataStoreFile()
         {
-            return getSoftwareDataDir() + "\\data.json";
+            return getSoftwareDataDir(true) + "\\data.json";
         }
 
         public static void launchSoftwareTopForty()
