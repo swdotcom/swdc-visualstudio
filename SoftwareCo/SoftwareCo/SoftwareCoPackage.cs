@@ -206,7 +206,7 @@ namespace SoftwareCo
 
                 if (_softwareStatus == null)
                 {
-                    IVsStatusbar statusbar = GetServiceAsync(typeof(SVsStatusbar)) as IVsStatusbar;
+                    IVsStatusbar statusbar = await GetServiceAsync(typeof(SVsStatusbar)) as IVsStatusbar;
                     _softwareStatus = new SoftwareStatus(statusbar);
                 }
 
