@@ -77,6 +77,12 @@
           <ButtonText>Login in to see your coding data</ButtonText>
         </Strings>
       </Button>
+      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareToggleStatusInfoCommand" priority="0x0400" type="Button">
+        <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
+        <Strings>
+          <ButtonText>Show/hide status bar metrics</ButtonText>
+        </Strings>
+      </Button>
 
     </Buttons>
 
@@ -104,6 +110,7 @@
       <IDSymbol name="cmdidSoftwareDashboardLaunchCommand" value="4131" />
       <IDSymbol name="cmdidSoftwareTopFortyCommand" value="4132" />
       <IDSymbol name="cmdidSoftwareLoginCommand" value="4133" />
+      <IDSymbol name="cmdidSoftwareToggleStatusInfoCommand" value="4134" />
     </GuidSymbol>
 
     <GuidSymbol name="guidImages" value="{54614706-87de-4c00-b8f5-888955b7804d}">

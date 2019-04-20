@@ -193,10 +193,11 @@ namespace SoftwareCo
                 _docEvents.DocumentOpening += DocEventsOnDocumentOpening;
 
                 // initialize the menu commands
-                SoftwareLaunchCommand.InitializeAsync(this);
-                SoftwareDashboardLaunchCommand.InitializeAsync(this);
-                SoftwareTopFortyCommand.InitializeAsync(this);
-                SoftwareLoginCommand.InitializeAsync(this);
+                await SoftwareLaunchCommand.InitializeAsync(this);
+                await SoftwareDashboardLaunchCommand.InitializeAsync(this);
+                await SoftwareTopFortyCommand.InitializeAsync(this);
+                await SoftwareLoginCommand.InitializeAsync(this);
+                await SoftwareToggleStatusInfoCommand.InitializeAsync(this);
 
                 if (_softwareRepoUtil == null)
                 {
@@ -404,6 +405,11 @@ namespace SoftwareCo
 
         #region Methods
 
+        public static void ToggleStatusInfo()
+        {
+            _softwareStatus.ToggleStatusInfo();
+        }
+
         private void ProcessHourlyJobs(Object stateInfo)
         {
             SoftwareUserSession.SendHeartbeat("HOURLY");
@@ -413,7 +419,6 @@ namespace SoftwareCo
             if (dir != null)
             {
                 _softwareRepoUtil.GetHistoricalCommitsAsync(dir);
-                _softwareRepoUtil.GetRepoUsers(dir);
             }
         }
 
@@ -567,10 +572,10 @@ namespace SoftwareCo
 
                 // Code time today:  4 hrs | Avg: 3 hrs 28 min
                 string inFlowIcon = currentDayMinutesVal > averageDailyMinutesVal ? "🚀" : "";
-                string msg = string.Format("Code time: {0}{1}", inFlowIcon, currentDayMinutesTime);
+                string msg = string.Format("{0}{1}", inFlowIcon, currentDayMinutesTime);
                 if (averageDailyMinutesVal > 0)
                 {
-                    msg += string.Format(" | Avg: {0}", averageDailyMinutesTime);
+                    msg += string.Format(" | {0}", averageDailyMinutesTime);
                 }
                 _softwareStatus.SetStatus(msg);
 

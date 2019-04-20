@@ -71,6 +71,7 @@
     <Compile Include="SoftwareStatus.cs" />
     <Compile Include="SoftwareTopFortyCommand.cs" />
     <Compile Include="SoftwareUserSession.cs" />
+    <Compile Include="SoftwareToggleStatusInfoCommand.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">

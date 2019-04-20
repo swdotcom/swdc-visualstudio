@@ -7,14 +7,39 @@ namespace SoftwareCo
     {
         private string _lastStatusMsg = "";
         private IVsStatusbar statusbar;
+        private bool showStatusText = true;
+        private string lastMsg = "";
+        private string lastTooltip = "";
 
         public SoftwareStatus(IVsStatusbar statusbar)
         {
             this.statusbar = statusbar;
         }
 
+        public void ToggleStatusInfo()
+        {
+            showStatusText = !showStatusText;
+
+            if (showStatusText)
+            {
+                SetStatus(lastMsg);
+            }
+            else
+            {
+                SetStatus("");
+            }
+        }
+
         public void SetStatus(string msg)
         {
+            if (showStatusText)
+            {
+                lastMsg = msg;
+            } else
+            {
+                // make sure the message is the clock
+                msg = " 🕒 ";
+            }
             if (statusbar == null)
             {
                 return;
