@@ -424,7 +424,13 @@ namespace SoftwareCo
 
         private async void ProcessMusicTracksAsync(Object stateInfo)
         {
-            await SoftwareSpotifyManager.GetLocalSpotifyTrackInfoAsync();
+            try
+            {
+                await SoftwareSpotifyManager.GetLocalSpotifyTrackInfoAsync();
+            } catch (Exception e)
+            {
+                Logger.Error("Unable to get spotify track info, error: " + e.Message);
+            }
         }
 
         // This method is called by the timer delegate.

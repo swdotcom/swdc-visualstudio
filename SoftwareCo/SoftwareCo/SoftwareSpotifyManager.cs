@@ -14,10 +14,17 @@ namespace SoftwareCo
 
         protected static async Task HandleTrackInfoAsync(LocalSpotifyTrackInfo localTrackInfo)
         {
-            if (!SoftwareHttpManager.HasSpotifyAccessToken())
+            try
             {
-                // initialize the token
-                await SoftwareHttpManager.InitializeSpotifyClientGrantAsync();
+                if (!SoftwareHttpManager.HasSpotifyAccessToken())
+                {
+                    // initialize the token
+                    await SoftwareHttpManager.InitializeSpotifyClientGrantAsync();
+                }
+            } catch (Exception e)
+            {
+                Logger.Error("Code Time: Unable to access spotify, error: " + e.Message);
+                return;
             }
 
             bool hasLocalTrackData = (localTrackInfo.name != null && localTrackInfo.artist != null)
@@ -72,8 +79,16 @@ namespace SoftwareCo
 
         public static async Task GetLocalSpotifyTrackInfoAsync()
         {
-            Process proc = Process.GetProcessesByName("Spotify").FirstOrDefault
+            Process proc = null;
+            try
+            {
+                proc = Process.GetProcessesByName("Spotify").FirstOrDefault
                 (p => !string.IsNullOrWhiteSpace(p.MainWindowTitle));
+            } catch (Exception e)
+            {
+                Logger.Error("Unable to get spotify track info: " + e.Message);
+                return;
+            }
 
             LocalSpotifyTrackInfo localTrackInfo = new LocalSpotifyTrackInfo();
             if (proc != null)
