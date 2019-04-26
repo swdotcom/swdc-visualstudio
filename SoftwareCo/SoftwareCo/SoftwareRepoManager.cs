@@ -264,7 +264,7 @@ namespace SoftwareCo
 
         public async void GetHistoricalCommitsAsync(string projectDir)
         {
-            if (projectDir == null || projectDir.Equals(""))
+            if (!SoftwareUserSession.isOnline || projectDir == null || projectDir.Equals(""))
             {
                 return;
             }
