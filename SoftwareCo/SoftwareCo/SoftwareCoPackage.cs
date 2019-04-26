@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.VisualStudio;
 using System.Windows.Forms;
+using Thread = System.Threading.Thread;
 
 namespace SoftwareCo
 {
@@ -223,13 +224,13 @@ namespace SoftwareCo
 
                 this.SendOfflineData();
 
-                // start in 5 seconds every 1 min
+                // start in 5 seconds every 5 min
                 int delay = 1000 * 5;
                 kpmTimer = new System.Threading.Timer(
                     ProcessFetchDailyKpmTimerCallbackAsync,
                     autoEvent,
                     delay,
-                    ONE_MINUTE);
+                    ONE_MINUTE * 5);
 
                 delay = 1000 * 45;
 
@@ -304,6 +305,15 @@ namespace SoftwareCo
             FileInfo fi = new FileInfo(fileName);
 
             _softwareData.UpdateData(fileName, "length", fi.Length);
+
+            try
+            {
+                _softwareStatus.ReloadStatus();
+            }
+            catch (ThreadInterruptedException e)
+            {
+                //
+            }
         }
 
         private void DocEventsOnDocumentOpening(String docPath, Boolean readOnly)
@@ -468,6 +478,18 @@ namespace SoftwareCo
                     {
                         this.StorePayload(softwareDataContent);
                     }
+
+                    // call the kpm summary
+                    try
+                    {
+                        Thread.Sleep(1000 * 5);
+                        ProcessFetchDailyKpmTimerCallbackAsync(null);
+                    }
+                    catch (ThreadInterruptedException e)
+                    {
+                        //
+                    }
+                    
                 }
                 else
                 {
@@ -552,27 +574,12 @@ namespace SoftwareCo
                 string responseBody = await response.Content.ReadAsStringAsync();
                 IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
 
-                jsonObj.TryGetValue("inFlow", out object inFlowObj);
-                bool inFlow = (inFlowObj == null) ? true : Convert.ToBoolean(inFlowObj);
-
-                jsonObj.TryGetValue("lastKpm", out object lastKpm);
-                long lastKpmVal = (lastKpm == null) ? 0 : Convert.ToInt64(lastKpm);
-
                 jsonObj.TryGetValue("currentDayMinutes", out object currentDayMinutes);
                 long currentDayMinutesVal = (currentDayMinutes == null) ? 0 : Convert.ToInt64(currentDayMinutes);
 
                 jsonObj.TryGetValue("averageDailyMinutes", out object averageDailyMinutes);
                 long averageDailyMinutesVal = (averageDailyMinutes == null) ? 0 : Convert.ToInt64(averageDailyMinutes);
 
-                jsonObj.TryGetValue("currentSessionGoalPercent", out object currentSessionGoalPercent);
-                double currentSessionGoalPercentVal = (currentSessionGoalPercent == null) ? 0.0 : Convert.ToDouble(currentSessionGoalPercent);
-
-                jsonObj.TryGetValue("currentSessionMinutes", out object currentSessionMinutes);
-                long currentSessionMinutesVal = (currentSessionMinutes == null) ? 0 : Convert.ToInt64(currentSessionMinutes);
-
-                string sessionTimeIcon = SoftwareCoUtil.GetCurrentSessionIcon(currentSessionGoalPercentVal);
-
-                string sessionTime = SoftwareCoUtil.HumanizeMinutes(currentSessionMinutesVal);
                 string currentDayMinutesTime = SoftwareCoUtil.HumanizeMinutes(currentDayMinutesVal);
                 string averageDailyMinutesTime = SoftwareCoUtil.HumanizeMinutes(averageDailyMinutesVal);
 
@@ -588,6 +595,9 @@ namespace SoftwareCo
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                 FetchCodeTimeDashboardAsync();
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            } else
+            {
+                _softwareStatus.SetStatus("Code Time");
             }
 
         }

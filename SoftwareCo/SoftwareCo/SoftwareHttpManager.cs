@@ -27,57 +27,63 @@ namespace SoftwareCo
 
         public static async Task InitializeSpotifyClientGrantAsync()
         {
-            token = new SpotifyToken();
-
-            string clientId = "72e3067b2cfe4f04933668ab12140c19";
-            string clientSecret = "4873269b09604d24a63d86f6a05dddb2";
-            string spotifyAuth = string.Format("{0}:{1}", clientId, clientSecret);
-            string encodedAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes(spotifyAuth));
-
-            string spotifyUrl = "https://accounts.spotify.com/api/token";
-            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(spotifyUrl);
-            webRequest.Method = "POST";
-            webRequest.ContentType = "application/x-www-form-urlencoded";
-            webRequest.Accept = "application/json";
-            webRequest.Headers.Add("Authorization: Basic " + encodedAuth);
-
-            string request = ("grant_type=client_credentials");
-            byte[] req_bytes = Encoding.ASCII.GetBytes(request);
-            webRequest.ContentLength = req_bytes.Length;
-
-            Stream stream = await webRequest.GetRequestStreamAsync();
-            await stream.WriteAsync(req_bytes, 0, req_bytes.Length);
-            stream.Close();
-
-            HttpWebResponse resp = (HttpWebResponse)await webRequest.GetResponseAsync();
-            string json = "";
-
-            using (Stream respStr = resp.GetResponseStream())
+            try
             {
-                using(StreamReader rdr = new StreamReader(respStr, Encoding.UTF8))
+                token = new SpotifyToken();
+
+                string clientId = "72e3067b2cfe4f04933668ab12140c19";
+                string clientSecret = "4873269b09604d24a63d86f6a05dddb2";
+                string spotifyAuth = string.Format("{0}:{1}", clientId, clientSecret);
+                string encodedAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes(spotifyAuth));
+
+                string spotifyUrl = "https://accounts.spotify.com/api/token";
+                HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(spotifyUrl);
+                webRequest.Method = "POST";
+                webRequest.ContentType = "application/x-www-form-urlencoded";
+                webRequest.Accept = "application/json";
+                webRequest.Headers.Add("Authorization: Basic " + encodedAuth);
+
+                string request = ("grant_type=client_credentials");
+                byte[] req_bytes = Encoding.ASCII.GetBytes(request);
+                webRequest.ContentLength = req_bytes.Length;
+
+                Stream stream = await webRequest.GetRequestStreamAsync();
+                await stream.WriteAsync(req_bytes, 0, req_bytes.Length);
+                stream.Close();
+
+                HttpWebResponse resp = (HttpWebResponse)await webRequest.GetResponseAsync();
+                string json = "";
+
+                using (Stream respStr = resp.GetResponseStream())
                 {
-                    // should get back a string we can turn into a json
-                    json = await rdr.ReadToEndAsync();
-                    rdr.Close();
+                    using (StreamReader rdr = new StreamReader(respStr, Encoding.UTF8))
+                    {
+                        // should get back a string we can turn into a json
+                        json = await rdr.ReadToEndAsync();
+                        rdr.Close();
+                    }
                 }
+
+                IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(json);
+                jsonObj.TryGetValue("access_token", out object accessTokenObj);
+                string access_token = (accessTokenObj == null) ? null : Convert.ToString(accessTokenObj);
+                jsonObj.TryGetValue("token_type", out object tokenTypeObj);
+                string token_type = (tokenTypeObj == null) ? null : Convert.ToString(tokenTypeObj);
+                // time period (in seconds) for which the access token is valid
+                jsonObj.TryGetValue("expires_in", out object expiresInObj);
+                double expires_in = (expiresInObj == null) ? 0d : Convert.ToDouble(expiresInObj);
+
+                DateTime dt = DateTime.Now;
+                dt = dt.AddSeconds(expires_in);
+
+                token.Access_token = access_token;
+                token.Token_type = token_type;
+                token.Expires_in = expires_in;
+                token.Expire_date = dt;
+            } catch (Exception e)
+            {
+                Logger.Error("Unable to connect to initialize connection: " + e.Message);
             }
-
-            IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(json);
-            jsonObj.TryGetValue("access_token", out object accessTokenObj);
-            string access_token = (accessTokenObj == null) ? null : Convert.ToString(accessTokenObj);
-            jsonObj.TryGetValue("token_type", out object tokenTypeObj);
-            string token_type = (tokenTypeObj == null) ? null : Convert.ToString(tokenTypeObj);
-            // time period (in seconds) for which the access token is valid
-            jsonObj.TryGetValue("expires_in", out object expiresInObj);
-            double expires_in = (expiresInObj == null) ? 0d : Convert.ToDouble(expiresInObj);
-
-            DateTime dt = DateTime.Now;
-            dt = dt.AddSeconds(expires_in);
-
-            token.Access_token = access_token;
-            token.Token_type = token_type;
-            token.Expires_in = expires_in;
-            token.Expire_date = dt;
         }
 
         public static async Task GetSpotifyTrackInfoAsync(LocalSpotifyTrackInfo trackInfo)
@@ -141,10 +147,7 @@ namespace SoftwareCo
                     trackInfo.local_start = trackInfo.start + ((int)offset * 60);
                 }
             }
-            catch (WebException ex)
-            {
-                Logger.Error("error: " + ex.Message);
-            } catch (TaskCanceledException tex)
+            catch (Exception tex)
             {
                 Logger.Error("error: " + tex.Message);
             }
@@ -168,7 +171,7 @@ namespace SoftwareCo
         public static async Task<HttpResponseMessage> SendRequestAsync(HttpMethod httpMethod, string uri, string optionalPayload, int timeout, string jwt = null)
         {
 
-            if (!SoftwareCoUtil.isTelemetryOn())
+            if (!SoftwareCoUtil.isTelemetryOn() || !SoftwareUserSession.isOnline)
             {
                 return null;
             }

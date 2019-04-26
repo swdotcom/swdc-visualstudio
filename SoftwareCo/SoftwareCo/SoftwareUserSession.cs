@@ -11,6 +11,7 @@ namespace SoftwareCo
 
         private static bool loggedInCacheState = false;
         private static string lastJwt = null;
+        public static bool isOnline = true;
 
         public class UserStatus
         {
@@ -27,7 +28,9 @@ namespace SoftwareCo
         public static async Task<bool> IsOnlineAsync()
         {
             HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/ping", null);
-            return SoftwareHttpManager.IsOk(response);
+            isOnline = SoftwareHttpManager.IsOk(response);
+
+            return isOnline;
         }
 
         public static string GetJwt()

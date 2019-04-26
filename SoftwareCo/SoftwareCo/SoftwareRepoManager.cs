@@ -290,6 +290,9 @@ namespace SoftwareCo
                     if (latestCommit != null)
                     {
                         sinceOption = " --since=" + latestCommit.timestamp;
+                    } else
+                    {
+                        sinceOption = " --max-count=100";
                     }
 
                     string cmd = "git log --stat --pretty=COMMIT:%H,%ct,%cI,%s --author=" + email + "" + sinceOption;
@@ -444,9 +447,9 @@ namespace SoftwareCo
                                 {
                                     Logger.Info(response.ToString());
                                 }
-                                else
+                                else if (response != null)
                                 {
-                                    Logger.Error(response.ToString());
+                                    Logger.Error("Unable to complete commit request, status: " + response.StatusCode);
                                 }
                             }
                         }
