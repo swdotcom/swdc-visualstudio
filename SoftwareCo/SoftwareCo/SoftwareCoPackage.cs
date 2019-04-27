@@ -9,7 +9,6 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System.IO;
 using System.Net.Http;
-using System.Timers;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.VisualStudio;
@@ -114,53 +113,7 @@ namespace SoftwareCo
 
         protected async Task InitializeUserAsync(int tryCount)
         {
-            bool softwareSessionFileExists = SoftwareCoUtil.softwareSessionFileExists();
-            if (!softwareSessionFileExists)
-            {
-                bool online = await SoftwareUserSession.IsOnlineAsync();
-                if (!online)
-                {
-                    if (tryCount == 0)
-                    {
-                        ShowOfflinePromptAsync();
-                    }
-                    try
-                    {
-                        System.Threading.Thread.Sleep(ONE_MINUTE * 10);
-                        tryCount++;
-                        InitializeUserAsync(tryCount);
-                    }
-                    catch (ThreadInterruptedException e)
-                    {
-                        //
-                    }
-                } else
-                {
-                    string result = await SoftwareUserSession.CreateAnonymousUserAsync(online);
-                    if (result == null) {
-                        if (tryCount == 0)
-                        {
-                            ShowOfflinePromptAsync();
-                        }
-                        try
-                        {
-                            System.Threading.Thread.Sleep(ONE_MINUTE * 10);
-                            tryCount++;
-                            InitializeUserAsync(tryCount);
-                        }
-                        catch (ThreadInterruptedException e)
-                        {
-                            //
-                        }
-                    } else
-                    {
-                        InitializeListenersAsync(true);
-                    }
-                }
-            } else
-            {
-                InitializeListenersAsync(false);
-            }
+            InitializeListenersAsync();
         }
 
         public static string GetVersion()
@@ -173,7 +126,7 @@ namespace SoftwareCo
             return System.Environment.OSVersion.VersionString;
         }
 
-        public async Task InitializeListenersAsync(bool initializedUser)
+        public async Task InitializeListenersAsync()
         {
             await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
             try
@@ -259,7 +212,7 @@ namespace SoftwareCo
                     ONE_MINUTE,
                     1000 * 120);
 
-                this.initializeUserInfo(initializedUser);
+                this.InitializeUserInfo();
             }
             catch (Exception ex)
             {
@@ -567,6 +520,11 @@ namespace SoftwareCo
                 Logger.Info("Code Time metrics are currently paused. Enable to update your metrics.");
                 return;
             }
+            bool online = await SoftwareUserSession.IsOnlineAsync();
+            if (!online)
+            {
+                return;
+            }
             HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/sessions?summary=true", null);
             if (SoftwareHttpManager.IsOk(response))
             {
@@ -650,11 +608,21 @@ namespace SoftwareCo
             _softwareData.EnsureFileInfoDataIsPresent(fileName);
         }
 
-        private async void initializeUserInfo(bool initializedUser)
+        private async void InitializeUserInfo()
         {
+            bool online = await SoftwareUserSession.IsOnlineAsync();
+            bool softwareSessionFileExists = SoftwareCoUtil.softwareSessionFileExists();
+            bool initializedUser = false;
+            if (!softwareSessionFileExists)
+            {
+                string result = await SoftwareUserSession.CreateAnonymousUserAsync(online);
+                if (result != null)
+                {
+                    initializedUser = true;
+                }
+            }
 
-            SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(null);
-            SoftwareLaunchCommand.UpdateEnabledState(status);
+            SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(true);
 
             SoftwareLoginCommand.UpdateEnabledState(status);
 
@@ -663,10 +631,13 @@ namespace SoftwareCo
                 LaunchLoginPrompt();
             }
 
-            ProcessFetchDailyKpmTimerCallbackAsync(null);
+            if (online)
+            {
+                ProcessFetchDailyKpmTimerCallbackAsync(null);
 
-            // send heartbeat
-            SoftwareUserSession.SendHeartbeat("INITIALIZED");
+                // send heartbeat
+                SoftwareUserSession.SendHeartbeat("INITIALIZED");
+            }
         }
 
         private String getDownloadDestinationDirectory()
@@ -681,9 +652,7 @@ namespace SoftwareCo
 
         public async void UpdateUserStatus(Object stateInfo)
         {
-            SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(null);
-            SoftwareLaunchCommand.UpdateEnabledState(status);
-            SoftwareLoginCommand.UpdateEnabledState(status);
+            SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(false);
         }
 
         private static string NO_DATA = "CODE TIME\n\nNo data available\n";

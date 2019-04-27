@@ -27,7 +27,8 @@ namespace SoftwareCo
 
         public static async Task<bool> IsOnlineAsync()
         {
-            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/ping", null);
+            // 3 second timeout
+            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/ping", null, 3, null);
             isOnline = SoftwareHttpManager.IsOk(response);
 
             return isOnline;
@@ -196,16 +197,21 @@ namespace SoftwareCo
             return false;
         }
 
-        public static async Task<UserStatus> GetUserStatusAsync(string token)
+        public static async Task<UserStatus> GetUserStatusAsync(bool isInitialCall)
         {
             bool online = await IsOnlineAsync();
+            bool softwareSessionFileExists = SoftwareCoUtil.softwareSessionFileExists();
+            if (!isInitialCall && isOnline && !softwareSessionFileExists)
+            {
+                await SoftwareUserSession.CreateAnonymousUserAsync(online);
+            }
 
             bool loggedIn = await IsLoggedOn(online);
 
             UserStatus currentUserStatus = new UserStatus();
             currentUserStatus.loggedIn = loggedIn;
 
-            if (loggedInCacheState != loggedIn)
+            if (online && loggedInCacheState != loggedIn)
             {
                 // change in logged in state, send heatbeat and fetch kpm
                 SendHeartbeat("STATE_CHANGE:LOGGED_IN:" + loggedIn);
@@ -222,12 +228,15 @@ namespace SoftwareCo
 
             loggedInCacheState = loggedIn;
 
+            SoftwareLaunchCommand.UpdateEnabledState(currentUserStatus);
+            SoftwareLoginCommand.UpdateEnabledState(currentUserStatus);
+
             return currentUserStatus;
         }
 
         public static async void RefetchUserStatusLazily(int tryCountUntilFoundUser)
         {
-            UserStatus userStatus = await GetUserStatusAsync(null);
+            UserStatus userStatus = await GetUserStatusAsync(true);
 
             if (!userStatus.loggedIn && tryCountUntilFoundUser > 0)
             {

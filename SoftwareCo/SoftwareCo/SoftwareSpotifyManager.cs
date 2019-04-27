@@ -27,6 +27,11 @@ namespace SoftwareCo
                 return;
             }
 
+            if (!SoftwareHttpManager.HasSpotifyAccessToken())
+            {
+                return;
+            }
+
             bool hasLocalTrackData = (localTrackInfo.name != null && localTrackInfo.artist != null)
                 ? true : false;
             bool hasCurrentTrackData = (CurrentTrackInfo != null && CurrentTrackInfo.name != null && CurrentTrackInfo.artist != null)

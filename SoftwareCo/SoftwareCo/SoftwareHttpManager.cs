@@ -82,7 +82,7 @@ namespace SoftwareCo
                 token.Expire_date = dt;
             } catch (Exception e)
             {
-                Logger.Error("Unable to connect to initialize connection: " + e.Message);
+                token = null;
             }
         }
 
