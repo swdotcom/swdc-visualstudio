@@ -6,6 +6,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 // using SpotifyAPI.Local;
 // using SpotifyAPI.Local.Enums;
 // using SpotifyAPI.Local.Models;
@@ -203,11 +205,18 @@ namespace SoftwareCo
             Process.Start(url);
         }
 
-        public static void launchLogin()
+        public static async void launchLogin()
         {
+           
             string jwt = SoftwareUserSession.GetJwt();
             string url = Constants.url_endpoint + "/onboarding?token=" + jwt;
             Process.Start(url);
+
+            bool isOnline = await SoftwareUserSession.IsOnlineAsync();
+            if (!isOnline)
+            {
+                return;
+            }
 
             SoftwareUserSession.RefetchUserStatusLazily(12);
         }
