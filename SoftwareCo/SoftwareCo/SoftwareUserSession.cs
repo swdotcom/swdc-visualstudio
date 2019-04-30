@@ -28,7 +28,7 @@ namespace SoftwareCo
         public static async Task<bool> IsOnlineAsync()
         {
             // 3 second timeout
-            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/ping", null, 3, null);
+            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/ping", null, 3, null, true /*isOnlineCheck*/);
             isOnline = SoftwareHttpManager.IsOk(response);
 
             return isOnline;

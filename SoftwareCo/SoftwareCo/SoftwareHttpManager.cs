@@ -168,10 +168,15 @@ namespace SoftwareCo
             return await SendRequestAsync(httpMethod, uri, optionalPayload, 10, jwt);
         }
 
-        public static async Task<HttpResponseMessage> SendRequestAsync(HttpMethod httpMethod, string uri, string optionalPayload, int timeout, string jwt = null)
+        public static async Task<HttpResponseMessage> SendRequestAsync(HttpMethod httpMethod, string uri, string optionalPayload, int timeout, string jwt = null, bool isOnlineCheck = false)
         {
 
-            if (!SoftwareCoUtil.isTelemetryOn() || !SoftwareUserSession.isOnline)
+            if (!SoftwareCoUtil.isTelemetryOn())
+            {
+                return null;
+            }
+
+            if (!isOnlineCheck && !SoftwareUserSession.isOnline)
             {
                 return null;
             }

@@ -207,18 +207,30 @@ namespace SoftwareCo
 
         public static async void launchLogin()
         {
-           
+            bool isOnline = await SoftwareUserSession.IsOnlineAsync();
             string jwt = SoftwareUserSession.GetJwt();
+            if (jwt == null && isOnline)
+            {
+                // initialize the anon flow
+                await SoftwareUserSession.CreateAnonymousUserAsync(isOnline);
+            }
+            jwt = SoftwareUserSession.GetJwt();
             string url = Constants.url_endpoint + "/onboarding?token=" + jwt;
+            if (!isOnline)
+            {
+                // just show the app home, which should end up showing up with a no connection message
+                url = Constants.url_endpoint;
+            }
+            
             Process.Start(url);
 
-            bool isOnline = await SoftwareUserSession.IsOnlineAsync();
             if (!isOnline)
             {
                 return;
             }
 
             SoftwareUserSession.RefetchUserStatusLazily(12);
+
         }
 
         public static long getNowInSeconds()
