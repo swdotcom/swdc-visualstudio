@@ -229,7 +229,10 @@ namespace SoftwareCo
                 return;
             }
 
-            SoftwareUserSession.RefetchUserStatusLazily(12);
+            if (!SoftwareUserSession.checkingLoginState)
+            {
+                SoftwareUserSession.RefetchUserStatusLazily(12);
+            }
 
         }
 

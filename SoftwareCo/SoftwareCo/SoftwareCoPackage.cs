@@ -108,11 +108,6 @@ namespace SoftwareCo
             _dteEvents = ObjDte.Events.DTEEvents;
             _dteEvents.OnStartupComplete += OnOnStartupComplete;
 
-            InitializeUserAsync(0);
-        }
-
-        protected async Task InitializeUserAsync(int tryCount)
-        {
             InitializeListenersAsync();
         }
 

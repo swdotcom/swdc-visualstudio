@@ -11,6 +11,7 @@ namespace SoftwareCo
 
         private static bool loggedInCacheState = false;
         private static string lastJwt = null;
+        public static bool checkingLoginState = false;
         public static bool isOnline = true;
 
         public class UserStatus
@@ -236,11 +237,13 @@ namespace SoftwareCo
 
         public static async void RefetchUserStatusLazily(int tryCountUntilFoundUser)
         {
+            checkingLoginState = true;
             UserStatus userStatus = await GetUserStatusAsync(true);
 
             if (!userStatus.loggedIn && tryCountUntilFoundUser > 0)
             {
                 tryCountUntilFoundUser -= 1;
+                
                 try
                 {
                     Thread.Sleep(1000 * 10);
@@ -253,6 +256,7 @@ namespace SoftwareCo
             else
             {
                 SoftwareCoPackage.ProcessFetchDailyKpmTimerCallbackAsync(null);
+                checkingLoginState = false;
             }
         }
 
