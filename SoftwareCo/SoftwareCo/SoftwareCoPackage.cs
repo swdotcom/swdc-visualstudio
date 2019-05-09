@@ -72,10 +72,6 @@ namespace SoftwareCo
         private SoftwareRepoManager _softwareRepoUtil;
         private static SoftwareStatus _softwareStatus;
 
-        private bool _isOnline = true;
-        private bool _isAuthenticated = true;
-        private bool _hasJwt = true;
-
         private static int THIRTY_SECONDS = 1000 * 30;
         private static int ONE_MINUTE = THIRTY_SECONDS * 2;
         private static int ONE_HOUR = ONE_MINUTE * 60;
@@ -607,8 +603,9 @@ namespace SoftwareCo
         {
             bool online = await SoftwareUserSession.IsOnlineAsync();
             bool softwareSessionFileExists = SoftwareCoUtil.softwareSessionFileExists();
+            bool jwtExists = SoftwareCoUtil.jwtExists();
             bool initializedUser = false;
-            if (!softwareSessionFileExists)
+            if (!softwareSessionFileExists || !jwtExists)
             {
                 string result = await SoftwareUserSession.CreateAnonymousUserAsync(online);
                 if (result != null)

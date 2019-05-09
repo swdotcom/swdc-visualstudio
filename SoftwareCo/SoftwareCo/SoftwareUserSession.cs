@@ -13,6 +13,7 @@ namespace SoftwareCo
         private static string lastJwt = null;
         public static bool checkingLoginState = false;
         public static bool isOnline = true;
+        public static long lastOnlineCheck = 0;
 
         public class UserStatus
         {
@@ -28,9 +29,14 @@ namespace SoftwareCo
 
         public static async Task<bool> IsOnlineAsync()
         {
-            // 3 second timeout
-            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/ping", null, 3, null, true /*isOnlineCheck*/);
-            isOnline = SoftwareHttpManager.IsOk(response);
+            long nowInSec = SoftwareCoUtil.getNowInSeconds();
+            long thresholdSeconds = nowInSec - lastOnlineCheck;
+            if (thresholdSeconds > 60) {
+                // 3 second timeout
+                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/ping", null, 3, null, true /*isOnlineCheck*/);
+                isOnline = SoftwareHttpManager.IsOk(response);
+                lastOnlineCheck = nowInSec;
+            }
 
             return isOnline;
         }
@@ -202,7 +208,8 @@ namespace SoftwareCo
         {
             bool online = await IsOnlineAsync();
             bool softwareSessionFileExists = SoftwareCoUtil.softwareSessionFileExists();
-            if (!isInitialCall && isOnline && !softwareSessionFileExists)
+            bool jwtExists = SoftwareCoUtil.jwtExists();
+            if (!isInitialCall && isOnline && !jwtExists)
             {
                 await SoftwareUserSession.CreateAnonymousUserAsync(online);
             }

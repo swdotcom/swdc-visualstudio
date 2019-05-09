@@ -183,6 +183,12 @@ namespace SoftwareCo
             return File.Exists(file);
         }
 
+        public static bool jwtExists()
+        {
+            string jwt = SoftwareUserSession.GetJwt();
+            return (jwt != null && !jwt.Equals(""));
+        }
+
         public static String getSoftwareSessionFile()
         {
             return getSoftwareDataDir(true) + "\\session.json";

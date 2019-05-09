@@ -409,11 +409,12 @@ namespace SoftwareCo
 
                         if (repoCommits != null && repoCommits.Count > 0)
                         {
+                            // batch 25 at a time
                             List<RepoCommit> batch = new List<RepoCommit>();
                             for (int i = 0; i < repoCommits.Count; i++)
                             {
                                 batch.Add(repoCommits[i]);
-                                if (i > 0 && i % 100 == 0)
+                                if (i > 0 && i % 25 == 0)
                                 {
                                     // send this batch.
                                     RepoCommitData commitData = new RepoCommitData(identifier, tag, branch, batch);
