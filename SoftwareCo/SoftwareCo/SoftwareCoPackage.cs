@@ -137,6 +137,9 @@ namespace SoftwareCo
                 _docEvents.DocumentSaved += DocEventsOnDocumentSaved;
                 _docEvents.DocumentOpening += DocEventsOnDocumentOpening;
 
+                //initialize the StatusBar 
+                await InitializeSoftwareStatusAsync();
+
                 // initialize the menu commands
                 await SoftwareLaunchCommand.InitializeAsync(this);
                 await SoftwareDashboardLaunchCommand.InitializeAsync(this);
@@ -149,11 +152,7 @@ namespace SoftwareCo
                     _softwareRepoUtil = new SoftwareRepoManager();
                 }
 
-                if (_softwareStatus == null)
-                {
-                    IVsStatusbar statusbar = await GetServiceAsync(typeof(SVsStatusbar)) as IVsStatusbar;
-                    _softwareStatus = new SoftwareStatus(statusbar);
-                }
+                
 
                 // Create an AutoResetEvent to signal the timeout threshold in the
                 // timer callback has been reached.
@@ -210,7 +209,14 @@ namespace SoftwareCo
                 Logger.Error("Error Initializing SoftwareCo", ex);
             }
         }
-
+        private async Task InitializeSoftwareStatusAsync()
+        {
+            if (_softwareStatus == null)
+            {
+                IVsStatusbar statusbar = await GetServiceAsync(typeof(SVsStatusbar)) as IVsStatusbar;
+                _softwareStatus = new SoftwareStatus(statusbar);
+            }
+        }
         public void Dispose()
         {
             if (timer != null)
@@ -361,7 +367,11 @@ namespace SoftwareCo
 
         public static void ToggleStatusInfo()
         {
-            _softwareStatus.ToggleStatusInfo();
+            if (_softwareStatus != null)
+            {
+                _softwareStatus.ToggleStatusInfo();
+
+            }
         }
 
         private void ProcessHourlyJobs(Object stateInfo)
