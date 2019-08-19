@@ -278,6 +278,8 @@ namespace SoftwareCo
         {
             String fileName = ObjDte.ActiveWindow.Document.FullName;
             InitializeSoftwareData(fileName);
+            //Sets end and local_end for source file
+            _IntialisefileMap(fileName);
 
             if (ObjDte.ActiveWindow.Document.Language != null)
             {
@@ -401,13 +403,15 @@ namespace SoftwareCo
         private async void ProcessSoftwareDataTimerCallbackAsync(Object stateInfo)
         {
             AutoResetEvent autoEvent = (AutoResetEvent)stateInfo;
-
+            double offset   = 0;
+            long end        = 0;
+            long local_end  = 0;
             this.SendOfflineData();
 
             DateTime now = DateTime.UtcNow;
             if (_softwareData != null && _softwareData.HasData() && (EnoughTimePassed(now) || timer == null))
             {
-                double offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+                 offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
                 _softwareData.local_start = _softwareData.start + ((int)offset * 60);
                 _softwareData.offset = Math.Abs((int)offset);
                 if (TimeZone.CurrentTimeZone.DaylightName != null
@@ -420,6 +424,41 @@ namespace SoftwareCo
                     _softwareData.timezone = TimeZone.CurrentTimeZone.StandardName;
                 }
 
+                foreach (KeyValuePair<string, object> sourceFiles in _softwareData.source)
+                {
+
+                    JsonObject fileInfoData = null;
+                    fileInfoData = (JsonObject)sourceFiles.Value;
+                    object outend;
+                    fileInfoData.TryGetValue("end", out outend);
+
+                    if (long.Parse(outend.ToString()) == 0)
+                    {
+                        end         = SoftwareCoUtil.getNowInSeconds();
+                        offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+                        local_end   = end + ((int)offset * 60);
+                        _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "end", end);
+                        _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "local_end", local_end);
+
+                    }
+
+                }
+
+                try
+                {
+                    end         = SoftwareCoUtil.getNowInSeconds();
+                    offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+                    local_end   = end + ((int)offset * 60);
+
+                    _softwareData.end           = end;
+                    _softwareData.local_end     = local_end;
+
+                }
+                catch (Exception)
+
+                {
+
+                }
                 string softwareDataContent = _softwareData.GetAsJson();
                 Logger.Info("Code Time: sending: " + softwareDataContent);
 
@@ -608,7 +647,43 @@ namespace SoftwareCo
             }
             _softwareData.EnsureFileInfoDataIsPresent(fileName);
         }
+        private void _IntialisefileMap(string fileName)
+        {
 
+            foreach (KeyValuePair<string, object> sourceFiles in _softwareData.source)
+            {
+                long end = 0;
+                long local_end = 0;
+                double offset = 0;
+                if (fileName != sourceFiles.Key)
+                {
+                    object outend = null;
+                    JsonObject fileInfoData = null;
+                    fileInfoData = (JsonObject)sourceFiles.Value;
+                    fileInfoData.TryGetValue("end", out outend);
+
+                    if (long.Parse(outend.ToString()) == 0)
+                    {
+
+                        end = SoftwareCoUtil.getNowInSeconds();
+                        offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+                        local_end = end + ((int)offset * 60);
+
+                        _softwareData.addOrUpdateFileInfo(fileName, "end", end);
+                        _softwareData.addOrUpdateFileInfo(fileName, "local_end", local_end);
+
+                    }
+
+                }
+                else
+                {
+                    _softwareData.addOrUpdateFileInfo(fileName, "end", 0);
+                    _softwareData.addOrUpdateFileInfo(fileName, "local_end", 0);
+                }
+
+            }
+
+        }
         private async void InitializeUserInfo()
         {
             bool online = await SoftwareUserSession.IsOnlineAsync();

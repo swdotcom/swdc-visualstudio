@@ -22,6 +22,8 @@ namespace SoftwareCo
         // start and end are in seconds
         public long start;
         public long local_start;
+        public long end;
+        public long local_end;
         public String timezone;
         public int offset; // in minutes
 
@@ -77,6 +79,8 @@ namespace SoftwareCo
             jsonObj.Add("offset", this.offset);
             jsonObj.Add("version", this.version);
             jsonObj.Add("os", this.os);
+            jsonObj.Add("end", this.end);
+            jsonObj.Add("local_end", this.local_end);
             return jsonObj.ToString();
         }
 
@@ -168,6 +172,10 @@ namespace SoftwareCo
                 {
                     dataCount = count;
                 }
+                if (property.Equals("end") || property.Equals("local_end"))
+                {
+                    dataCount = count;
+                }
                 else
                 {
                     dataCount = Convert.ToInt64(fileInfoData[property]) + count;
@@ -181,9 +189,12 @@ namespace SoftwareCo
 
         public void EnsureFileInfoDataIsPresent(string fileName)
         {
+            JsonObject fileInfoData = new JsonObject();
+            long start = SoftwareCoUtil.getNowInSeconds();
+            double offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+            long local_start = start + ((int)offset * 60);
             if (!source.ContainsKey(fileName))
             {
-                JsonObject fileInfoData = new JsonObject();
                 fileInfoData.Add("paste", 0);
                 fileInfoData.Add("open", 0);
                 fileInfoData.Add("close", 0);
@@ -195,7 +206,12 @@ namespace SoftwareCo
                 fileInfoData.Add("linesAdded", 0);
                 fileInfoData.Add("linesRemoved", 0);
                 fileInfoData.Add("syntax", "");
+                fileInfoData.Add("start", start);
+                fileInfoData.Add("local_start", local_start);
+                fileInfoData.Add("end", 0);
+                fileInfoData.Add("local_end", 0);
                 source.Add(fileName, fileInfoData);
+
             }
         }
         
