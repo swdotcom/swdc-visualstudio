@@ -131,11 +131,11 @@ namespace SoftwareCo
                 _docEvents = ObjDte.Events.DocumentEvents;
 
                 // setup event handlers
-                _textDocKeyEvent.AfterKeyPress += AfterKeyPressed;
-                _docEvents.DocumentOpened += DocEventsOnDocumentOpened;
-                _docEvents.DocumentClosing += DocEventsOnDocumentClosed;
-                _docEvents.DocumentSaved += DocEventsOnDocumentSaved;
-                _docEvents.DocumentOpening += DocEventsOnDocumentOpening;
+                _textDocKeyEvent.AfterKeyPress += AfterKeyPressedAsync;
+                _docEvents.DocumentOpened += DocEventsOnDocumentOpenedAsync;
+                _docEvents.DocumentClosing += DocEventsOnDocumentClosedAsync;
+                _docEvents.DocumentSaved += DocEventsOnDocumentSavedAsync;
+                _docEvents.DocumentOpening += DocEventsOnDocumentOpeningAsync;
 
                 //initialize the StatusBar 
                 await InitializeSoftwareStatusAsync();
@@ -221,11 +221,11 @@ namespace SoftwareCo
         {
             if (timer != null)
             {
-                _textDocKeyEvent.AfterKeyPress -= AfterKeyPressed;
-                _docEvents.DocumentOpened -= DocEventsOnDocumentOpened;
-                _docEvents.DocumentClosing -= DocEventsOnDocumentClosed;
+                _textDocKeyEvent.AfterKeyPress -= AfterKeyPressedAsync;
+                _docEvents.DocumentOpened -= DocEventsOnDocumentOpenedAsync;
+                _docEvents.DocumentClosing -= DocEventsOnDocumentClosedAsync;
                 _docEvents.DocumentSaved -= DocEventsOnDocumentSaved;
-                _docEvents.DocumentOpening -= DocEventsOnDocumentOpening;
+                _docEvents.DocumentOpening -= DocEventsOnDocumentOpeningAsync;
 
                 timer.Dispose();
                 timer = null;
@@ -251,7 +251,7 @@ namespace SoftwareCo
             }
 
             InitializeSoftwareData(fileName);
-
+           
             FileInfo fi = new FileInfo(fileName);
 
             _softwareData.UpdateData(fileName, "length", fi.Length);
@@ -266,20 +266,24 @@ namespace SoftwareCo
             }
         }
 
-        private void DocEventsOnDocumentOpening(String docPath, Boolean readOnly)
+        private async void DocEventsOnDocumentOpeningAsync(String docPath, Boolean readOnly)
         {
             FileInfo fi = new FileInfo(docPath);
             String fileName = fi.FullName;
             InitializeSoftwareData(fileName);
+
+            //Sets end and local_end for source file
+            await _IntialisefileMap(fileName);
         }
 
-        private void AfterKeyPressed(
+        private async void AfterKeyPressedAsync(
             string Keypress, TextSelection Selection, bool InStatementCompletion)
         {
             String fileName = ObjDte.ActiveWindow.Document.FullName;
             InitializeSoftwareData(fileName);
+
             //Sets end and local_end for source file
-            _IntialisefileMap(fileName);
+            await _IntialisefileMap(fileName);
 
             if (ObjDte.ActiveWindow.Document.Language != null)
             {
@@ -315,7 +319,7 @@ namespace SoftwareCo
             }
         }
 
-        private void DocEventsOnDocumentOpened(Document document)
+        private async void DocEventsOnDocumentOpenedAsync(Document document)
         {
             if (document == null || document.FullName == null)
             {
@@ -326,6 +330,8 @@ namespace SoftwareCo
             {
                 return;
             }
+                //Sets end and local_end for source file
+                await _IntialisefileMap(fileName);
             try
             {
                 _softwareData.UpdateData(fileName, "open", 1);
@@ -337,7 +343,7 @@ namespace SoftwareCo
             }
         }
 
-        private void DocEventsOnDocumentClosed(Document document)
+        private async void DocEventsOnDocumentClosedAsync(Document document)
         {
             if (document == null || document.FullName == null)
             {
@@ -348,6 +354,8 @@ namespace SoftwareCo
             {
                 return;
             }
+            //Sets end and local_end for source file
+            await _IntialisefileMap(fileName);
             try
             {
                 _softwareData.UpdateData(fileName, "close", 1);
@@ -647,27 +655,27 @@ namespace SoftwareCo
             }
             _softwareData.EnsureFileInfoDataIsPresent(fileName);
         }
-        private void _IntialisefileMap(string fileName)
+        private async Task _IntialisefileMap(string fileName)
         {
 
             foreach (KeyValuePair<string, object> sourceFiles in _softwareData.source)
             {
-                long end = 0;
-                long local_end = 0;
-                double offset = 0;
+                long end        = 0;
+                long local_end  = 0;
+                double offset   = 0;
                 if (fileName != sourceFiles.Key)
                 {
-                    object outend = null;
+                    object outend           = null;
                     JsonObject fileInfoData = null;
-                    fileInfoData = (JsonObject)sourceFiles.Value;
+                    fileInfoData            = (JsonObject)sourceFiles.Value;
                     fileInfoData.TryGetValue("end", out outend);
 
                     if (long.Parse(outend.ToString()) == 0)
                     {
 
-                        end = SoftwareCoUtil.getNowInSeconds();
-                        offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-                        local_end = end + ((int)offset * 60);
+                        end         = SoftwareCoUtil.getNowInSeconds();
+                        offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+                        local_end   = end + ((int)offset * 60);
 
                         _softwareData.addOrUpdateFileInfo(fileName, "end", end);
                         _softwareData.addOrUpdateFileInfo(fileName, "local_end", local_end);

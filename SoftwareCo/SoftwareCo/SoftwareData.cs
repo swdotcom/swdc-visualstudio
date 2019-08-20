@@ -189,10 +189,11 @@ namespace SoftwareCo
 
         public void EnsureFileInfoDataIsPresent(string fileName)
         {
-            JsonObject fileInfoData = new JsonObject();
-            long start = SoftwareCoUtil.getNowInSeconds();
-            double offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-            long local_start = start + ((int)offset * 60);
+            JsonObject fileInfoData     = new JsonObject();
+            long start                  = SoftwareCoUtil.getNowInSeconds();
+            double offset               = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+            long local_start            = start + ((int)offset * 60);
+
             if (!source.ContainsKey(fileName))
             {
                 fileInfoData.Add("paste", 0);
