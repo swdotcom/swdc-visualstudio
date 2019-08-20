@@ -565,7 +565,7 @@ namespace SoftwareCo
             {
                 return;
             }
-            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/sessions?summary=true", null);
+            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/sessions/summary", null);
             if (SoftwareHttpManager.IsOk(response))
             {
                 // get the json data
