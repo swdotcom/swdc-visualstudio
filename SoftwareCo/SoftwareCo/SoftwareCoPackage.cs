@@ -134,7 +134,7 @@ namespace SoftwareCo
                 _textDocKeyEvent.AfterKeyPress += AfterKeyPressedAsync;
                 _docEvents.DocumentOpened += DocEventsOnDocumentOpenedAsync;
                 _docEvents.DocumentClosing += DocEventsOnDocumentClosedAsync;
-                _docEvents.DocumentSaved += DocEventsOnDocumentSavedAsync;
+                _docEvents.DocumentSaved += DocEventsOnDocumentSaved;
                 _docEvents.DocumentOpening += DocEventsOnDocumentOpeningAsync;
 
                 //initialize the StatusBar 
