@@ -131,11 +131,11 @@ namespace SoftwareCo
                 _docEvents = ObjDte.Events.DocumentEvents;
 
                 // setup event handlers
-                _textDocKeyEvent.AfterKeyPress += AfterKeyPressed;
-                _docEvents.DocumentOpened += DocEventsOnDocumentOpened;
-                _docEvents.DocumentClosing += DocEventsOnDocumentClosed;
+                _textDocKeyEvent.AfterKeyPress += AfterKeyPressedAsync;
+                _docEvents.DocumentOpened += DocEventsOnDocumentOpenedAsync;
+                _docEvents.DocumentClosing += DocEventsOnDocumentClosedAsync;
                 _docEvents.DocumentSaved += DocEventsOnDocumentSaved;
-                _docEvents.DocumentOpening += DocEventsOnDocumentOpening;
+                _docEvents.DocumentOpening += DocEventsOnDocumentOpeningAsync;
 
                 //initialize the StatusBar 
                 await InitializeSoftwareStatusAsync();
@@ -221,11 +221,11 @@ namespace SoftwareCo
         {
             if (timer != null)
             {
-                _textDocKeyEvent.AfterKeyPress -= AfterKeyPressed;
-                _docEvents.DocumentOpened -= DocEventsOnDocumentOpened;
-                _docEvents.DocumentClosing -= DocEventsOnDocumentClosed;
+                _textDocKeyEvent.AfterKeyPress -= AfterKeyPressedAsync;
+                _docEvents.DocumentOpened -= DocEventsOnDocumentOpenedAsync;
+                _docEvents.DocumentClosing -= DocEventsOnDocumentClosedAsync;
                 _docEvents.DocumentSaved -= DocEventsOnDocumentSaved;
-                _docEvents.DocumentOpening -= DocEventsOnDocumentOpening;
+                _docEvents.DocumentOpening -= DocEventsOnDocumentOpeningAsync;
 
                 timer.Dispose();
                 timer = null;
@@ -251,7 +251,7 @@ namespace SoftwareCo
             }
 
             InitializeSoftwareData(fileName);
-
+           
             FileInfo fi = new FileInfo(fileName);
 
             _softwareData.UpdateData(fileName, "length", fi.Length);
@@ -266,18 +266,24 @@ namespace SoftwareCo
             }
         }
 
-        private void DocEventsOnDocumentOpening(String docPath, Boolean readOnly)
+        private async void DocEventsOnDocumentOpeningAsync(String docPath, Boolean readOnly)
         {
             FileInfo fi = new FileInfo(docPath);
             String fileName = fi.FullName;
             InitializeSoftwareData(fileName);
+
+            //Sets end and local_end for source file
+            await _IntialisefileMap(fileName);
         }
 
-        private void AfterKeyPressed(
+        private async void AfterKeyPressedAsync(
             string Keypress, TextSelection Selection, bool InStatementCompletion)
         {
             String fileName = ObjDte.ActiveWindow.Document.FullName;
             InitializeSoftwareData(fileName);
+
+            //Sets end and local_end for source file
+            await _IntialisefileMap(fileName);
 
             if (ObjDte.ActiveWindow.Document.Language != null)
             {
@@ -313,7 +319,7 @@ namespace SoftwareCo
             }
         }
 
-        private void DocEventsOnDocumentOpened(Document document)
+        private async void DocEventsOnDocumentOpenedAsync(Document document)
         {
             if (document == null || document.FullName == null)
             {
@@ -324,6 +330,8 @@ namespace SoftwareCo
             {
                 return;
             }
+                //Sets end and local_end for source file
+                await _IntialisefileMap(fileName);
             try
             {
                 _softwareData.UpdateData(fileName, "open", 1);
@@ -335,7 +343,7 @@ namespace SoftwareCo
             }
         }
 
-        private void DocEventsOnDocumentClosed(Document document)
+        private async void DocEventsOnDocumentClosedAsync(Document document)
         {
             if (document == null || document.FullName == null)
             {
@@ -346,6 +354,8 @@ namespace SoftwareCo
             {
                 return;
             }
+            //Sets end and local_end for source file
+            await _IntialisefileMap(fileName);
             try
             {
                 _softwareData.UpdateData(fileName, "close", 1);
@@ -401,13 +411,15 @@ namespace SoftwareCo
         private async void ProcessSoftwareDataTimerCallbackAsync(Object stateInfo)
         {
             AutoResetEvent autoEvent = (AutoResetEvent)stateInfo;
-
+            double offset   = 0;
+            long end        = 0;
+            long local_end  = 0;
             this.SendOfflineData();
 
             DateTime now = DateTime.UtcNow;
             if (_softwareData != null && _softwareData.HasData() && (EnoughTimePassed(now) || timer == null))
             {
-                double offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+                 offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
                 _softwareData.local_start = _softwareData.start + ((int)offset * 60);
                 _softwareData.offset = Math.Abs((int)offset);
                 if (TimeZone.CurrentTimeZone.DaylightName != null
@@ -420,6 +432,41 @@ namespace SoftwareCo
                     _softwareData.timezone = TimeZone.CurrentTimeZone.StandardName;
                 }
 
+                foreach (KeyValuePair<string, object> sourceFiles in _softwareData.source)
+                {
+
+                    JsonObject fileInfoData = null;
+                    fileInfoData = (JsonObject)sourceFiles.Value;
+                    object outend;
+                    fileInfoData.TryGetValue("end", out outend);
+
+                    if (long.Parse(outend.ToString()) == 0)
+                    {
+                        end         = SoftwareCoUtil.getNowInSeconds();
+                        offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+                        local_end   = end + ((int)offset * 60);
+                        _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "end", end);
+                        _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "local_end", local_end);
+
+                    }
+
+                }
+
+                try
+                {
+                    end         = SoftwareCoUtil.getNowInSeconds();
+                    offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+                    local_end   = end + ((int)offset * 60);
+
+                    _softwareData.end           = end;
+                    _softwareData.local_end     = local_end;
+
+                }
+                catch (Exception)
+
+                {
+
+                }
                 string softwareDataContent = _softwareData.GetAsJson();
                 Logger.Info("Code Time: sending: " + softwareDataContent);
 
@@ -608,7 +655,43 @@ namespace SoftwareCo
             }
             _softwareData.EnsureFileInfoDataIsPresent(fileName);
         }
+        private async Task _IntialisefileMap(string fileName)
+        {
 
+            foreach (KeyValuePair<string, object> sourceFiles in _softwareData.source)
+            {
+                long end        = 0;
+                long local_end  = 0;
+                double offset   = 0;
+                if (fileName != sourceFiles.Key)
+                {
+                    object outend           = null;
+                    JsonObject fileInfoData = null;
+                    fileInfoData            = (JsonObject)sourceFiles.Value;
+                    fileInfoData.TryGetValue("end", out outend);
+
+                    if (long.Parse(outend.ToString()) == 0)
+                    {
+
+                        end         = SoftwareCoUtil.getNowInSeconds();
+                        offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+                        local_end   = end + ((int)offset * 60);
+
+                        _softwareData.addOrUpdateFileInfo(fileName, "end", end);
+                        _softwareData.addOrUpdateFileInfo(fileName, "local_end", local_end);
+
+                    }
+
+                }
+                else
+                {
+                    _softwareData.addOrUpdateFileInfo(fileName, "end", 0);
+                    _softwareData.addOrUpdateFileInfo(fileName, "local_end", 0);
+                }
+
+            }
+
+        }
         private async void InitializeUserInfo()
         {
             bool online = await SoftwareUserSession.IsOnlineAsync();
