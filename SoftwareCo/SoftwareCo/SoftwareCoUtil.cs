@@ -194,6 +194,16 @@ namespace SoftwareCo
             return getSoftwareDataDir(true) + "\\session.json";
         }
 
+        public static bool SessionSummaryFileExists()
+        {
+            string file = getSoftwareDataDir(false) + "\\sessionSummary.json";
+            return File.Exists(file);
+        }
+        public static String getSessionSummaryFile()
+        {
+            return getSoftwareDataDir(true) + "\\sessionSummary.json";
+        }
+
         public static String getSoftwareDataStoreFile()
         {
             return getSoftwareDataDir(true) + "\\data.json";

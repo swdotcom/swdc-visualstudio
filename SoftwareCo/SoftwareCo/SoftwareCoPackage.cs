@@ -59,6 +59,7 @@ namespace SoftwareCo
         private System.Threading.Timer musicTimer;
         private System.Threading.Timer statusMsgTimer;
         private System.Threading.Timer userStatusTimer;
+        private System.Threading.Timer offlineDataTimer;
 
         // Used by Constants for version info
         public static DTE2 ObjDte;
@@ -75,6 +76,7 @@ namespace SoftwareCo
         private static int THIRTY_SECONDS = 1000 * 30;
         private static int ONE_MINUTE = THIRTY_SECONDS * 2;
         private static int ONE_HOUR = ONE_MINUTE * 60;
+        private static int THIRTY_MINUTES = ONE_MINUTE * 30;
 
         #endregion
 
@@ -164,8 +166,14 @@ namespace SoftwareCo
                     autoEvent,
                     ONE_MINUTE,
                     ONE_MINUTE);
-
-                this.SendOfflineData();
+               
+                offlineDataTimer = new System.Threading.Timer(
+                    SendOfflineData, 
+                    autoEvent,
+                    ONE_MINUTE,
+                    THIRTY_MINUTES);
+                    
+               // this.SendOfflineData();
 
                 // start in 5 seconds every 5 min
                 int delay = 1000 * 5;
@@ -402,7 +410,7 @@ namespace SoftwareCo
         {
             AutoResetEvent autoEvent = (AutoResetEvent)stateInfo;
 
-            this.SendOfflineData();
+            //this.SendOfflineData();
 
             DateTime now = DateTime.UtcNow;
             if (_softwareData != null && _softwareData.HasData() && (EnoughTimePassed(now) || timer == null))
@@ -461,6 +469,7 @@ namespace SoftwareCo
             string datastoreFile = SoftwareCoUtil.getSoftwareDataStoreFile();
             // append to the file
             File.AppendAllText(datastoreFile, softwareDataContent + Environment.NewLine);
+
         }
 
         private async void LaunchLoginPrompt()
@@ -485,8 +494,15 @@ namespace SoftwareCo
             }
         }
 
-        private async void SendOfflineData()
+        private async void SendOfflineData(object stateinfo)
         {
+            bool online = await SoftwareUserSession.IsOnlineAsync();
+
+            if(!online)
+            {
+                return;
+            }
+
             string datastoreFile = SoftwareCoUtil.getSoftwareDataStoreFile();
             if (File.Exists(datastoreFile))
             {
@@ -512,26 +528,25 @@ namespace SoftwareCo
                     }
                 }
             }
+
+            //çlearSessionSummaryData();
+
+
         }
 
         public static async void ProcessFetchDailyKpmTimerCallbackAsync(Object stateInfo)
         {
-            if (!SoftwareCoUtil.isTelemetryOn())
-            {
-                Logger.Info("Code Time metrics are currently paused. Enable to update your metrics.");
-                return;
-            }
+            
             bool online = await SoftwareUserSession.IsOnlineAsync();
             if (!online)
             {
                 return;
             }
-            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/sessions/summary", null);
-            if (SoftwareHttpManager.IsOk(response))
-            {
+           
                 // get the json data
-                string responseBody = await response.Content.ReadAsStringAsync();
-                IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+              //  string responseBody = getSessionSummaryAsJson();
+
+            IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
 
                 jsonObj.TryGetValue("currentDayMinutes", out object currentDayMinutes);
                 long currentDayMinutesVal = (currentDayMinutes == null) ? 0 : Convert.ToInt64(currentDayMinutes);
@@ -551,15 +566,66 @@ namespace SoftwareCo
                 }
                 _softwareStatus.SetStatus(msg);
 
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+
                 FetchCodeTimeDashboardAsync();
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-            } else
-            {
+
+            
                 _softwareStatus.SetStatus("Code Time");
-            }
+            
 
         }
+
+        //private static string getSessionSummaryAsJson()
+        //{
+            
+        //}
+
+        //        public static async void ProcessFetchDailyKpmTimerCallbackAsync(Object stateInfo)
+        //        {
+        //            if (!SoftwareCoUtil.isTelemetryOn())
+        //            {
+        //                Logger.Info("Code Time metrics are currently paused. Enable to update your metrics.");
+        //                return;
+        //            }
+        //            bool online = await SoftwareUserSession.IsOnlineAsync();
+        //            if (!online)
+        //            {
+        //                return;
+        //            }
+        //            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/sessions/summary", null);
+        //            if (SoftwareHttpManager.IsOk(response))
+        //            {
+        //                // get the json data
+        //                string responseBody = await response.Content.ReadAsStringAsync();
+        //                IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+
+        //                jsonObj.TryGetValue("currentDayMinutes", out object currentDayMinutes);
+        //                long currentDayMinutesVal = (currentDayMinutes == null) ? 0 : Convert.ToInt64(currentDayMinutes);
+
+        //                jsonObj.TryGetValue("averageDailyMinutes", out object averageDailyMinutes);
+        //                long averageDailyMinutesVal = (averageDailyMinutes == null) ? 0 : Convert.ToInt64(averageDailyMinutes);
+
+        //                string currentDayMinutesTime = SoftwareCoUtil.HumanizeMinutes(currentDayMinutesVal);
+        //                string averageDailyMinutesTime = SoftwareCoUtil.HumanizeMinutes(averageDailyMinutesVal);
+
+        //                // Code time today:  4 hrs | Avg: 3 hrs 28 min
+        //                string inFlowIcon = currentDayMinutesVal > averageDailyMinutesVal ? "🚀" : "";
+        //                string msg = string.Format("{0}{1}", inFlowIcon, currentDayMinutesTime);
+        //                if (averageDailyMinutesVal > 0)
+        //                {
+        //                    msg += string.Format(" | {0}", averageDailyMinutesTime);
+        //                }
+        //                _softwareStatus.SetStatus(msg);
+
+        //#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        //                FetchCodeTimeDashboardAsync();
+        //#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        //            } else
+        //            {
+        //                _softwareStatus.SetStatus("Code Time");
+        //            }
+
+        //        }
 
         private bool EnoughTimePassed(DateTime now)
         {
