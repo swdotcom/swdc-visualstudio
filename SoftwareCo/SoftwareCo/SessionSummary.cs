@@ -39,9 +39,9 @@ namespace SoftwareCo
             return jsonObj.ToString();
         }
 
-      
-
-
-
+        public static explicit operator SessionSummary(Task<SessionSummary> v)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

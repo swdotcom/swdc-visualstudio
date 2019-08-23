@@ -889,7 +889,6 @@ namespace SoftwareCo
             string summaryContent  = "";   
             string summaryInfoFile = SoftwareCoUtil.getSessionSummaryInfoFile();
 
-            string dashboardFile = SoftwareCoUtil.getDashboardFile();
             HttpResponseMessage resp =
                 await SoftwareHttpManager.SendDashboardRequestAsync(HttpMethod.Get, "/dashboard");
 
@@ -909,8 +908,16 @@ namespace SoftwareCo
                 File.WriteAllText(summaryInfoFile, summaryContent);
                 File.SetAttributes(summaryInfoFile, FileAttributes.ReadOnly);
             }
-          
 
+
+            string dashboardFile = SoftwareCoUtil.getDashboardFile();
+            string dashboardContent = "";
+            string formattedDate = DateTime.Now.ToString("ddd, MMM Do h:mma");
+
+            dashboardContent = "CODE TIME          "+ "(Last updated on "+ formattedDate +"  )";
+            dashboardContent += "\n\n";
+
+            string todayDate = DateTime.Now.ToString("ddd, MMM Do");
 
         }
 
