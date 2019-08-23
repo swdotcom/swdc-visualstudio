@@ -227,7 +227,7 @@ namespace SoftwareCo
                 try
                 {
                     Thread.Sleep(1000);
-                    SoftwareCoPackage.ProcessFetchDailyKpmTimerCallbackAsync(null);
+                    SoftwareCoPackage.ProcessFetchDailyKpmTimerCallback(null);
                 } catch (ThreadInterruptedException e)
                 {
                     //
@@ -262,7 +262,7 @@ namespace SoftwareCo
             }
             else
             {
-                SoftwareCoPackage.ProcessFetchDailyKpmTimerCallbackAsync(null);
+                SoftwareCoPackage.ProcessFetchDailyKpmTimerCallback(null);
                 checkingLoginState = false;
             }
         }

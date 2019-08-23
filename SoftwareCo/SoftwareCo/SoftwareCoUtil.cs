@@ -201,12 +201,24 @@ namespace SoftwareCo
         }
         public static String getSessionSummaryFile()
         {
+            return getSoftwareDataDir(true) + "\\SummaryInfo.txt";
+        }
+        public static bool SessionSummaryInfoFileExists()
+        {
+            string file = getSoftwareDataDir(false) + "\\SummaryInfo.txt";
+            return File.Exists(file);
+        }
+        public static String getSessionSummaryInfoFile()
+        {
             return getSoftwareDataDir(true) + "\\sessionSummary.json";
         }
-
         public static String getSoftwareDataStoreFile()
         {
             return getSoftwareDataDir(true) + "\\data.json";
+        }
+        public void incrementSessionSummaryData(int time, object keystrokes)
+        {
+
         }
 
         public static void launchSoftwareTopForty()
