@@ -190,7 +190,7 @@ namespace SoftwareCo
                 //    delay,
                 //    ONE_MINUTE * 5);
 
-                delay = 1000 * 45;
+                int delay = 1000 * 45;
 
                 delay = ONE_MINUTE + (1000 * 10);
                 repoCommitsTimer = new System.Threading.Timer(
@@ -557,8 +557,15 @@ namespace SoftwareCo
 
         private static SessionSummary getSessionSummayData()
         {
-            string sessionSummary = SoftwareCoUtil.getSessionSummaryFile();
-           return _sessionSummary = (SessionSummary)SimpleJson.DeserializeObject(sessionSummary);
+            if (SoftwareCoUtil.SessionSummaryFileExists())
+            {
+                string sessionSummary = SoftwareCoUtil.getSessionSummaryFile();
+                if (string.IsNullOrEmpty(sessionSummary))
+                    return _sessionSummary = (SessionSummary)SimpleJson.DeserializeObject(sessionSummary);
+                else
+                    return new SessionSummary();
+            }
+            return new SessionSummary();
         }
 
 
@@ -645,25 +652,26 @@ namespace SoftwareCo
                 _sessionSummary.currentDayMinutes = 0;
                 _sessionSummary.liveshareMinutes = 0;
             }
+            saveSessionSummaryToDisk(_sessionSummary);
         }
 
         public static async Task ProcessFetchDailyKpmTimerCallback(Object stateInfo)
         {
-            SessionSummary sessionSummary = new SessionSummary();
-                 
-            sessionSummary  =  (SessionSummary) GetSessionSummaryStatusAsync(true);
+            //SessionSummary sessionSummary = new SessionSummary();
 
-            await FetchCodeTimeDashboardAsync(sessionSummary);
+            var sessionSummary = await GetSessionSummaryStatusAsync(true);
+
+            await FetchCodeTimeDashboardAsync((SessionSummary) sessionSummary);
 
         }
 
         private static async Task<SessionSummary> GetSessionSummaryStatusAsync(bool forceRefresh = false)
         {
-            if(SoftwareCoUtil.softwareSessionFileExists())
+            _sessionSummary = getSessionSummayData();
+
+            if (SoftwareCoUtil.SessionSummaryFileExists())
             {
                 
-                _sessionSummary = getSessionSummayData();
-
                 if (_sessionSummary.currentDayMinutes == 0 || forceRefresh)
                 {
                     bool online = await SoftwareUserSession.IsOnlineAsync();
@@ -727,12 +735,13 @@ namespace SoftwareCo
             string sessionSummaryFile = SoftwareCoUtil.getSessionSummaryFile();
 
 
-            if (SoftwareCoUtil.softwareSessionFileExists())
+            if (!SoftwareCoUtil.SessionSummaryFileExists())
             {
-                File.SetAttributes(sessionSummaryFile, FileAttributes.Normal);
+                File.Create(sessionSummaryFile);
             }
-            File.WriteAllText(sessionSummaryFile, sessionSummary.GetSessionSummaryAsJson());
-            File.SetAttributes(sessionSummaryFile, FileAttributes.ReadOnly);
+
+                File.WriteAllText(sessionSummaryFile, sessionSummary.GetSessionSummaryAsJson());
+                File.SetAttributes(sessionSummaryFile, FileAttributes.Normal);
         }
 
 
@@ -904,9 +913,18 @@ namespace SoftwareCo
 
             if (File.Exists(summaryInfoFile))
             {
-                File.SetAttributes(summaryInfoFile, FileAttributes.Normal);
-                File.WriteAllText(summaryInfoFile, summaryContent);
-                File.SetAttributes(summaryInfoFile, FileAttributes.ReadOnly);
+                try
+                {
+                    File.SetAttributes(summaryInfoFile, FileAttributes.Normal);
+                    File.WriteAllText(summaryInfoFile, summaryContent);
+                    File.SetAttributes(summaryInfoFile, FileAttributes.ReadOnly);
+                }
+                catch (Exception e)
+                {
+
+                    
+                }
+              
             }
 
 
@@ -918,7 +936,51 @@ namespace SoftwareCo
             dashboardContent += "\n\n";
 
             string todayDate = DateTime.Now.ToString("ddd, MMM Do");
+            string today_date = "Today" + "(" + todayDate + ")";
+            dashboardContent += SoftwareCoUtil.getSectionHeader(today_date);
 
+            if(_sessionSummary!= null)
+            {
+              
+                string averageTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.averageDailyMinutes);
+                string hoursCodedToday = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.currentDayMinutes);
+                String liveshareTime ="";
+                if (_sessionSummary.liveshareMinutes != 0)
+                {
+                    liveshareTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.liveshareMinutes);
+                }
+                dashboardContent += SoftwareCoUtil.getDashboardRow("Hours Coded" , hoursCodedToday);
+                dashboardContent += SoftwareCoUtil.getDashboardRow("90-day avg", averageTime);
+                if (liveshareTime != "0")
+                {
+                    dashboardContent += SoftwareCoUtil.getDashboardRow("Live Share", liveshareTime);
+                }
+                dashboardContent += "\n";
+            }
+
+            if (SoftwareCoUtil.SessionSummaryInfoFileExists())
+            {
+                string SummaryData = SoftwareCoUtil.getSessionSummaryInfoFile();
+                dashboardContent += SummaryData;
+            }
+
+
+            if (File.Exists(dashboardFile))
+            {
+                try
+                {
+                    File.SetAttributes(dashboardFile, FileAttributes.Normal);
+                    File.WriteAllText(dashboardFile, dashboardContent);
+                    File.SetAttributes(summaryInfoFile, FileAttributes.ReadOnly);
+
+                }
+                catch ( Exception e)
+                {
+
+                    
+                }
+               
+            }
         }
 
         public static async void LaunchCodeTimeDashboardAsync()

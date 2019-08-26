@@ -15,18 +15,18 @@ namespace SoftwareCo
         public long averageDailyKeystrokes  = 0;
         public long currentDayKeystrokes    = 0;
         public long liveshareMinutes        = 0;
-        
 
-        //public SessionSummary()
-        //{
-        //    currentDayMinutes       = 0;
-        //    averageDailyMinutes     = 0;
-        //    averageDailyKeystrokes  = 0;
-        //    currentDayKeystrokes    = 0;
-        //    liveshareMinutes        = 0;
-        //}
 
-     
+        public SessionSummary()
+        {
+            currentDayMinutes = 0;
+            averageDailyMinutes = 0;
+            averageDailyKeystrokes = 0;
+            currentDayKeystrokes = 0;
+            liveshareMinutes = 0;
+        }
+
+
 
         public string GetSessionSummaryAsJson()
         {
@@ -39,9 +39,6 @@ namespace SoftwareCo
             return jsonObj.ToString();
         }
 
-        public static explicit operator SessionSummary(Task<SessionSummary> v)
-        {
-            throw new NotImplementedException();
-        }
+      
     }
 }
