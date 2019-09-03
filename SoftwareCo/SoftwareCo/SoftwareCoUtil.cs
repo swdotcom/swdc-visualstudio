@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 // using SpotifyAPI.Local;
@@ -191,12 +192,17 @@ namespace SoftwareCo
         }
         public static bool SessionSummaryFileExists()
         {
-            string file = getSoftwareDataDir(true) + "\\sessionSummary.json";
+            string file = getSoftwareDataDir(false) + "\\sessionSummary.json";
             return File.Exists(file);
         }
         public static String getSessionSummaryFile()
         {
             return getSoftwareDataDir(true) + "\\sessionSummary.json";
+        }
+
+        public static String getSessionSummaryFileData()
+        {
+            return File.ReadAllText(getSoftwareDataDir(true)+"\\sessionSummary.json");
         }
         public static String getSoftwareSessionFile()
         {
@@ -208,6 +214,10 @@ namespace SoftwareCo
         {
             return getSoftwareDataDir(true) + "\\SummaryInfo.txt";
         }
+        public static String getSessionSummaryInfoFileData()
+        {
+            return  File.ReadAllText(getSoftwareDataDir(false) + "\\SummaryInfo.txt");
+        }
         public static bool SessionSummaryInfoFileExists()
         {
             string file = getSoftwareDataDir(false) + "\\SummaryInfo.txt";
@@ -218,10 +228,7 @@ namespace SoftwareCo
         {
             return getSoftwareDataDir(true) + "\\data.json";
         }
-        public void incrementSessionSummaryData(int time, object keystrokes)
-        {
-
-        }
+        
 
         public static string getSectionHeader( string  label)
         {
@@ -382,12 +389,11 @@ namespace SoftwareCo
 
         }
 
-       
-
         private static string getDashboardLabel(string label)
         {
            return  getDashboardDataDisplay(DASHBOARD_VALUE_WIDTH, label);
         }
+
         private static string getDashboardValue(string value)
         {
             string valueContent = getDashboardDataDisplay(DASHBOARD_VALUE_WIDTH, value);
@@ -411,9 +417,50 @@ namespace SoftwareCo
             return content += data;
         }
 
-        
-    }
+        internal static string CreateDateSuffix(DateTime date)
+        {
+           
+                // Get day...
+                var day = date.Day;
 
+                // Get day modulo...
+                var dayModulo = day % 10;
+
+                // Convert day to string...
+                var suffix = day.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                // Combine day with correct suffix...
+                suffix += (day == 11 || day == 12 || day == 13) ? "th" :
+                    (dayModulo == 1) ? "st" :
+                    (dayModulo == 2) ? "nd" :
+                    (dayModulo == 3) ? "rd" :
+                    "th";
+
+                // Return result...
+                return suffix;
+            
+        }
+
+        private static ReaderWriterLockSlim _readWriteLock = new ReaderWriterLockSlim();
+
+        public static void WriteToFileThreadSafe(string text, string path)
+        {
+            // Set Status to Locked
+            _readWriteLock.EnterWriteLock();
+            try
+            {
+                // Append text to the file
+                File.WriteAllText(path, text);
+                File.SetAttributes(path, FileAttributes.ReadOnly);
+            }
+            finally
+            {
+                // Release lock
+                _readWriteLock.ExitWriteLock();
+            }
+        }
+    }
+   
     struct Date
     {
         public static double GetTime(DateTime dateTime)

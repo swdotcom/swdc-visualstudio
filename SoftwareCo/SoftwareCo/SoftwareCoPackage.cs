@@ -15,7 +15,7 @@ using Microsoft.VisualStudio;
 using System.Windows.Forms;
 using Thread = System.Threading.Thread;
 using System.Threading.Tasks;
-
+using System.Linq;
 
 namespace SoftwareCo
 {
@@ -81,6 +81,8 @@ namespace SoftwareCo
         private static int ONE_MINUTE = THIRTY_SECONDS * 2;
         private static int ONE_HOUR = ONE_MINUTE * 60;
         private static int THIRTY_MINUTES = ONE_MINUTE * 30;
+        private static long lastDashboardFetchTime = 0;
+        private static long day_in_sec = 60 * 60 * 24 ;
 
         #endregion
 
@@ -145,7 +147,10 @@ namespace SoftwareCo
 
                 //initialize the StatusBar 
                 await InitializeSoftwareStatusAsync();
-
+                if (_sessionSummary == null)
+                {
+                    _sessionSummary = new SessionSummary();
+                }
                 // initialize the menu commands
                 await SoftwareLaunchCommand.InitializeAsync(this);
                 await SoftwareDashboardLaunchCommand.InitializeAsync(this);
@@ -158,10 +163,7 @@ namespace SoftwareCo
                     _softwareRepoUtil = new SoftwareRepoManager();
                 }
 
-                if (_sessionSummary == null)
-                {
-                    _sessionSummary = new SessionSummary();
-                }
+               
 
                 // Create an AutoResetEvent to signal the timeout threshold in the
                 // timer callback has been reached.
@@ -176,8 +178,8 @@ namespace SoftwareCo
                
                 offlineDataTimer = new System.Threading.Timer(
                     SendOfflineData, 
-                    autoEvent,
-                    ONE_MINUTE,
+                    null,
+                    THIRTY_MINUTES,
                     THIRTY_MINUTES);
                     
                // this.SendOfflineData();
@@ -229,7 +231,7 @@ namespace SoftwareCo
             if (_softwareStatus == null)
             {
                 IVsStatusbar statusbar = await GetServiceAsync(typeof(SVsStatusbar)) as IVsStatusbar;
-                _softwareStatus = new SoftwareStatus(statusbar);
+                _softwareStatus        = new SoftwareStatus(statusbar);
             }
         }
         public void Dispose()
@@ -474,9 +476,7 @@ namespace SoftwareCo
         private async void ProcessSoftwareDataTimerCallbackAsync(Object stateInfo)
         {
             AutoResetEvent autoEvent = (AutoResetEvent)stateInfo;
-
-            //this.SendOfflineData();
-
+            
             DateTime now = DateTime.UtcNow;
             if (_softwareData != null && _softwareData.HasData() && (EnoughTimePassed(now) || timer == null))
             {
@@ -499,9 +499,16 @@ namespace SoftwareCo
                 if (SoftwareCoUtil.isTelemetryOn())
                 {
                     
-                  // this.StorePayload(softwareDataContent);
+                    try
+                    {
+                        await StorePayloadAsync(_softwareData);
+                    }
+                    catch (Exception e)
+                    {
 
-                    this.StorePayload(_softwareData);
+                        
+                    }
+                  
                     // call the kpm summary
                     //try
                     //{
@@ -514,18 +521,18 @@ namespace SoftwareCo
                     //}
 
                 }
-                else
-                {
-                    Logger.Info("Code Time metrics are currently paused.");
-                    this.StorePayload(softwareDataContent);
-                }
+                //else
+                //{
+                //    Logger.Info("Code Time metrics are currently paused.");
+                //    this.StorePayload(softwareDataContent);
+                //}
 
                 _softwareData.ResetData();
                 _lastPostTime = now;
             }
         }
 
-        private void StorePayload(SoftwareData _softwareData)
+        private async Task StorePayloadAsync(SoftwareData _softwareData)
         {
             if (_softwareData != null)
             {
@@ -534,7 +541,7 @@ namespace SoftwareCo
 
                 incrementSessionSummaryData(1 /*minutes*/, keystrokes);
 
-                saveSessionSummaryToDisk(getSessionSummayData());
+                saveSessionSummaryToDisk(_sessionSummary);
 
                 string softwareDataContent = _softwareData.GetAsJson();
 
@@ -543,7 +550,7 @@ namespace SoftwareCo
                 File.AppendAllText(datastoreFile, softwareDataContent + Environment.NewLine);
 
                 //// update the statusbar
-                ProcessFetchDailyKpmTimerCallback(null);
+                fetchSessionSummaryInfoAsync();
             }
         }
 
@@ -559,23 +566,25 @@ namespace SoftwareCo
         {
             if (SoftwareCoUtil.SessionSummaryFileExists())
             {
-                string sessionSummary = SoftwareCoUtil.getSessionSummaryFile();
-                if (string.IsNullOrEmpty(sessionSummary))
-                    return _sessionSummary = (SessionSummary)SimpleJson.DeserializeObject(sessionSummary);
+                string sessionSummary = SoftwareCoUtil.getSessionSummaryFileData();
+                if (!string.IsNullOrEmpty(sessionSummary))
+                {
+                    IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(sessionSummary);
+                    _sessionSummary                     = DictionaryToObject<SessionSummary>(jsonObj);
+                }
                 else
-                    return new SessionSummary();
+                    return _sessionSummary;
             }
-            return new SessionSummary();
+            return _sessionSummary;
         }
+       
+        //private void StorePayload(string softwareDataContent)
+        //{
+        //    string datastoreFile = SoftwareCoUtil.getSoftwareDataStoreFile();
+        //    // append to the file
+        //    File.AppendAllText(datastoreFile, softwareDataContent + Environment.NewLine);
 
-
-        private void StorePayload(string softwareDataContent)
-        {
-            string datastoreFile = SoftwareCoUtil.getSoftwareDataStoreFile();
-            // append to the file
-            File.AppendAllText(datastoreFile, softwareDataContent + Environment.NewLine);
-
-        }
+        //}
 
         private async void LaunchLoginPrompt()
         {
@@ -601,6 +610,7 @@ namespace SoftwareCo
 
         private async void SendOfflineData(object stateinfo)
         {
+            Logger.Info(DateTime.Now.ToString());
             bool online = await SoftwareUserSession.IsOnlineAsync();
 
             if(!online)
@@ -634,15 +644,13 @@ namespace SoftwareCo
                 }
             }
 
-            çlearSessionSummaryData();
+            ÇlearSessionSummaryData();
 
-            ProcessFetchDailyKpmTimerCallback(null);
-
-
+            fetchSessionSummaryInfoAsync(true);
 
         }
 
-        private void çlearSessionSummaryData()
+        private void ÇlearSessionSummaryData()
         {
             if(_sessionSummary != null)
             {
@@ -652,44 +660,55 @@ namespace SoftwareCo
                 _sessionSummary.currentDayMinutes = 0;
                 _sessionSummary.liveshareMinutes = 0;
             }
-            saveSessionSummaryToDisk(_sessionSummary);
+             saveSessionSummaryToDisk(_sessionSummary);
         }
 
-        public static async Task ProcessFetchDailyKpmTimerCallback(Object stateInfo)
+        public static async Task fetchSessionSummaryInfoAsync(bool forceRefresh= false)
         {
             //SessionSummary sessionSummary = new SessionSummary();
 
-            var sessionSummary = await GetSessionSummaryStatusAsync(true);
+            var sessionSummaryResult = await GetSessionSummaryStatusAsync(forceRefresh);
 
-            await FetchCodeTimeDashboardAsync((SessionSummary) sessionSummary);
+            if(sessionSummaryResult.status == "OK")
+            {
+                await FetchCodeTimeDashboardAsync(sessionSummaryResult.sessionSummary);
+            }
+            
 
         }
 
-        private static async Task<SessionSummary> GetSessionSummaryStatusAsync(bool forceRefresh = false)
+        private static async Task<SessionSummaryResult> GetSessionSummaryStatusAsync(bool forceRefresh = false)
         {
-            _sessionSummary = getSessionSummayData();
+            SessionSummaryResult sessionSummaryResult = new SessionSummaryResult();
+            _sessionSummary                           = getSessionSummayData();
 
             if (SoftwareCoUtil.SessionSummaryFileExists())
             {
-                
+
                 if (_sessionSummary.currentDayMinutes == 0 || forceRefresh)
                 {
                     bool online = await SoftwareUserSession.IsOnlineAsync();
 
                     if (!online)
                     {
-                        return _sessionSummary;
+                        sessionSummaryResult.sessionSummary = _sessionSummary;
+                        sessionSummaryResult.status = "ERROR";
                     }
                     HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/sessions/summary", null);
+
                     if (SoftwareHttpManager.IsOk(response))
                     {
                         string responseBody = await response.Content.ReadAsStringAsync();
 
-                        _sessionSummary = (SessionSummary)SimpleJson.DeserializeObject(responseBody);
+                        IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+                        _sessionSummary = DictionaryToObject<SessionSummary>(jsonObj);
 
                         saveSessionSummaryToDisk(_sessionSummary);
 
                         updateStatusBarWithSummaryData();
+
+                        sessionSummaryResult.sessionSummary = _sessionSummary;
+                        sessionSummaryResult.status = "OK";
                     }
 
                 }
@@ -697,22 +716,52 @@ namespace SoftwareCo
                 {
                     updateStatusBarWithSummaryData();
                 }
-
-
+                
+            }
+            else
+            {
+                updateStatusBarWithSummaryData();
             }
 
-            return _sessionSummary;
+            sessionSummaryResult.sessionSummary = _sessionSummary;
+            sessionSummaryResult.status         = "OK";
+            return sessionSummaryResult;
+        }
+
+        private static T DictionaryToObject<T>(IDictionary<string, object> dict) where T : new()
+        {
+            var t = new T();
+            PropertyInfo[] properties = t.GetType().GetProperties();
+            
+            foreach (PropertyInfo property in properties)
+            {
+                if (!dict.Any(x => x.Key.Equals(property.Name, StringComparison.InvariantCultureIgnoreCase)))
+                    continue;
+
+                KeyValuePair<string, object> item = dict.First(x => x.Key.Equals(property.Name, StringComparison.InvariantCultureIgnoreCase));
+
+                // Find which property type (int, string, double? etc) the CURRENT property is...
+                Type tPropertyType = t.GetType().GetProperty(property.Name).PropertyType;
+
+                // Fix nullables...
+                Type newT = Nullable.GetUnderlyingType(tPropertyType) ?? tPropertyType;
+
+                // ...and change the type
+                object newA = Convert.ChangeType(item.Value, newT);
+                t.GetType().GetProperty(property.Name).SetValue(t, newA, null);
+            }
+            return t;
         }
 
         private static void updateStatusBarWithSummaryData()
         {
-            _sessionSummary  = getSessionSummayData();
+            _sessionSummary                 = getSessionSummayData();
 
-            long currentDayMinutesVal   = _sessionSummary.currentDayMinutes;
-            long averageDailyMinutesVal = _sessionSummary.averageDailyMinutes;
+            long currentDayMinutesVal       = _sessionSummary.currentDayMinutes;
+            long averageDailyMinutesVal     = _sessionSummary.averageDailyMinutes;
 
-            string currentDayMinutesTime = SoftwareCoUtil.HumanizeMinutes(currentDayMinutesVal);
-            string averageDailyMinutesTime = SoftwareCoUtil.HumanizeMinutes(averageDailyMinutesVal);
+            string currentDayMinutesTime    = SoftwareCoUtil.HumanizeMinutes(currentDayMinutesVal);
+            string averageDailyMinutesTime  = SoftwareCoUtil.HumanizeMinutes(averageDailyMinutesVal);
 
             // Code time today:  4 hrs | Avg: 3 hrs 28 min
             string inFlowIcon = currentDayMinutesVal > averageDailyMinutesVal ? "🚀" : "";
@@ -731,17 +780,27 @@ namespace SoftwareCo
 }
 
         private static void saveSessionSummaryToDisk(SessionSummary sessionSummary)
-        {
+        { 
             string sessionSummaryFile = SoftwareCoUtil.getSessionSummaryFile();
 
 
-            if (!SoftwareCoUtil.SessionSummaryFileExists())
+            if (SoftwareCoUtil.SessionSummaryFileExists())
             {
-                File.Create(sessionSummaryFile);
+                File.SetAttributes(sessionSummaryFile, FileAttributes.Normal);
             }
 
+            try
+            {
+                //SoftwareCoUtil.WriteToFileThreadSafe(sessionSummary.GetSessionSummaryAsJson(), sessionSummaryFile);
                 File.WriteAllText(sessionSummaryFile, sessionSummary.GetSessionSummaryAsJson());
-                File.SetAttributes(sessionSummaryFile, FileAttributes.Normal);
+                File.SetAttributes(sessionSummaryFile, FileAttributes.ReadOnly);
+            }
+            catch (Exception e)
+            {
+
+               
+            }
+               
         }
 
 
@@ -764,8 +823,8 @@ namespace SoftwareCo
         //            if (SoftwareHttpManager.IsOk(response))
         //            {
         //                // get the json data
-        //                string responseBody = await response.Content.ReadAsStringAsync();
-        //                IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+                        //string responseBody = await response.Content.ReadAsStringAsync();
+                        //IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
 
         //                jsonObj.TryGetValue("currentDayMinutes", out object currentDayMinutes);
         //                long currentDayMinutesVal = (currentDayMinutes == null) ? 0 : Convert.ToInt64(currentDayMinutes);
@@ -869,7 +928,7 @@ namespace SoftwareCo
 
             if (online)
             {
-                ProcessFetchDailyKpmTimerCallback(null);
+                fetchSessionSummaryInfoAsync();
 
                 // send heartbeat
                 SoftwareUserSession.SendHeartbeat("INITIALIZED");
@@ -895,11 +954,16 @@ namespace SoftwareCo
 
         private static async Task FetchCodeTimeDashboardAsync(SessionSummary _sessionSummary)
         {
-            string summaryContent  = "";   
+            string summaryContent = "";
             string summaryInfoFile = SoftwareCoUtil.getSessionSummaryInfoFile();
 
-            HttpResponseMessage resp =
-                await SoftwareHttpManager.SendDashboardRequestAsync(HttpMethod.Get, "/dashboard");
+
+            long diff =  SoftwareCoUtil.getNowInSeconds() - lastDashboardFetchTime;
+            if (lastDashboardFetchTime == 0 || diff >= day_in_sec)
+            {
+                lastDashboardFetchTime = SoftwareCoUtil.getNowInSeconds();
+                HttpResponseMessage resp =
+                await SoftwareHttpManager.SendDashboardRequestAsync(HttpMethod.Get, "/dashboard?showMusic=false&showGit=false&showRank=false&showToday=false");
 
             if (SoftwareHttpManager.IsOk(resp))
             {
@@ -913,30 +977,32 @@ namespace SoftwareCo
 
             if (File.Exists(summaryInfoFile))
             {
-                try
-                {
-                    File.SetAttributes(summaryInfoFile, FileAttributes.Normal);
-                    File.WriteAllText(summaryInfoFile, summaryContent);
-                    File.SetAttributes(summaryInfoFile, FileAttributes.ReadOnly);
-                }
-                catch (Exception e)
-                {
-
-                    
-                }
-              
+               File.SetAttributes(summaryInfoFile, FileAttributes.Normal);
             }
 
+            try
+            {
+               
+                File.WriteAllText(summaryInfoFile, summaryContent);
+                File.SetAttributes(summaryInfoFile, FileAttributes.ReadOnly);
+            }
+            catch (Exception e)
+            {
 
+
+            }
+
+        }
             string dashboardFile = SoftwareCoUtil.getDashboardFile();
             string dashboardContent = "";
-            string formattedDate = DateTime.Now.ToString("ddd, MMM Do h:mma");
+            string suffix = SoftwareCoUtil.CreateDateSuffix(DateTime.Now);
+            string formattedDate = DateTime.Now.ToString("ddd, MMM ") + suffix + DateTime.Now.ToString(" h:mm tt");
 
-            dashboardContent = "CODE TIME          "+ "(Last updated on "+ formattedDate +"  )";
+            dashboardContent = "CODE TIME          "+ "(Last updated on "+ formattedDate +" )";
             dashboardContent += "\n\n";
 
-            string todayDate = DateTime.Now.ToString("ddd, MMM Do");
-            string today_date = "Today" + "(" + todayDate + ")";
+            string todayDate = DateTime.Now.ToString("ddd, MMM ") + suffix;
+            string today_date = "Today " + "(" + todayDate + ")";
             dashboardContent += SoftwareCoUtil.getSectionHeader(today_date);
 
             if(_sessionSummary!= null)
@@ -945,47 +1011,54 @@ namespace SoftwareCo
                 string averageTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.averageDailyMinutes);
                 string hoursCodedToday = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.currentDayMinutes);
                 String liveshareTime ="";
-                if (_sessionSummary.liveshareMinutes != 0)
-                {
-                    liveshareTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.liveshareMinutes);
-                }
+                //if (_sessionSummary.liveshareMinutes != 0)
+                //{
+                //    liveshareTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.liveshareMinutes);
+                //}
                 dashboardContent += SoftwareCoUtil.getDashboardRow("Hours Coded" , hoursCodedToday);
                 dashboardContent += SoftwareCoUtil.getDashboardRow("90-day avg", averageTime);
-                if (liveshareTime != "0")
-                {
-                    dashboardContent += SoftwareCoUtil.getDashboardRow("Live Share", liveshareTime);
-                }
+                //if (liveshareTime != "0")
+                //{
+                //    dashboardContent += SoftwareCoUtil.getDashboardRow("Live Share", liveshareTime);
+                //}
                 dashboardContent += "\n";
             }
 
             if (SoftwareCoUtil.SessionSummaryInfoFileExists())
             {
-                string SummaryData = SoftwareCoUtil.getSessionSummaryInfoFile();
+                string SummaryData = SoftwareCoUtil.getSessionSummaryInfoFileData();
                 dashboardContent += SummaryData;
             }
 
 
             if (File.Exists(dashboardFile))
             {
+                File.SetAttributes(dashboardFile, FileAttributes.Normal);
+            }
                 try
                 {
-                    File.SetAttributes(dashboardFile, FileAttributes.Normal);
-                    File.WriteAllText(dashboardFile, dashboardContent);
-                    File.SetAttributes(summaryInfoFile, FileAttributes.ReadOnly);
+                     //SoftwareCoUtil.WriteToFileThreadSafe(dashboardContent, dashboardFile);
+                     File.WriteAllText(dashboardFile, dashboardContent);
+                     File.SetAttributes(dashboardFile, FileAttributes.ReadOnly);
 
-                }
-                catch ( Exception e)
+            }
+            catch ( Exception e)
                 {
 
-                    
                 }
                
-            }
+            
+        }
+
+        private static DateTime nowInSecs()
+        {
+            return DateTime.UtcNow;
         }
 
         public static async void LaunchCodeTimeDashboardAsync()
         {
-            await FetchCodeTimeDashboardAsync(getSessionSummayData());
+           //await FetchCodeTimeDashboardAsync(getSessionSummayData());
+           fetchSessionSummaryInfoAsync();
             string dashboardFile = SoftwareCoUtil.getDashboardFile();
             ObjDte.ItemOperations.OpenFile(dashboardFile);
         }
@@ -1006,5 +1079,11 @@ namespace SoftwareCo
             static readonly Assembly Reference = typeof(CodeTimeAssembly).Assembly;
             public static readonly Version Version = Reference.GetName().Version;
         }
+    }
+
+    internal class SessionSummaryResult
+    {
+        public SessionSummary sessionSummary { get; set; }
+        public string status { get; set; }
     }
 }

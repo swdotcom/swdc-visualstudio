@@ -9,23 +9,14 @@ namespace SoftwareCo
 {
 
      class SessionSummary
-    {
-        public long currentDayMinutes       = 0;
-        public long averageDailyMinutes     = 0;
-        public long averageDailyKeystrokes  = 0;
-        public long currentDayKeystrokes    = 0;
-        public long liveshareMinutes        = 0;
-
-
-        public SessionSummary()
-        {
-            currentDayMinutes = 0;
-            averageDailyMinutes = 0;
-            averageDailyKeystrokes = 0;
-            currentDayKeystrokes = 0;
-            liveshareMinutes = 0;
-        }
-
+     {
+        public long currentDayMinutes { get; set; }
+        public long averageDailyMinutes { get; set; }
+        public long averageDailyKeystrokes { get; set; }
+        public long currentDayKeystrokes { get; set; }
+        public object liveshareMinutes { get; set; }
+        public long latestPayloadTimestamp { get; set; }
+        public bool lastUpdatedToday { get; set; }
 
 
         public string GetSessionSummaryAsJson()
@@ -36,6 +27,8 @@ namespace SoftwareCo
             jsonObj.Add("averageDailyKeystrokes", this.averageDailyKeystrokes);
             jsonObj.Add("currentDayKeystrokes", this.currentDayKeystrokes);
             jsonObj.Add("liveshareMinutes", this.liveshareMinutes);
+            jsonObj.Add("latestPayloadTimestamp", this.latestPayloadTimestamp);
+            jsonObj.Add("lastUpdatedToday", this.lastUpdatedToday);
             return jsonObj.ToString();
         }
 
