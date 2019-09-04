@@ -751,6 +751,10 @@ namespace SoftwareCo
                 msg += string.Format(" | {0}", averageDailyMinutesTime);
                 _softwareStatus.SetStatus(msg);
             }
+            else if(currentDayMinutesVal>0)
+            {
+                _softwareStatus.SetStatus(msg);
+            }
             else
             {
                 _softwareStatus.SetStatus("Code Time");
