@@ -14,6 +14,8 @@ using System.Reflection;
 using Microsoft.VisualStudio;
 using System.Windows.Forms;
 using Thread = System.Threading.Thread;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
@@ -428,7 +430,7 @@ namespace SoftwareCo
             double offset   = 0;
             long end        = 0;
             long local_end  = 0;
-            this.SendOfflineData();
+           
 
             DateTime now = DateTime.UtcNow;
             if (_softwareData != null && _softwareData.HasData() && (EnoughTimePassed(now) || timer == null))
