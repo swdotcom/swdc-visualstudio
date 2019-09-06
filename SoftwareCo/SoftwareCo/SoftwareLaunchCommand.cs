@@ -83,6 +83,8 @@ namespace SoftwareCo
             {
                 var menuCommandID = new CommandID(CommandSet, CommandId);
                 menuItem = new MenuCommand(Execute, menuCommandID);
+                menuItem.Enabled = false;
+                menuItem.Visible = false;
                 commandService.AddCommand(menuItem);
             }
             Instance = new SoftwareLaunchCommand(package, commandService);

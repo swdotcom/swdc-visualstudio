@@ -28,7 +28,7 @@ namespace SoftwareCo
         public int offset; // in minutes
 
         public ProjectInfo project;
-
+  
         public SoftwareData(ProjectInfo projectInfo)
         {
             start = SoftwareCoUtil.getNowInSeconds();
@@ -83,6 +83,7 @@ namespace SoftwareCo
             jsonObj.Add("local_end", this.local_end);
             return jsonObj.ToString();
         }
+
 
         private IDictionary<string, object> GetSourceDictionary()
         {
