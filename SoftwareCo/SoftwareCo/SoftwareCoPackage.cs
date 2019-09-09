@@ -672,7 +672,8 @@ namespace SoftwareCo
                     if (!online)
                     {
                         sessionSummaryResult.sessionSummary = _sessionSummary;
-                        sessionSummaryResult.status = "ERROR";
+                        sessionSummaryResult.status = "OK";
+                        updateStatusBarWithSummaryData();
                         return sessionSummaryResult;
                     }
                     HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/sessions/summary", null);
