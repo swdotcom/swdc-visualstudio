@@ -301,7 +301,7 @@ namespace SoftwareCo
         private async void AfterKeyPressedAsync(
             string Keypress, TextSelection Selection, bool InStatementCompletion)
         {
-            String fileName = ObjDte.ActiveWindow.Document.FullName;
+           String fileName = ObjDte.ActiveWindow.Document.FullName;
             InitializeSoftwareData(fileName);
 
             //Sets end and local_end for source file
@@ -495,7 +495,7 @@ namespace SoftwareCo
                 if (SoftwareCoUtil.isTelemetryOn())
                 {
 
-                    await StorePayloadAsync(_softwareData);
+                     StorePayload(_softwareData);
 
                     // call the kpm summary
                    /* try
@@ -520,7 +520,7 @@ namespace SoftwareCo
             }
         }
 
-        private async Task StorePayloadAsync(SoftwareData _softwareData)
+        private void StorePayload(SoftwareData _softwareData)
         {
             if (_softwareData != null)
             {
@@ -668,8 +668,8 @@ namespace SoftwareCo
             SessionSummaryResult sessionSummaryResult = new SessionSummaryResult();
             _sessionSummary = getSessionSummayData();
 
-            if (SoftwareCoUtil.SessionSummaryFileExists())
-            {
+            //if (SoftwareCoUtil.SessionSummaryFileExists())
+            //{
 
                 if (_sessionSummary.currentDayMinutes == 0 || forceRefresh)
                 {
@@ -678,7 +678,9 @@ namespace SoftwareCo
                     if (!online)
                     {
                         sessionSummaryResult.sessionSummary = _sessionSummary;
-                        sessionSummaryResult.status = "ERROR";
+                        sessionSummaryResult.status = "OK";
+                        updateStatusBarWithSummaryData();
+                        return sessionSummaryResult;
                     }
                     HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/sessions/summary", null);
 
@@ -703,11 +705,11 @@ namespace SoftwareCo
                     updateStatusBarWithSummaryData();
                 }
 
-            }
-            else
-            {
-                updateStatusBarWithSummaryData();
-            }
+            //}
+            //else
+            //{
+            //    updateStatusBarWithSummaryData();
+            //}
 
             sessionSummaryResult.sessionSummary = _sessionSummary;
             sessionSummaryResult.status = "OK";
@@ -931,11 +933,19 @@ namespace SoftwareCo
             string summaryContent = "";
             string summaryInfoFile = SoftwareCoUtil.getSessionSummaryInfoFile();
 
-
+            bool online = await SoftwareUserSession.IsOnlineAsync();
+            
             long diff = SoftwareCoUtil.getNowInSeconds() - lastDashboardFetchTime;
-            if (lastDashboardFetchTime == 0 || diff >= day_in_sec)
+            if (lastDashboardFetchTime == 0 || diff >= day_in_sec || !online)
             {
+  
+                if (!online)
+                {
+                    lastDashboardFetchTime = 0;
+                }
+                else
                 lastDashboardFetchTime = SoftwareCoUtil.getNowInSeconds();
+
                 HttpResponseMessage resp =
                 await SoftwareHttpManager.SendDashboardRequestAsync(HttpMethod.Get, "/dashboard?showMusic=false&showGit=false&showRank=false&showToday=false");
 
@@ -1028,6 +1038,7 @@ namespace SoftwareCo
         {
             fetchSessionSummaryInfoAsync();
             string dashboardFile = SoftwareCoUtil.getDashboardFile();
+            if(File.Exists(dashboardFile))
             ObjDte.ItemOperations.OpenFile(dashboardFile);
         }
 
