@@ -287,6 +287,15 @@ namespace SoftwareCo
 
         }
 
+        public static NowTime GetNowTime()
+        {
+            NowTime timeParam = new NowTime();   
+            timeParam.now = DateTimeOffset.Now.ToUnixTimeSeconds();
+            timeParam.offset_now = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+            timeParam.local_now = timeParam.now + ((int)timeParam.offset_now * 60);
+    
+            return timeParam;
+        }
         public static long getNowInSeconds()
         {
             long unixSeconds = DateTimeOffset.Now.ToUnixTimeSeconds();
@@ -474,6 +483,11 @@ namespace SoftwareCo
         }
 
     }
-
+    class NowTime
+    {
+        public long now { get; set; }
+        public long local_now { get; set; }
+        public double offset_now { get; set; }
+    }
 
 }

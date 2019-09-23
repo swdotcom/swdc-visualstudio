@@ -45,7 +45,8 @@ namespace SoftwareCo
             {
                 project.ResetData();
             }
-            start = SoftwareCoUtil.getNowInSeconds();
+            //start = SoftwareCoUtil.getNowInSeconds();
+            start = 0L;
             local_start = 0L;
             initialized = false;
         }
@@ -105,7 +106,8 @@ namespace SoftwareCo
 
         public Boolean HasData()
         {
-            if (this.initialized && this.keystrokes > 0 && this.project != null && this.project.name != null) {
+
+            if (this.initialized && (this.keystrokes > 0 || this.source.Count>0) && this.project != null && this.project.name != null) {
                 return true;
             }
             return false;
@@ -191,10 +193,13 @@ namespace SoftwareCo
         public void EnsureFileInfoDataIsPresent(string fileName)
         {
             JsonObject fileInfoData     = new JsonObject();
-            long start                  = SoftwareCoUtil.getNowInSeconds();
-            double offset               = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-            long local_start            = start + ((int)offset * 60);
+            //long start                  = SoftwareCoUtil.getNowInSeconds();
+            //double offset               = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+            //long local_start            = start + ((int)offset * 60);\
 
+            NowTime nowTime = SoftwareCoUtil.GetNowTime();
+            long start        = nowTime.now;
+            long local_start  = nowTime.local_now;
             if (!source.ContainsKey(fileName))
             {
                 fileInfoData.Add("paste", 0);

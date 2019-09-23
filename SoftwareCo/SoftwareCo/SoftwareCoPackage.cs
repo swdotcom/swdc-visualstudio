@@ -430,13 +430,13 @@ namespace SoftwareCo
             double offset   = 0;
             long end        = 0;
             long local_end  = 0;
-           
 
-            DateTime now = DateTime.UtcNow;
+            NowTime nowTime = SoftwareCoUtil.GetNowTime();
+            DateTime now    = DateTime.UtcNow;
             if (_softwareData != null && _softwareData.HasData() && (EnoughTimePassed(now) || timer == null))
             {
                  offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-                _softwareData.local_start = _softwareData.start + ((int)offset * 60);
+                //_softwareData.local_start = _softwareData.start + ((int)offset * 60);
                 _softwareData.offset = Math.Abs((int)offset);
                 if (TimeZone.CurrentTimeZone.DaylightName != null
                     && TimeZone.CurrentTimeZone.DaylightName != TimeZone.CurrentTimeZone.StandardName)
@@ -447,7 +447,7 @@ namespace SoftwareCo
                 {
                     _softwareData.timezone = TimeZone.CurrentTimeZone.StandardName;
                 }
-
+               
                 foreach (KeyValuePair<string, object> sourceFiles in _softwareData.source)
                 {
 
@@ -455,12 +455,14 @@ namespace SoftwareCo
                     fileInfoData = (JsonObject)sourceFiles.Value;
                     object outend;
                     fileInfoData.TryGetValue("end", out outend);
-
+                   
                     if (long.Parse(outend.ToString()) == 0)
                     {
-                        end         = SoftwareCoUtil.getNowInSeconds();
-                        offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-                        local_end   = end + ((int)offset * 60);
+                        //end         = SoftwareCoUtil.getNowInSeconds();
+                        //offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+                        //local_end   = end + ((int)offset * 60);
+                        end           = nowTime.now;
+                        local_end     = nowTime.local_now;
                         _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "end", end);
                         _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "local_end", local_end);
 
@@ -470,12 +472,12 @@ namespace SoftwareCo
 
                 try
                 {
-                    end         = SoftwareCoUtil.getNowInSeconds();
-                    offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-                    local_end   = end + ((int)offset * 60);
+                    //end         = SoftwareCoUtil.getNowInSeconds();
+                    //offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+                    //local_end   = end + ((int)offset * 60);
 
-                    _softwareData.end           = end;
-                    _softwareData.local_end     = local_end;
+                    _softwareData.end       = nowTime.now;
+                    _softwareData.local_end = nowTime.local_now;
 
                 }
                 catch (Exception)
@@ -806,15 +808,16 @@ namespace SoftwareCo
         {
             if (_softwareData == null || !_softwareData.initialized)
             {
-
+                NowTime nowTime = SoftwareCoUtil.GetNowTime(); 
+                     
                 // get the project name
-                String projectName = "Untitled";
-                String directoryName = "Unknown";
+                String projectName      = "Untitled";
+                String directoryName    = "Unknown";
                 if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
                 {
-                    projectName = Path.GetFileNameWithoutExtension(ObjDte.Solution.FullName);
+                    projectName         = Path.GetFileNameWithoutExtension(ObjDte.Solution.FullName);
                     string solutionFile = ObjDte.Solution.FullName;
-                    directoryName = Path.GetDirectoryName(solutionFile);
+                    directoryName       = Path.GetDirectoryName(solutionFile);
                 }
                 else
                 {
@@ -824,14 +827,20 @@ namespace SoftwareCo
                 if (_softwareData == null)
                 {
                     ProjectInfo projectInfo = new ProjectInfo(projectName, directoryName);
-                    _softwareData = new SoftwareData(projectInfo);
+                    _softwareData           = new SoftwareData(projectInfo);
+                  
                 }
                 else
                 {
                     _softwareData.project.name = projectName;
                     _softwareData.project.directory = directoryName;
                 }
-                _softwareData.initialized = true;
+                _softwareData.start         = nowTime.now;
+                _softwareData.local_start   = nowTime.local_now;
+                _softwareData.initialized   = true;
+
+                
+
             }
             _softwareData.EnsureFileInfoDataIsPresent(fileName);
         }
@@ -842,7 +851,8 @@ namespace SoftwareCo
             {
                 long end        = 0;
                 long local_end  = 0;
-                double offset   = 0;
+               // double offset   = 0;
+                NowTime nowTime = SoftwareCoUtil.GetNowTime();
                 if (fileName != sourceFiles.Key)
                 {
                     object outend           = null;
@@ -853,9 +863,11 @@ namespace SoftwareCo
                     if (long.Parse(outend.ToString()) == 0)
                     {
 
-                        end         = SoftwareCoUtil.getNowInSeconds();
-                        offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-                        local_end   = end + ((int)offset * 60);
+                        //end         = SoftwareCoUtil.getNowInSeconds();
+                        //offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+                        //local_end   = end + ((int)offset * 60);
+                        end         = nowTime.now;
+                        local_end   = nowTime.local_now;
 
                         _softwareData.addOrUpdateFileInfo(fileName, "end", end);
                         _softwareData.addOrUpdateFileInfo(fileName, "local_end", local_end);
