@@ -5,7 +5,7 @@
         <DisplayName>Code Time</DisplayName>
         <Description xml:space="preserve">Code Time provides insights into how you code</Description>
         <License>LICENSE.txt</License>
-        <GettingStartedGuide>index.html</GettingStartedGuide>
+        <GettingStartedGuide>https://github.com/swdotcom/swdc-visualstudio</GettingStartedGuide>
         <Icon>Microsoft.VisualStudio.Services.Icons.Default.png</Icon>
     </Metadata>
     <Installation AllUsers="true">

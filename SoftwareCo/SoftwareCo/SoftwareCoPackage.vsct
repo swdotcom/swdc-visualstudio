@@ -74,7 +74,7 @@
       <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareLoginCommand" priority="0x0300" type="Button">
         <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
         <Strings>
-          <ButtonText>Login in to see your coding data</ButtonText>
+          <ButtonText>Log in to see your coding data</ButtonText>
         </Strings>
       </Button>
       <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareToggleStatusInfoCommand" priority="0x0400" type="Button">
