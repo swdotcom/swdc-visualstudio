@@ -1036,7 +1036,7 @@ namespace SoftwareCo
 
         public static async void LaunchCodeTimeDashboardAsync()
         {
-            fetchSessionSummaryInfoAsync();
+            await fetchSessionSummaryInfoAsync();
             string dashboardFile = SoftwareCoUtil.getDashboardFile();
             if(File.Exists(dashboardFile))
             ObjDte.ItemOperations.OpenFile(dashboardFile);
