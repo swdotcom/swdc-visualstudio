@@ -449,24 +449,18 @@ namespace SoftwareCo
                 return suffix;
             
         }
-
-        private static ReaderWriterLockSlim _readWriteLock = new ReaderWriterLockSlim();
-
-        public static void WriteToFileThreadSafe(string text, string path)
+        /// <summary>
+        /// Function Equibalent to setTimeout 
+        /// </summary>
+        /// <param name="interval"> Time interval to call function</param>
+        /// <param name="function"> Genarliaze function parameter </param>
+        /// <param name="value">Boolean value to call as a setInterval method </param>
+        public static void SetTimeout(int interval, Action function, bool value)
         {
-            // Set Status to Locked
-            _readWriteLock.EnterWriteLock();
-            try
-            {
-                // Append text to the file
-                File.WriteAllText(path, text);
-                File.SetAttributes(path, FileAttributes.ReadOnly);
-            }
-            finally
-            {
-                // Release lock
-                _readWriteLock.ExitWriteLock();
-            }
+            Action functionCopy = (Action)function.Clone(); // if incoming function set to null it could get crashed need to copy it before hand
+            System.Timers.Timer timer = new System.Timers.Timer { Interval = interval, AutoReset = value };
+            timer.Elapsed += (sender, e) => functionCopy();
+            timer.Start();
         }
     }
    
@@ -489,5 +483,5 @@ namespace SoftwareCo
         public long local_now { get; set; }
         public double offset_now { get; set; }
     }
-
+    
 }
