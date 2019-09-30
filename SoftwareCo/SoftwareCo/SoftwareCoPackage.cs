@@ -82,7 +82,7 @@ namespace SoftwareCo
         private static int THIRTY_MINUTES = ONE_MINUTE * 30;
         private static long lastDashboardFetchTime = 0;
         private static long day_in_sec = 60 * 60 * 24;
-        private static int ONE_SECOND = 1;
+        private static int ZERO_SECOND = 1;
         #endregion
 
         /// <summary>
@@ -247,7 +247,7 @@ namespace SoftwareCo
                 timer = null;
 
                 // process any remaining data
-                ProcessSoftwareDataTimerCallbackAsync(null);
+               // ProcessSoftwareDataTimerCallbackAsync(null);
             }
         }
         #endregion
@@ -425,13 +425,12 @@ namespace SoftwareCo
 
         public void HasData()
         {
-            Logger.Info(DateTime.Now.ToString()+"HasData");
+           
             if (_softwareData.initialized && (_softwareData.keystrokes > 0 || _softwareData.source.Count > 0) && _softwareData.project != null && _softwareData.project.name != null)
             {
-                SoftwareCoUtil.SetTimeout(ONE_SECOND, PostData, false);
+                SoftwareCoUtil.SetTimeout(ZERO_SECOND, PostData, false);
             }
-
-
+            
         }
 
         public void PostData()
@@ -442,7 +441,7 @@ namespace SoftwareCo
             long local_end = 0;
 
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
-            DateTime now = DateTime.UtcNow;
+            DateTime now    = DateTime.UtcNow;
             
                 offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
                 _softwareData.offset = Math.Abs((int)offset);
@@ -504,78 +503,6 @@ namespace SoftwareCo
             }
         }
 
-        private async void ProcessSoftwareDataTimerCallbackAsync(Object stateInfo)
-        {
-            AutoResetEvent autoEvent = (AutoResetEvent)stateInfo;
-            double offset   = 0;
-            long end        = 0;
-            long local_end  = 0;
-
-            NowTime nowTime     = SoftwareCoUtil.GetNowTime();
-            DateTime now        = DateTime.UtcNow;
-            if (_softwareData != null && _softwareData.HasData() && (EnoughTimePassed(now) || timer == null))
-            {
-                offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;           
-                _softwareData.offset = Math.Abs((int)offset);
-                if (TimeZone.CurrentTimeZone.DaylightName != null
-                    && TimeZone.CurrentTimeZone.DaylightName != TimeZone.CurrentTimeZone.StandardName)
-                {
-                    _softwareData.timezone = TimeZone.CurrentTimeZone.DaylightName;
-                }
-                else
-                {
-                    _softwareData.timezone = TimeZone.CurrentTimeZone.StandardName;
-                }
-
-                foreach (KeyValuePair<string, object> sourceFiles in _softwareData.source)
-                {
-
-                    JsonObject fileInfoData = null;
-                    fileInfoData = (JsonObject)sourceFiles.Value;
-                    object outend;
-                    fileInfoData.TryGetValue("end", out outend);
-
-                    if (long.Parse(outend.ToString()) == 0)
-                    {
-                        end         = nowTime.now;
-                        local_end   = nowTime.local_now;
-                        _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "end", end);
-                        _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "local_end", local_end);
-
-                    }
-
-                }
-
-                try
-                {
-                    
-                    _softwareData.end = nowTime.now;
-                    _softwareData.local_end = nowTime.local_now;
-
-                }
-                catch (Exception)
-
-                {
-
-                }
-                string softwareDataContent = _softwareData.GetAsJson();
-                Logger.Info("Code Time: sending: " + softwareDataContent);
-
-                if (SoftwareCoUtil.isTelemetryOn())
-                {
-                    StorePayload(_softwareData);
-                  
-                }
-                else
-                {
-                    Logger.Info("Code Time metrics are currently paused.");
-                  
-                }
-
-                _softwareData.ResetData();
-                _lastPostTime = now;
-            }
-        }
 
 
         // This method is called by the timer delegate.
