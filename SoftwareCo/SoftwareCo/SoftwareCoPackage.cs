@@ -161,8 +161,8 @@ namespace SoftwareCo
                 {
                     _softwareRepoUtil = new SoftwareRepoManager();
                 }
+                InitializeStatusBarButton();
 
-                
 
                 // Create an AutoResetEvent to signal the timeout threshold in the
                 // timer callback has been reached.
@@ -225,6 +225,12 @@ namespace SoftwareCo
                 Logger.Error("Error Initializing SoftwareCo", ex);
             }
         }
+
+        private void InitializeStatusBarButton()
+        {
+            SoftwareCoUtil.GetStatusBar(false);
+        }
+
         private async Task InitializeSoftwareStatusAsync()
         {
             if (_softwareStatus == null)
@@ -1122,7 +1128,7 @@ namespace SoftwareCo
 
         public static async void LaunchCodeTimeDashboardAsync()
         {
-            fetchSessionSummaryInfoAsync();
+            await fetchSessionSummaryInfoAsync();
             string dashboardFile = SoftwareCoUtil.getDashboardFile();
             if(File.Exists(dashboardFile))
             ObjDte.ItemOperations.OpenFile(dashboardFile);

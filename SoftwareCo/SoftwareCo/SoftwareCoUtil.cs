@@ -8,7 +8,10 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Forms;
+using System.Windows.Media;
 // using SpotifyAPI.Local;
 // using SpotifyAPI.Local.Enums;
 // using SpotifyAPI.Local.Models;
@@ -462,6 +465,62 @@ namespace SoftwareCo
             timer.Elapsed += (sender, e) => functionCopy();
             timer.Start();
         }
+        public static T FindChildControl<T>(DependencyObject parent, string childName)
+          where T : DependencyObject
+        {
+
+            if (parent == null) return null;
+
+            T foundChild = null;
+
+            int childrenCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childrenCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+
+                T childType = child as T;
+                if (childType == null)
+                {
+
+                    foundChild = FindChildControl<T>(child, childName);
+
+
+                    if (foundChild != null) break;
+                }
+                else if (!string.IsNullOrEmpty(childName))
+                {
+
+                    if (child is FrameworkElement frameworkElement && frameworkElement.Name == childName)
+                    {
+
+                        foundChild = (T)child;
+                        break;
+                    }
+                }
+                else
+                {
+
+                    foundChild = (T)child;
+                    break;
+                }
+            }
+
+            return foundChild;
+        }
+
+        public static void GetStatusBar(bool forceEnabled)
+        {
+            var statusBarObj = FindChildControl<DockPanel>(System.Windows.Application.Current.MainWindow, "StatusBarPanel");
+
+            if (statusBarObj != null)
+            {
+
+                statusBarObj.Children.Insert(0, new StatusBarButton());
+
+            }
+        }
+
+
     }
    
     struct Date
