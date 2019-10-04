@@ -434,6 +434,7 @@ namespace SoftwareCo
            
             if (_softwareData.initialized && (_softwareData.keystrokes > 0 || _softwareData.source.Count > 0) && _softwareData.project != null && _softwareData.project.name != null)
             {
+               
                 SoftwareCoUtil.SetTimeout(ZERO_SECOND, PostData, false);
             }
             
@@ -441,14 +442,14 @@ namespace SoftwareCo
 
         public void PostData()
         {
-            Logger.Info(DateTime.Now.ToString() + "PostData");
-            double offset = 0;
-            long end = 0;
-            long local_end = 0;
+            double offset   = 0;
+            long end        = 0;
+            long local_end  = 0;
 
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             DateTime now    = DateTime.UtcNow;
-            
+            if (_softwareData.source.Count > 0)
+            {
                 offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
                 _softwareData.offset = Math.Abs((int)offset);
                 if (TimeZone.CurrentTimeZone.DaylightName != null
@@ -463,7 +464,7 @@ namespace SoftwareCo
 
                 foreach (KeyValuePair<string, object> sourceFiles in _softwareData.source)
                 {
-
+                   
                     JsonObject fileInfoData = null;
                     fileInfoData = (JsonObject)sourceFiles.Value;
                     object outend;
@@ -471,59 +472,62 @@ namespace SoftwareCo
 
                     if (long.Parse(outend.ToString()) == 0)
                     {
-                        end = nowTime.now;
-                        local_end = nowTime.local_now;
+                       
+                        end             = nowTime.now;
+                        local_end       = nowTime.local_now;
                         _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "end", end);
                         _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "local_end", local_end);
+                       
+                    }
+
+                }
+
+                    try
+                    {
+
+                        _softwareData.end = nowTime.now;
+                        _softwareData.local_end = nowTime.local_now;
+
+                    }
+                    catch (Exception)
+
+                    {
+
+                    }
+                
+                    string softwareDataContent = _softwareData.GetAsJson();
+                    Logger.Info("Code Time: sending: " + softwareDataContent);
+
+                    if (SoftwareCoUtil.isTelemetryOn())
+                    {
+                        StorePayload(_softwareData);
+
+                    }
+                    else
+                    {
+                        Logger.Info("Code Time metrics are currently paused.");
 
                     }
 
-                try
-                {
-
-                    _softwareData.end = nowTime.now;
-                    _softwareData.local_end = nowTime.local_now;
-
+                    _softwareData.ResetData();
+                    _lastPostTime = now;
                 }
-                catch (Exception)
-
-                {
-
-                }
-                string softwareDataContent = _softwareData.GetAsJson();
-                Logger.Info("Code Time: sending: " + softwareDataContent);
-
-                if (SoftwareCoUtil.isTelemetryOn())
-                {
-                    StorePayload(_softwareData);
-
-                }
-                else
-                {
-                    Logger.Info("Code Time metrics are currently paused.");
-
-                }
-
-                _softwareData.ResetData();
-                _lastPostTime = now;
-            }
+            
         }
 
-
-
-        // This method is called by the timer delegate.
+        
         //private async void ProcessSoftwareDataTimerCallbackAsync(Object stateInfo)
         //{
         //    AutoResetEvent autoEvent = (AutoResetEvent)stateInfo;
-        //    double offset   = 0;
-        //    long end        = 0;
-        //    long local_end  = 0;
+        //    double offset = 0;
+        //    long end = 0;
+        //    long local_end = 0;
 
         //    NowTime nowTime = SoftwareCoUtil.GetNowTime();
-        //    DateTime now    = DateTime.UtcNow;
+        //    DateTime now = DateTime.UtcNow;
         //    if (_softwareData != null && _softwareData.HasData() && (EnoughTimePassed(now) || timer == null))
         //    {
-        //         offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+        //        offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
         //        //_softwareData.local_start = _softwareData.start + ((int)offset * 60);
         //        _softwareData.offset = Math.Abs((int)offset);
         //        if (TimeZone.CurrentTimeZone.DaylightName != null
@@ -549,8 +553,8 @@ namespace SoftwareCo
         //                //end         = SoftwareCoUtil.getNowInSeconds();
         //                //offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
         //                //local_end   = end + ((int)offset * 60);
-        //                end           = nowTime.now;
-        //                local_end     = nowTime.local_now;
+        //                end = nowTime.now;
+        //                local_end = nowTime.local_now;
         //                _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "end", end);
         //                _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "local_end", local_end);
 
@@ -564,7 +568,7 @@ namespace SoftwareCo
         //            //offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
         //            //local_end   = end + ((int)offset * 60);
 
-        //            _softwareData.end       = nowTime.now;
+        //            _softwareData.end = nowTime.now;
         //            _softwareData.local_end = nowTime.local_now;
 
         //        }
@@ -579,24 +583,24 @@ namespace SoftwareCo
         //        if (SoftwareCoUtil.isTelemetryOn())
         //        {
 
-        //             StorePayload(_softwareData);
+        //            StorePayload(_softwareData);
 
         //            // call the kpm summary
-        //           /* try
-        //            {
-        //                Thread.Sleep(1000 * 5);
-        //                ProcessFetchDailyKpmTimerCallbackAsync(null);
-        //            }
-        //            catch (ThreadInterruptedException e)
-        //            {
-        //                //
-        //            }*/
+        //            /* try
+        //             {
+        //                 Thread.Sleep(1000 * 5);
+        //                 ProcessFetchDailyKpmTimerCallbackAsync(null);
+        //             }
+        //             catch (ThreadInterruptedException e)
+        //             {
+        //                 //
+        //             }*/
 
         //        }
         //        else
         //        {
         //            Logger.Info("Code Time metrics are currently paused.");
-        //           // this.StorePayload(softwareDataContent);
+        //            // this.StorePayload(softwareDataContent);
         //        }
 
         //        _softwareData.ResetData();
@@ -894,9 +898,10 @@ namespace SoftwareCo
 
         private void InitializeSoftwareData(string fileName)
         {
+            NowTime nowTime = SoftwareCoUtil.GetNowTime();
             if (_softwareData == null || !_softwareData.initialized)
             {
-                NowTime nowTime = SoftwareCoUtil.GetNowTime(); 
+               
                      
                 // get the project name
                 String projectName      = "Untitled";
@@ -928,47 +933,45 @@ namespace SoftwareCo
                 _softwareData.initialized   = true;
                 SoftwareCoUtil.SetTimeout(ONE_MINUTE, HasData, false);
             }
-            _softwareData.EnsureFileInfoDataIsPresent(fileName);
+            _softwareData.EnsureFileInfoDataIsPresent(fileName,nowTime);
         }
         private async Task _IntialisefileMap(string fileName)
         {
-
-            foreach (KeyValuePair<string, object> sourceFiles in _softwareData.source)
+            
+            JsonObject localSource = new JsonObject();
+            foreach (var sourceFiles in _softwareData.source)
             {
-                long end        = 0;
-                long local_end  = 0;
-               // double offset   = 0;
-                NowTime nowTime = SoftwareCoUtil.GetNowTime();
+                object outend               = null;
+                JsonObject fileInfoData     = null;
+                NowTime nowTime             = SoftwareCoUtil.GetNowTime();
+            
                 if (fileName != sourceFiles.Key)
                 {
-                    object outend           = null;
-                    JsonObject fileInfoData = null;
-                    fileInfoData            = (JsonObject)sourceFiles.Value;
+                    fileInfoData = (JsonObject)sourceFiles.Value;
                     fileInfoData.TryGetValue("end", out outend);
 
                     if (long.Parse(outend.ToString()) == 0)
                     {
 
-                        //end         = SoftwareCoUtil.getNowInSeconds();
-                        //offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-                        //local_end   = end + ((int)offset * 60);
-                        end         = nowTime.now;
-                        local_end   = nowTime.local_now;
-
-                        _softwareData.addOrUpdateFileInfo(fileName, "end", end);
-                        _softwareData.addOrUpdateFileInfo(fileName, "local_end", local_end);
-
+                        fileInfoData["end"]         = nowTime.now;
+                        fileInfoData["local_end"]   = nowTime.local_now;
+                       
                     }
-
+                    localSource.Add(sourceFiles.Key, fileInfoData);
                 }
                 else
                 {
-                    _softwareData.addOrUpdateFileInfo(fileName, "end", 0);
-                    _softwareData.addOrUpdateFileInfo(fileName, "local_end", 0);
+                    fileInfoData                = (JsonObject)sourceFiles.Value;
+                    fileInfoData["end"]         = 0;
+                    fileInfoData["local_end"]   = 0;
+                    localSource.Add(sourceFiles.Key, fileInfoData);
                 }
+
+                _softwareData.source = localSource;
 
             }
 
+           
         }
         private async void InitializeUserInfo()
         {

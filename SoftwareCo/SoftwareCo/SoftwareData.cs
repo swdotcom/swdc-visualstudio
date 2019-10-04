@@ -190,14 +190,12 @@ namespace SoftwareCo
             }
         }
 
-        public void EnsureFileInfoDataIsPresent(string fileName)
+        public void EnsureFileInfoDataIsPresent(string fileName,NowTime nowTime)
         {
             JsonObject fileInfoData     = new JsonObject();
             //long start                  = SoftwareCoUtil.getNowInSeconds();
             //double offset               = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
             //long local_start            = start + ((int)offset * 60);\
-
-            NowTime nowTime = SoftwareCoUtil.GetNowTime();
             long start        = nowTime.now;
             long local_start  = nowTime.local_now;
             if (!source.ContainsKey(fileName))
