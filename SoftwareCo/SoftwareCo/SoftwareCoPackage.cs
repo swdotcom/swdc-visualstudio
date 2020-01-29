@@ -831,7 +831,7 @@ namespace SoftwareCo
         private static void updateStatusBarWithSummaryData()
         {
             _sessionSummary = getSessionSummayData();
-
+            string msg = "";
             long currentDayMinutesVal = _sessionSummary.currentDayMinutes;
             long averageDailyMinutesVal = _sessionSummary.averageDailyMinutes;
 
@@ -840,21 +840,21 @@ namespace SoftwareCo
 
             // Code time today:  4 hrs | Avg: 3 hrs 28 min
             string inFlowIcon = currentDayMinutesVal > averageDailyMinutesVal ? "🚀" : "";
-            string msg = string.Format("{0}{1}", inFlowIcon, currentDayMinutesTime);
+            msg = string.Format("{0}{1}", inFlowIcon, currentDayMinutesTime);
 
             if (averageDailyMinutesVal > 0)
             {
                 msg += string.Format(" | {0}", averageDailyMinutesTime);
                 _softwareStatus.SetStatus(msg);
             }
-            else if(currentDayMinutesVal>0)
+            else/* if(currentDayMinutesVal>0)*/
             {
                 _softwareStatus.SetStatus(msg);
             }
-            else
-            {
-                _softwareStatus.SetStatus("Code Time");
-            }
+            //else
+            //{
+            //    _softwareStatus.SetStatus("Code Time");
+            //}
 
         }
 
