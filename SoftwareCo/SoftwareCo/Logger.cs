@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.IO;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 
@@ -10,7 +11,8 @@ namespace SoftwareCo
         Debug = 1,
         Info,
         Warning,
-        HandledException
+        HandledException,
+        File
     };
 
     class Logger
@@ -41,6 +43,10 @@ namespace SoftwareCo
             Log(LogLevel.Debug, message);
         }
 
+        internal static void FileLog(string message,string method)
+        {
+            Log(LogLevel.File, message,method);
+        }
         internal static void Error(string message, Exception ex = null)
         {
             var exceptionMessage = string.Format("{0}: {1}", message, ex);
@@ -58,7 +64,7 @@ namespace SoftwareCo
             Log(LogLevel.Info, message);
         }
 
-        private static void Log(LogLevel level, string message)
+        private static void Log(LogLevel level, string message, string method = null)
         {
             var outputWindowPane = SoftwareCoOutputWindowPane;
             if (outputWindowPane == null) return;
@@ -66,6 +72,22 @@ namespace SoftwareCo
             var outputMessage = string.Format("[CodeTime {0} {1}] {2}{3}", Enum.GetName(level.GetType(), level),
                 DateTime.Now.ToString("hh:mm:ss tt", CultureInfo.InvariantCulture), message, Environment.NewLine);
 
+            if(Enum.GetName(level.GetType(),level)=="File" || Enum.GetName(level.GetType(), level) == "HandledException")
+            {
+                string LogContent   = outputMessage.ToString();
+                string LogDataPath      = SoftwareCoUtil.getLogFile();
+                    try
+                    {
+                    File.AppendAllText(LogDataPath, LogContent);
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                
+                
+            }
+            else
             outputWindowPane.OutputString(outputMessage);
         }
     }

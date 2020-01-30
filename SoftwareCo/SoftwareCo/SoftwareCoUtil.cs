@@ -231,7 +231,15 @@ namespace SoftwareCo
         {
             return getSoftwareDataDir(true) + "\\data.json";
         }
-        
+        public static bool LogFileExists()
+        {
+            string file = getSoftwareDataDir(true) + "\\Log.txt";
+            return File.Exists(file);
+        }
+        public static String getLogFile()
+        {
+            return getSoftwareDataDir(true) + "\\Log.txt";
+        }
 
         public static string getSectionHeader( string  label)
         {
@@ -261,41 +269,50 @@ namespace SoftwareCo
 
         public static async void launchLogin()
         {
-            bool isOnline = await SoftwareUserSession.IsOnlineAsync();
-            string jwt = SoftwareUserSession.GetJwt();
-            if (jwt == null && isOnline)
+            try
             {
-                // initialize the anon flow
-                await SoftwareUserSession.CreateAnonymousUserAsync(isOnline);
+                bool isOnline = await SoftwareUserSession.IsOnlineAsync();
+                string jwt = SoftwareUserSession.GetJwt();
+                if (jwt == null && isOnline)
+                {
+                    // initialize the anon flow
+                    await SoftwareUserSession.CreateAnonymousUserAsync(isOnline);
+                }
+                jwt = SoftwareUserSession.GetJwt();
+                string url = Constants.url_endpoint + "/onboarding?token=" + jwt;
+                if (!isOnline)
+                {
+                    // just show the app home, which should end up showing up with a no connection message
+                    url = Constants.url_endpoint;
+                }
+
+                Process.Start(url);
+
+                if (!isOnline)
+                {
+                    return;
+                }
+
+                if (!SoftwareUserSession.checkingLoginState)
+                {
+                    SoftwareUserSession.RefetchUserStatusLazily(12);
+                }
             }
-            jwt = SoftwareUserSession.GetJwt();
-            string url = Constants.url_endpoint + "/onboarding?token=" + jwt;
-            if (!isOnline)
+            catch (Exception ex)
             {
-                // just show the app home, which should end up showing up with a no connection message
-                url = Constants.url_endpoint;
+
+                Logger.Error("launchLogin, error : " + ex.Message, ex);
             }
             
-            Process.Start(url);
-
-            if (!isOnline)
-            {
-                return;
-            }
-
-            if (!SoftwareUserSession.checkingLoginState)
-            {
-                SoftwareUserSession.RefetchUserStatusLazily(12);
-            }
 
         }
 
         public static NowTime GetNowTime()
         {
-            NowTime timeParam = new NowTime();   
-            timeParam.now = DateTimeOffset.Now.ToUnixTimeSeconds();
-            timeParam.offset_now = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-            timeParam.local_now = timeParam.now + ((int)timeParam.offset_now * 60);
+            NowTime timeParam       = new NowTime();   
+            timeParam.now           = DateTimeOffset.Now.ToUnixTimeSeconds();
+            timeParam.offset_now    = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+            timeParam.local_now     = timeParam.now + ((int)timeParam.offset_now * 60);
     
             return timeParam;
         }

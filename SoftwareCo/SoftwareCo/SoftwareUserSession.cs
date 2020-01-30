@@ -54,223 +54,280 @@ namespace SoftwareCo
         public static async Task<string> CreateAnonymousUserAsync(bool online)
         {
             // get the app jwt
-            string app_jwt = await GetAppJwtAsync(online);
-            if (app_jwt != null && online)
+            try
             {
-                string creation_annotation = "NO_SESSION_FILE";
-                string osUsername = Environment.UserName;
-                string timezone = "";
-                if (TimeZone.CurrentTimeZone.DaylightName != null
-                    && TimeZone.CurrentTimeZone.DaylightName != TimeZone.CurrentTimeZone.StandardName)
+                string app_jwt = await GetAppJwtAsync(online);
+                if (app_jwt != null && online)
                 {
-                    timezone = TimeZone.CurrentTimeZone.DaylightName;
-                }
-                else
-                {
-                    timezone = TimeZone.CurrentTimeZone.StandardName;
-                }
-
-                JsonObject jsonObj = new JsonObject();
-                jsonObj.Add("timezone", timezone);
-                jsonObj.Add("username", osUsername);
-                jsonObj.Add("hostname", SoftwareCoUtil.getHostname());
-                jsonObj.Add("creation_annotation", creation_annotation);
-
-                string api = "/data/onboard";
-                string jsonData = jsonObj.ToString();
-                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, api, jsonData, app_jwt);
-
-                if (SoftwareHttpManager.IsOk(response))
-                {
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    IDictionary<string, object> respObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
-                    respObj.TryGetValue("jwt", out object jwtObj);
-                    string jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
-                    if (jwt != null)
+                    string creation_annotation = "NO_SESSION_FILE";
+                    string osUsername = Environment.UserName;
+                    string timezone = "";
+                    if (TimeZone.CurrentTimeZone.DaylightName != null
+                        && TimeZone.CurrentTimeZone.DaylightName != TimeZone.CurrentTimeZone.StandardName)
                     {
-                        SoftwareCoUtil.setItem("jwt", jwt);
-                        return jwt;
+                        timezone = TimeZone.CurrentTimeZone.DaylightName;
+                    }
+                    else
+                    {
+                        timezone = TimeZone.CurrentTimeZone.StandardName;
+                    }
+
+                    JsonObject jsonObj = new JsonObject();
+                    jsonObj.Add("timezone", timezone);
+                    jsonObj.Add("username", osUsername);
+                    jsonObj.Add("hostname", SoftwareCoUtil.getHostname());
+                    jsonObj.Add("creation_annotation", creation_annotation);
+
+                    string api = "/data/onboard";
+                    string jsonData = jsonObj.ToString();
+                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, api, jsonData, app_jwt);
+
+                    if (SoftwareHttpManager.IsOk(response))
+                    {
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        IDictionary<string, object> respObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+                        respObj.TryGetValue("jwt", out object jwtObj);
+                        string jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
+                        if (jwt != null)
+                        {
+                            SoftwareCoUtil.setItem("jwt", jwt);
+                            return jwt;
+                        }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+
+                Logger.Error("CreateAnonymousUserAsync, error: " + ex.Message,ex);
+            }
+           
 
             return null;
         }
 
         public static async Task<string> GetAppJwtAsync(bool online)
         {
-            if (online)
+            try
             {
-                long seconds = SoftwareCoUtil.getNowInSeconds();
-                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
-                        HttpMethod.Get, "/data/apptoken?token=" + seconds, null);
-
-                if (SoftwareHttpManager.IsOk(response))
+                if (online)
                 {
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
-                    jsonObj.TryGetValue("jwt", out object jwtObj);
-                    string app_jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
-                    return app_jwt;
+                    long seconds = SoftwareCoUtil.getNowInSeconds();
+                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
+                            HttpMethod.Get, "/data/apptoken?token=" + seconds, null);
+
+                    if (SoftwareHttpManager.IsOk(response))
+                    {
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+                        jsonObj.TryGetValue("jwt", out object jwtObj);
+                        string app_jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
+                        return app_jwt;
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+
+                Logger.Error("GetAppJwtAsync, error: " + ex.Message, ex);
+            }
+          
             return null;
         }
 
         private static async Task<User> GetUserAsync(bool online)
         {
             string jwt = GetJwt();
-            if (jwt != null && online)
+            try
             {
-                string api = "/users/me";
-                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, jwt);
-                if (SoftwareHttpManager.IsOk(response))
+                if (jwt != null && online)
                 {
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
-                    if (jsonObj != null)
+                    string api = "/users/me";
+                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, jwt);
+                    if (SoftwareHttpManager.IsOk(response))
                     {
-                        jsonObj.TryGetValue("data", out object userObj);
-                        if (userObj != null)
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+                        if (jsonObj != null)
                         {
-                            IDictionary<string, object> userData = (IDictionary<string, object>)userObj;
+                            jsonObj.TryGetValue("data", out object userObj);
+                            if (userObj != null)
+                            {
+                                IDictionary<string, object> userData = (IDictionary<string, object>)userObj;
 
-                            userData.TryGetValue("email", out object emailObj);
-                            string email = (emailObj == null) ? null : Convert.ToString(emailObj);
-                            userData.TryGetValue("plugin_jwt", out object pluginJwtObj);
-                            string pluginJwt = (pluginJwtObj == null) ? null : Convert.ToString(pluginJwtObj);
-                            userData.TryGetValue("id", out object idObj);
-                            long userId = (idObj == null) ? 0L : Convert.ToInt64(idObj);
+                                userData.TryGetValue("email", out object emailObj);
+                                string email = (emailObj == null) ? null : Convert.ToString(emailObj);
+                                userData.TryGetValue("plugin_jwt", out object pluginJwtObj);
+                                string pluginJwt = (pluginJwtObj == null) ? null : Convert.ToString(pluginJwtObj);
+                                userData.TryGetValue("id", out object idObj);
+                                long userId = (idObj == null) ? 0L : Convert.ToInt64(idObj);
 
-                            User user = new User();
-                            user.email = email;
-                            user.plugin_jwt = pluginJwt;
-                            user.id = userId;
-                            return user;
+                                User user = new User();
+                                user.email = email;
+                                user.plugin_jwt = pluginJwt;
+                                user.id = userId;
+                                return user;
+                            }
                         }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                Logger.Error("GetUserAsync, error: " + ex.Message, ex);
+
+            }
+           
             return null;
         }
 
         private static async Task<bool> IsLoggedOn(bool online)
         {
-            string jwt = GetJwt();
-            if (online && jwt != null)
+            try
             {
-                User user = await GetUserAsync(online);
-                if (user != null && SoftwareCoUtil.IsValidEmail(user.email))
+                string jwt = GetJwt();
+                if (online && jwt != null)
                 {
-                    SoftwareCoUtil.setItem("name", user.email);
-                    SoftwareCoUtil.setItem("jwt", user.plugin_jwt);
-                    lastJwt = user.plugin_jwt;
-                    return true;
-                }
-
-                string api = "/users/plugin/state";
-                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, jwt);
-                if (SoftwareHttpManager.IsOk(response))
-                {
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
-                    if (jsonObj != null)
+                    User user = await GetUserAsync(online);
+                    if (user != null && SoftwareCoUtil.IsValidEmail(user.email))
                     {
-                        jsonObj.TryGetValue("state", out object stateObj);
-                        string state = (stateObj == null) ? "NONE" : Convert.ToString(stateObj);
-                        jsonObj.TryGetValue("jwt", out object pluginJwtObj);
-                        string pluginJwt = (pluginJwtObj == null) ? null : Convert.ToString(pluginJwtObj);
-                        if (state.Equals("OK") && pluginJwt != null)
+                        SoftwareCoUtil.setItem("name", user.email);
+                        SoftwareCoUtil.setItem("jwt", user.plugin_jwt);
+                        lastJwt = user.plugin_jwt;
+                        return true;
+                    }
+
+                    string api = "/users/plugin/state";
+                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, jwt);
+                    if (SoftwareHttpManager.IsOk(response))
+                    {
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+                        if (jsonObj != null)
                         {
-                            jsonObj.TryGetValue("email", out object nameObj);
-                            string name = (nameObj == null) ? null : Convert.ToString(nameObj);
-                            if (name != null)
+                            jsonObj.TryGetValue("state", out object stateObj);
+                            string state = (stateObj == null) ? "NONE" : Convert.ToString(stateObj);
+                            jsonObj.TryGetValue("jwt", out object pluginJwtObj);
+                            string pluginJwt = (pluginJwtObj == null) ? null : Convert.ToString(pluginJwtObj);
+                            if (state.Equals("OK") && pluginJwt != null)
                             {
-                                SoftwareCoUtil.setItem("name", name);
+                                jsonObj.TryGetValue("email", out object nameObj);
+                                string name = (nameObj == null) ? null : Convert.ToString(nameObj);
+                                if (name != null)
+                                {
+                                    SoftwareCoUtil.setItem("name", name);
+                                }
+                                SoftwareCoUtil.setItem("jwt", pluginJwt);
+                                lastJwt = pluginJwt;
                             }
-                            SoftwareCoUtil.setItem("jwt", pluginJwt);
-                            lastJwt = pluginJwt;
-                        }
-                        else if (state.Equals("NOT_FOUND"))
-                        {
-                            SoftwareCoUtil.setItem("jwt", null);
-                            lastJwt = null;
+                            else if (state.Equals("NOT_FOUND"))
+                            {
+                                SoftwareCoUtil.setItem("jwt", null);
+                                lastJwt = null;
+                            }
                         }
                     }
-                }
 
+                }
+                SoftwareCoUtil.setItem("name", null);
             }
-            SoftwareCoUtil.setItem("name", null);
+            catch (Exception ex)
+            {
+
+              
+            }  
+          
             return false;
         }
 
         public static async Task<UserStatus> GetUserStatusAsync(bool isInitialCall)
         {
-            bool online = await IsOnlineAsync();
-            bool softwareSessionFileExists = SoftwareCoUtil.softwareSessionFileExists();
-            bool jwtExists = SoftwareCoUtil.jwtExists();
-            if (!isInitialCall && isOnline && !jwtExists)
+             UserStatus currentUserStatus = new UserStatus();
+            try
             {
-                await SoftwareUserSession.CreateAnonymousUserAsync(online);
+                bool online = await IsOnlineAsync();
+                bool softwareSessionFileExists = SoftwareCoUtil.softwareSessionFileExists();
+                bool jwtExists = SoftwareCoUtil.jwtExists();
+                if (!isInitialCall && isOnline && !jwtExists)
+                {
+                    await SoftwareUserSession.CreateAnonymousUserAsync(online);
+                }
+
+                bool loggedIn                   = await IsLoggedOn(online);
+                currentUserStatus.loggedIn      = loggedIn;
+
+                if (online && loggedInCacheState != loggedIn)
+                {
+                    // change in logged in state, send heatbeat and fetch kpm
+                    SendHeartbeat("STATE_CHANGE:LOGGED_IN:" + loggedIn);
+
+                    try
+                    {
+                        Thread.Sleep(1000);
+                        SoftwareCoPackage.fetchSessionSummaryInfoAsync();
+                    }
+                    catch (ThreadInterruptedException e)
+                    {
+                        //
+                    }
+                }
+
+                loggedInCacheState = loggedIn;
+
+                SoftwareLaunchCommand.UpdateEnabledState(currentUserStatus);
+                SoftwareLoginCommand.UpdateEnabledState(currentUserStatus);
+
             }
-
-            bool loggedIn = await IsLoggedOn(online);
-
-            UserStatus currentUserStatus = new UserStatus();
-            currentUserStatus.loggedIn = loggedIn;
-
-            if (online && loggedInCacheState != loggedIn)
+            catch (Exception ex)
             {
-                // change in logged in state, send heatbeat and fetch kpm
-                SendHeartbeat("STATE_CHANGE:LOGGED_IN:" + loggedIn);
 
-                try
-                {
-                    Thread.Sleep(1000);
-                    SoftwareCoPackage.fetchSessionSummaryInfoAsync();
-                }
-                catch (ThreadInterruptedException e)
-                {
-                    //
-                }
+                Logger.Error("GetUserStatusAsync , error : " + ex.Message, ex);
             }
-
-            loggedInCacheState = loggedIn;
-
-            SoftwareLaunchCommand.UpdateEnabledState(currentUserStatus);
-            SoftwareLoginCommand.UpdateEnabledState(currentUserStatus);
+            
 
             return currentUserStatus;
         }
 
         public static async void RefetchUserStatusLazily(int tryCountUntilFoundUser)
         {
-            checkingLoginState = true;
-            UserStatus userStatus = await GetUserStatusAsync(true);
-
-            if (!userStatus.loggedIn && tryCountUntilFoundUser > 0)
+            try
             {
-                tryCountUntilFoundUser -= 1;
-                
-                try
+                checkingLoginState      = true;
+                UserStatus userStatus   = null;
+                userStatus              = await GetUserStatusAsync(true);
+
+                if ( userStatus!=null && !userStatus.loggedIn && tryCountUntilFoundUser > 0)
                 {
-                    Thread.Sleep(1000 * 10);
-                    RefetchUserStatusLazily(tryCountUntilFoundUser);
-                } catch (ThreadInterruptedException e)
+                    tryCountUntilFoundUser -= 1;
+
+                    try
+                    {
+                        Thread.Sleep(1000 * 10);
+                        RefetchUserStatusLazily(tryCountUntilFoundUser);
+                    }
+                    catch (ThreadInterruptedException e)
+                    {
+                        //
+                    }
+                }
+                else
                 {
-                    //
+                    SoftwareCoPackage.fetchSessionSummaryInfoAsync();
+                    checkingLoginState = false;
                 }
             }
-            else
+            catch (Exception ex)
             {
-                SoftwareCoPackage.fetchSessionSummaryInfoAsync();
-                checkingLoginState = false;
+                Logger.Error("RefetchUserStatusLazily ,error : " + ex.Message, ex);
+              
             }
+            
         }
 
         public static async void SendHeartbeat(string reason)
         {
-            string jwt = GetJwt();
+           
+            string jwt  = GetJwt();
             bool online = await IsOnlineAsync();
             if (online && jwt != null)
             {
