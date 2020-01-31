@@ -176,8 +176,17 @@ namespace SoftwareCo
             string softwareDataDir = userHomeDir + "\\.software";
             if (autoCreate && !Directory.Exists(softwareDataDir))
             {
-                // create it
-                Directory.CreateDirectory(softwareDataDir);
+                try
+                {
+                    // create it
+                    Directory.CreateDirectory(softwareDataDir);
+                }
+                catch (Exception ex)
+                {
+
+                    
+                }
+               
             }
             return softwareDataDir;
         }
