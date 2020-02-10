@@ -39,7 +39,7 @@ namespace SoftwareCo
 
         public static async void UpdateEnabledState(SoftwareUserSession.UserStatus userStatus)
         {
-            if (menuItem != null)
+            if (menuItem != null && userStatus != null)
             {
                 if (userStatus.loggedIn)
                 {
