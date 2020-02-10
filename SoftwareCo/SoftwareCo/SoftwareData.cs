@@ -45,7 +45,8 @@ namespace SoftwareCo
             {
                 project.ResetData();
             }
-            start = SoftwareCoUtil.getNowInSeconds();
+            //start = SoftwareCoUtil.getNowInSeconds();
+            start = 0L;
             local_start = 0L;
             initialized = false;
         }
@@ -105,7 +106,8 @@ namespace SoftwareCo
 
         public Boolean HasData()
         {
-            if (this.initialized && this.keystrokes > 0 && this.project != null && this.project.name != null) {
+
+            if (this.initialized && (this.keystrokes > 0 || this.source.Count>0) && this.project != null && this.project.name != null) {
                 return true;
             }
             return false;
@@ -188,33 +190,44 @@ namespace SoftwareCo
             }
         }
 
-        public void EnsureFileInfoDataIsPresent(string fileName)
+        public void EnsureFileInfoDataIsPresent(string fileName,NowTime nowTime)
         {
-            JsonObject fileInfoData     = new JsonObject();
-            long start                  = SoftwareCoUtil.getNowInSeconds();
-            double offset               = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-            long local_start            = start + ((int)offset * 60);
-
-            if (!source.ContainsKey(fileName))
+            try
             {
-                fileInfoData.Add("paste", 0);
-                fileInfoData.Add("open", 0);
-                fileInfoData.Add("close", 0);
-                fileInfoData.Add("delete", 0);
-                fileInfoData.Add("add", 0);
-                fileInfoData.Add("netkeys", 0);
-                fileInfoData.Add("length", 0);
-                fileInfoData.Add("lines", 0);
-                fileInfoData.Add("linesAdded", 0);
-                fileInfoData.Add("linesRemoved", 0);
-                fileInfoData.Add("syntax", "");
-                fileInfoData.Add("start", start);
-                fileInfoData.Add("local_start", local_start);
-                fileInfoData.Add("end", 0);
-                fileInfoData.Add("local_end", 0);
-                source.Add(fileName, fileInfoData);
+                JsonObject fileInfoData = new JsonObject();
+                //long start                  = SoftwareCoUtil.getNowInSeconds();
+                //double offset               = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+                //long local_start            = start + ((int)offset * 60);\
+                long start = nowTime.now;
+                long local_start = nowTime.local_now;
+                if (!source.ContainsKey(fileName))
+                {
+                    fileInfoData.Add("paste", 0);
+                    fileInfoData.Add("open", 0);
+                    fileInfoData.Add("close", 0);
+                    fileInfoData.Add("delete", 0);
+                    fileInfoData.Add("add", 0);
+                    fileInfoData.Add("netkeys", 0);
+                    fileInfoData.Add("length", 0);
+                    fileInfoData.Add("lines", 0);
+                    fileInfoData.Add("linesAdded", 0);
+                    fileInfoData.Add("linesRemoved", 0);
+                    fileInfoData.Add("syntax", "");
+                    fileInfoData.Add("start", start);
+                    fileInfoData.Add("local_start", local_start);
+                    fileInfoData.Add("end", 0);
+                    fileInfoData.Add("local_end", 0);
+                    source.Add(fileName, fileInfoData);
+
+                }
 
             }
+            catch (Exception ex)
+            {
+                Logger.Error("EnsureFileInfoDataIsPresent, error : " + ex.Message, ex);
+                
+            }
+           
         }
         
         private JsonObject getFileInfoFromSource(String sourceVal)

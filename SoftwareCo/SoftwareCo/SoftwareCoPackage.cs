@@ -82,7 +82,7 @@ namespace SoftwareCo
         private static int THIRTY_MINUTES = ONE_MINUTE * 30;
         private static long lastDashboardFetchTime = 0;
         private static long day_in_sec = 60 * 60 * 24;
-
+        private static int ZERO_SECOND = 1;
         #endregion
 
         /// <summary>
@@ -104,14 +104,24 @@ namespace SoftwareCo
         /// </summary>
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
-            await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
-            base.Initialize();
+            try
+            {
+                await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+                base.Initialize();
 
-            ObjDte = await GetServiceAsync(typeof(DTE)) as DTE2;
-            _dteEvents = ObjDte.Events.DTEEvents;
-            _dteEvents.OnStartupComplete += OnOnStartupComplete;
+                ObjDte = await GetServiceAsync(typeof(DTE)) as DTE2;
+                _dteEvents = ObjDte.Events.DTEEvents;
+                _dteEvents.OnStartupComplete += OnOnStartupComplete;
 
-            InitializeListenersAsync();
+                InitializeListenersAsync();
+
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Error in InitializeAsync", ex);
+                
+            }
+           
         }
 
         public static string GetVersion()
@@ -126,12 +136,13 @@ namespace SoftwareCo
 
         public async Task InitializeListenersAsync()
         {
-            await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
+            string MethodName = "InitializeListenersAsync";
             try
             {
+                await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
                 string PluginVersion = GetVersion();
                 Logger.Info(string.Format("Initializing Code Time v{0}", PluginVersion));
-
+                Logger.FileLog("Initializing Code Time", MethodName);
                 // VisualStudio Object
                 Events2 events = (Events2)ObjDte.Events;
                 _textDocKeyEvent = events.TextDocumentKeyPressEvents;
@@ -163,17 +174,9 @@ namespace SoftwareCo
                 }
                 InitializeStatusBarButton();
 
-
                 // Create an AutoResetEvent to signal the timeout threshold in the
                 // timer callback has been reached.
                 var autoEvent = new AutoResetEvent(false);
-
-                // setup timer to process events every 1 minute
-                timer = new System.Threading.Timer(
-                    ProcessSoftwareDataTimerCallbackAsync,
-                    autoEvent,
-                    ONE_MINUTE,
-                    ONE_MINUTE);
 
                 offlineDataTimer = new System.Threading.Timer(
                       SendOfflineData,
@@ -181,15 +184,6 @@ namespace SoftwareCo
                       THIRTY_MINUTES,
                       THIRTY_MINUTES);
 
-                // this.SendOfflineData();
-
-                // start in 5 seconds every 5 min
-                //int delay = 1000 * 5;
-                //kpmTimer = new System.Threading.Timer(
-                //    ProcessFetchDailyKpmTimerCallbackAsync,
-                //    autoEvent,
-                //    delay,
-                //    ONE_MINUTE * 5);
 
                 int delay = 1000 * 45;
 
@@ -200,11 +194,11 @@ namespace SoftwareCo
                     delay,
                     ONE_HOUR);
 
-                musicTimer = new System.Threading.Timer(
-                    ProcessMusicTracksAsync,
-                    autoEvent,
-                    1000 * 5,
-                    1000 * 30);
+                //musicTimer = new System.Threading.Timer(
+                //    ProcessMusicTracksAsync,
+                //    autoEvent,
+                //    1000 * 5,
+                //    1000 * 30);
 
                 statusMsgTimer = new System.Threading.Timer(
                     UpdateStatusMsg,
@@ -253,7 +247,7 @@ namespace SoftwareCo
                 timer = null;
 
                 // process any remaining data
-                ProcessSoftwareDataTimerCallbackAsync(null);
+               // ProcessSoftwareDataTimerCallbackAsync(null);
             }
         }
         #endregion
@@ -408,14 +402,23 @@ namespace SoftwareCo
 
         private void ProcessHourlyJobs(Object stateInfo)
         {
-            SoftwareUserSession.SendHeartbeat("HOURLY");
-
-            string dir = getSolutionDirectory();
-
-            if (dir != null)
+            try
             {
-                _softwareRepoUtil.GetHistoricalCommitsAsync(dir);
+                SoftwareUserSession.SendHeartbeat("HOURLY");
+
+                string dir = getSolutionDirectory();
+
+                if (dir != null)
+                {
+                    _softwareRepoUtil.GetHistoricalCommitsAsync(dir);
+                }
             }
+            catch (Exception ex)
+            {
+
+                Logger.Error("ProcessHourlyJobs, error: " + ex.Message, ex);
+            }
+            
         }
 
         private async void ProcessMusicTracksAsync(Object stateInfo)
@@ -429,20 +432,28 @@ namespace SoftwareCo
             }
         }
 
-        // This method is called by the timer delegate.
-        private async void ProcessSoftwareDataTimerCallbackAsync(Object stateInfo)
+        public void HasData()
         {
-            AutoResetEvent autoEvent = (AutoResetEvent)stateInfo;
+           
+            if (_softwareData.initialized && (_softwareData.keystrokes > 0 || _softwareData.source.Count > 0) && _softwareData.project != null && _softwareData.project.name != null)
+            {
+               
+                SoftwareCoUtil.SetTimeout(ZERO_SECOND, PostData, false);
+            }
+            
+        }
+
+        public void PostData()
+        {
             double offset   = 0;
             long end        = 0;
             long local_end  = 0;
-           
 
-            DateTime now = DateTime.UtcNow;
-            if (_softwareData != null && _softwareData.HasData() && (EnoughTimePassed(now) || timer == null))
+            NowTime nowTime = SoftwareCoUtil.GetNowTime();
+            DateTime now    = DateTime.UtcNow;
+            if (_softwareData.source.Count > 0)
             {
-                 offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-                _softwareData.local_start = _softwareData.start + ((int)offset * 60);
+                offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
                 _softwareData.offset = Math.Abs((int)offset);
                 if (TimeZone.CurrentTimeZone.DaylightName != null
                     && TimeZone.CurrentTimeZone.DaylightName != TimeZone.CurrentTimeZone.StandardName)
@@ -456,7 +467,7 @@ namespace SoftwareCo
 
                 foreach (KeyValuePair<string, object> sourceFiles in _softwareData.source)
                 {
-
+                   
                     JsonObject fileInfoData = null;
                     fileInfoData = (JsonObject)sourceFiles.Value;
                     object outend;
@@ -464,61 +475,141 @@ namespace SoftwareCo
 
                     if (long.Parse(outend.ToString()) == 0)
                     {
-                        end         = SoftwareCoUtil.getNowInSeconds();
-                        offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-                        local_end   = end + ((int)offset * 60);
+                       
+                        end             = nowTime.now;
+                        local_end       = nowTime.local_now;
                         _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "end", end);
                         _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "local_end", local_end);
-
+                       
                     }
 
                 }
 
-                try
-                {
-                    end         = SoftwareCoUtil.getNowInSeconds();
-                    offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-                    local_end   = end + ((int)offset * 60);
-
-                    _softwareData.end           = end;
-                    _softwareData.local_end     = local_end;
-
-                }
-                catch (Exception)
-
-                {
-
-                }
-                string softwareDataContent = _softwareData.GetAsJson();
-                Logger.Info("Code Time: sending: " + softwareDataContent);
-
-                if (SoftwareCoUtil.isTelemetryOn())
-                {
-
-                     StorePayload(_softwareData);
-
-                    // call the kpm summary
-                   /* try
+                    try
                     {
-                        Thread.Sleep(1000 * 5);
-                        ProcessFetchDailyKpmTimerCallbackAsync(null);
+
+                        _softwareData.end = nowTime.now;
+                        _softwareData.local_end = nowTime.local_now;
+
                     }
-                    catch (ThreadInterruptedException e)
-                    {
-                        //
-                    }*/
-                    
-                }
-                else
-                {
-                    Logger.Info("Code Time metrics are currently paused.");
-                   // this.StorePayload(softwareDataContent);
-                }
+                    catch (Exception)
 
-                _softwareData.ResetData();
-                _lastPostTime = now;
-            }
+                    {
+
+                    }
+                
+                    string softwareDataContent = _softwareData.GetAsJson();
+                    Logger.Info("Code Time: sending: " + softwareDataContent);
+
+                    if (SoftwareCoUtil.isTelemetryOn())
+                    {
+                        StorePayload(_softwareData);
+
+                    }
+                    else
+                    {
+                        Logger.Info("Code Time metrics are currently paused.");
+
+                    }
+
+                    _softwareData.ResetData();
+                    _lastPostTime = now;
+                }
+            
         }
+
+        
+        //private async void ProcessSoftwareDataTimerCallbackAsync(Object stateInfo)
+        //{
+        //    AutoResetEvent autoEvent = (AutoResetEvent)stateInfo;
+        //    double offset = 0;
+        //    long end = 0;
+        //    long local_end = 0;
+
+        //    NowTime nowTime = SoftwareCoUtil.GetNowTime();
+        //    DateTime now = DateTime.UtcNow;
+        //    if (_softwareData != null && _softwareData.HasData() && (EnoughTimePassed(now) || timer == null))
+        //    {
+        //        offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+        //        //_softwareData.local_start = _softwareData.start + ((int)offset * 60);
+        //        _softwareData.offset = Math.Abs((int)offset);
+        //        if (TimeZone.CurrentTimeZone.DaylightName != null
+        //            && TimeZone.CurrentTimeZone.DaylightName != TimeZone.CurrentTimeZone.StandardName)
+        //        {
+        //            _softwareData.timezone = TimeZone.CurrentTimeZone.DaylightName;
+        //        }
+        //        else
+        //        {
+        //            _softwareData.timezone = TimeZone.CurrentTimeZone.StandardName;
+        //        }
+
+        //        foreach (KeyValuePair<string, object> sourceFiles in _softwareData.source)
+        //        {
+
+        //            JsonObject fileInfoData = null;
+        //            fileInfoData = (JsonObject)sourceFiles.Value;
+        //            object outend;
+        //            fileInfoData.TryGetValue("end", out outend);
+
+        //            if (long.Parse(outend.ToString()) == 0)
+        //            {
+        //                //end         = SoftwareCoUtil.getNowInSeconds();
+        //                //offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+        //                //local_end   = end + ((int)offset * 60);
+        //                end = nowTime.now;
+        //                local_end = nowTime.local_now;
+        //                _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "end", end);
+        //                _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "local_end", local_end);
+
+        //            }
+
+        //        }
+
+        //        try
+        //        {
+        //            //end         = SoftwareCoUtil.getNowInSeconds();
+        //            //offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+        //            //local_end   = end + ((int)offset * 60);
+
+        //            _softwareData.end = nowTime.now;
+        //            _softwareData.local_end = nowTime.local_now;
+
+        //        }
+        //        catch (Exception)
+
+        //        {
+
+        //        }
+        //        string softwareDataContent = _softwareData.GetAsJson();
+        //        Logger.Info("Code Time: sending: " + softwareDataContent);
+
+        //        if (SoftwareCoUtil.isTelemetryOn())
+        //        {
+
+        //            StorePayload(_softwareData);
+
+        //            // call the kpm summary
+        //            /* try
+        //             {
+        //                 Thread.Sleep(1000 * 5);
+        //                 ProcessFetchDailyKpmTimerCallbackAsync(null);
+        //             }
+        //             catch (ThreadInterruptedException e)
+        //             {
+        //                 //
+        //             }*/
+
+        //        }
+        //        else
+        //        {
+        //            Logger.Info("Code Time metrics are currently paused.");
+        //            // this.StorePayload(softwareDataContent);
+        //        }
+
+        //        _softwareData.ResetData();
+        //        _lastPostTime = now;
+        //    }
+        //}
 
         private void StorePayload(SoftwareData _softwareData)
         {
@@ -597,6 +688,7 @@ namespace SoftwareCo
 
         private async void SendOfflineData(object stateinfo)
         {
+            string MethodName = "SendOfflineData";
             Logger.Info(DateTime.Now.ToString());
             bool online = await SoftwareUserSession.IsOnlineAsync();
 
@@ -652,6 +744,7 @@ namespace SoftwareCo
 
         public static async Task fetchSessionSummaryInfoAsync(bool forceRefresh = false)
         {
+            string MethodName = "fetchSessionSummaryInfoAsync";
             //SessionSummary sessionSummary = new SessionSummary();
 
             var sessionSummaryResult = await GetSessionSummaryStatusAsync(forceRefresh);
@@ -665,6 +758,7 @@ namespace SoftwareCo
         }
         private static async Task<SessionSummaryResult> GetSessionSummaryStatusAsync(bool forceRefresh = false)
         {
+            string MethodName = "GetSessionSummaryStatusAsync";
             SessionSummaryResult sessionSummaryResult = new SessionSummaryResult();
             _sessionSummary = getSessionSummayData();
 
@@ -742,8 +836,9 @@ namespace SoftwareCo
 
         private static void updateStatusBarWithSummaryData()
         {
+            string MethodName = "updateStatusBarWithSummaryData";
             _sessionSummary = getSessionSummayData();
-
+            string msg = "";
             long currentDayMinutesVal = _sessionSummary.currentDayMinutes;
             long averageDailyMinutesVal = _sessionSummary.averageDailyMinutes;
 
@@ -752,26 +847,27 @@ namespace SoftwareCo
 
             // Code time today:  4 hrs | Avg: 3 hrs 28 min
             string inFlowIcon = currentDayMinutesVal > averageDailyMinutesVal ? "🚀" : "";
-            string msg = string.Format("{0}{1}", inFlowIcon, currentDayMinutesTime);
+            msg = string.Format("{0}{1}", inFlowIcon, currentDayMinutesTime);
 
             if (averageDailyMinutesVal > 0)
             {
                 msg += string.Format(" | {0}", averageDailyMinutesTime);
                 _softwareStatus.SetStatus(msg);
             }
-            else if(currentDayMinutesVal>0)
+            else/* if(currentDayMinutesVal>0)*/
             {
                 _softwareStatus.SetStatus(msg);
             }
-            else
-            {
-                _softwareStatus.SetStatus("Code Time");
-            }
+            //else
+            //{
+            //    _softwareStatus.SetStatus("Code Time");
+            //}
 
         }
 
         private static void saveSessionSummaryToDisk(SessionSummary sessionSummary)
         {
+            string MethodName = "saveSessionSummaryToDisk";
             string sessionSummaryFile = SoftwareCoUtil.getSessionSummaryFile();
 
 
@@ -784,7 +880,7 @@ namespace SoftwareCo
             {
                 //SoftwareCoUtil.WriteToFileThreadSafe(sessionSummary.GetSessionSummaryAsJson(), sessionSummaryFile);
                 File.WriteAllText(sessionSummaryFile, sessionSummary.GetSessionSummaryAsJson());
-                File.SetAttributes(sessionSummaryFile, FileAttributes.ReadOnly);
+                //File.SetAttributes(sessionSummaryFile, FileAttributes.ReadOnly);
             }
             catch (Exception e)
             {
@@ -810,17 +906,20 @@ namespace SoftwareCo
 
         private void InitializeSoftwareData(string fileName)
         {
+            string MethodName = "InitializeSoftwareData";
+            NowTime nowTime = SoftwareCoUtil.GetNowTime();
             if (_softwareData == null || !_softwareData.initialized)
             {
-
+               
+                     
                 // get the project name
-                String projectName = "Untitled";
-                String directoryName = "Unknown";
+                String projectName      = "Untitled";
+                String directoryName    = "Unknown";
                 if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
                 {
-                    projectName = Path.GetFileNameWithoutExtension(ObjDte.Solution.FullName);
+                    projectName         = Path.GetFileNameWithoutExtension(ObjDte.Solution.FullName);
                     string solutionFile = ObjDte.Solution.FullName;
-                    directoryName = Path.GetDirectoryName(solutionFile);
+                    directoryName       = Path.GetDirectoryName(solutionFile);
                 }
                 else
                 {
@@ -830,85 +929,102 @@ namespace SoftwareCo
                 if (_softwareData == null)
                 {
                     ProjectInfo projectInfo = new ProjectInfo(projectName, directoryName);
-                    _softwareData = new SoftwareData(projectInfo);
+                    _softwareData           = new SoftwareData(projectInfo);
+                  
                 }
                 else
                 {
                     _softwareData.project.name = projectName;
                     _softwareData.project.directory = directoryName;
                 }
-                _softwareData.initialized = true;
+                _softwareData.start         = nowTime.now;
+                _softwareData.local_start   = nowTime.local_now;
+                _softwareData.initialized   = true;
+                SoftwareCoUtil.SetTimeout(ONE_MINUTE, HasData, false);
             }
-            _softwareData.EnsureFileInfoDataIsPresent(fileName);
+            _softwareData.EnsureFileInfoDataIsPresent(fileName,nowTime);
         }
         private async Task _IntialisefileMap(string fileName)
         {
-
-            foreach (KeyValuePair<string, object> sourceFiles in _softwareData.source)
+            
+            JsonObject localSource = new JsonObject();
+            foreach (var sourceFiles in _softwareData.source)
             {
-                long end        = 0;
-                long local_end  = 0;
-                double offset   = 0;
+                object outend               = null;
+                JsonObject fileInfoData     = null;
+                NowTime nowTime             = SoftwareCoUtil.GetNowTime();
+            
                 if (fileName != sourceFiles.Key)
                 {
-                    object outend           = null;
-                    JsonObject fileInfoData = null;
-                    fileInfoData            = (JsonObject)sourceFiles.Value;
+                    fileInfoData = (JsonObject)sourceFiles.Value;
                     fileInfoData.TryGetValue("end", out outend);
 
                     if (long.Parse(outend.ToString()) == 0)
                     {
 
-                        end         = SoftwareCoUtil.getNowInSeconds();
-                        offset      = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-                        local_end   = end + ((int)offset * 60);
-
-                        _softwareData.addOrUpdateFileInfo(fileName, "end", end);
-                        _softwareData.addOrUpdateFileInfo(fileName, "local_end", local_end);
-
+                        fileInfoData["end"]         = nowTime.now;
+                        fileInfoData["local_end"]   = nowTime.local_now;
+                       
                     }
-
+                    localSource.Add(sourceFiles.Key, fileInfoData);
                 }
                 else
                 {
-                    _softwareData.addOrUpdateFileInfo(fileName, "end", 0);
-                    _softwareData.addOrUpdateFileInfo(fileName, "local_end", 0);
+                    fileInfoData                = (JsonObject)sourceFiles.Value;
+                    fileInfoData["end"]         = 0;
+                    fileInfoData["local_end"]   = 0;
+                    localSource.Add(sourceFiles.Key, fileInfoData);
                 }
+
+                _softwareData.source = localSource;
 
             }
 
+           
         }
         private async void InitializeUserInfo()
         {
-            bool online = await SoftwareUserSession.IsOnlineAsync();
-            bool softwareSessionFileExists = SoftwareCoUtil.softwareSessionFileExists();
-            bool jwtExists = SoftwareCoUtil.jwtExists();
-            bool initializedUser = false;
-            if (!softwareSessionFileExists || !jwtExists)
+            try
             {
-                string result = await SoftwareUserSession.CreateAnonymousUserAsync(online);
-                if (result != null)
+                string MethodName = "InitializeUserInfo";
+                Logger.FileLog("Initializing User", MethodName);
+                bool online = await SoftwareUserSession.IsOnlineAsync();
+                bool softwareSessionFileExists = SoftwareCoUtil.softwareSessionFileExists();
+                bool jwtExists = SoftwareCoUtil.jwtExists();
+                bool initializedUser = false;
+                if (!softwareSessionFileExists || !jwtExists)
                 {
-                    initializedUser = true;
+                    string result = await SoftwareUserSession.CreateAnonymousUserAsync(online);
+                    if (result != null)
+                    {
+                        initializedUser = true;
+                    }
                 }
+
+                SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(true);
+
+                SoftwareLoginCommand.UpdateEnabledState(status);
+
+                if (initializedUser)
+                {
+                    LaunchLoginPrompt();
+                }
+
+                if (online)
+                {
+                    fetchSessionSummaryInfoAsync();
+
+                    // send heartbeat
+                    SoftwareUserSession.SendHeartbeat("INITIALIZED");
+                }
+
             }
-
-            SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(true);
-
-            SoftwareLoginCommand.UpdateEnabledState(status);
-
-            if (initializedUser)
+            catch (Exception ex)
             {
-                LaunchLoginPrompt();
-            }
+                Logger.Error("Error Initializing UserInfo", ex);
 
-            if (online)
-            {
-                fetchSessionSummaryInfoAsync();
-
-                // send heartbeat
-                SoftwareUserSession.SendHeartbeat("INITIALIZED");
             }
+            
         }
 
         private String getDownloadDestinationDirectory()
@@ -930,6 +1046,7 @@ namespace SoftwareCo
 
         private static async Task FetchCodeTimeDashboardAsync(SessionSummary _sessionSummary)
         {
+           
             string summaryContent = "";
             string summaryInfoFile = SoftwareCoUtil.getSessionSummaryInfoFile();
 
@@ -968,7 +1085,7 @@ namespace SoftwareCo
                 {
 
                     File.WriteAllText(summaryInfoFile, summaryContent);
-                    File.SetAttributes(summaryInfoFile, FileAttributes.ReadOnly);
+                   // File.SetAttributes(summaryInfoFile, FileAttributes.ReadOnly);
                 }
                 catch (Exception e)
                 {
@@ -1023,7 +1140,7 @@ namespace SoftwareCo
             {
                 //SoftwareCoUtil.WriteToFileThreadSafe(dashboardContent, dashboardFile);
                 File.WriteAllText(dashboardFile, dashboardContent);
-                File.SetAttributes(dashboardFile, FileAttributes.ReadOnly);
+               // File.SetAttributes(dashboardFile, FileAttributes.ReadOnly);
 
             }
             catch (Exception e)
@@ -1036,13 +1153,24 @@ namespace SoftwareCo
 
         public static async void LaunchCodeTimeDashboardAsync()
         {
-            await fetchSessionSummaryInfoAsync();
-            string dashboardFile = SoftwareCoUtil.getDashboardFile();
-            if(File.Exists(dashboardFile))
-            ObjDte.ItemOperations.OpenFile(dashboardFile);
+            try
+            {
+                await fetchSessionSummaryInfoAsync();
+                string dashboardFile = SoftwareCoUtil.getDashboardFile();
+                if (File.Exists(dashboardFile))
+                    ObjDte.ItemOperations.OpenFile(dashboardFile);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("LaunchCodeTimeDashboardAsync, error : " + ex.Message, ex);
+                    
+            }
+           
         }
 
-        protected async Task ShowOfflinePromptAsync() {
+        protected async Task ShowOfflinePromptAsync()
+        {
+
             string msg = "Our service is temporarily unavailable. We will try to reconnect again in 10 minutes. Your status bar will not update at this time.";
             string caption = "Code Time";
             MessageBoxButtons buttons = MessageBoxButtons.OK;

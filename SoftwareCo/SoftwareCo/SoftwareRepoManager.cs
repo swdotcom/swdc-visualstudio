@@ -115,30 +115,40 @@ namespace SoftwareCo
         public IDictionary<string, string> GetResourceInfo(string projectDir)
         {
             IDictionary<string, string> dict = new Dictionary<string, string>();
-            string identifier = SoftwareCoUtil.RunCommand("git config remote.origin.url", projectDir);
-            if (identifier != null && !identifier.Equals(""))
+            try
             {
-                dict.Add("identifier", identifier);
+                string identifier = SoftwareCoUtil.RunCommand("git config remote.origin.url", projectDir);
+                if (identifier != null && !identifier.Equals(""))
+                {
+                    dict.Add("identifier", identifier);
 
-                // only get these since identifier is available
-                string email = SoftwareCoUtil.RunCommand("git config user.email", projectDir);
-                if (email != null && !email.Equals(""))
-                {
-                    dict.Add("email", email);
-                }
-                string branch = SoftwareCoUtil.RunCommand("git symbolic-ref --short HEAD", projectDir);
-                if (branch != null && !branch.Equals(""))
-                {
-                    dict.Add("branch", branch);
-                }
-                string tag = SoftwareCoUtil.RunCommand("git describe --all", projectDir);
+                    // only get these since identifier is available
+                    string email = SoftwareCoUtil.RunCommand("git config user.email", projectDir);
+                    if (email != null && !email.Equals(""))
+                    {
+                        dict.Add("email", email);
+                    }
+                    string branch = SoftwareCoUtil.RunCommand("git symbolic-ref --short HEAD", projectDir);
+                    if (branch != null && !branch.Equals(""))
+                    {
+                        dict.Add("branch", branch);
+                    }
+                    string tag = SoftwareCoUtil.RunCommand("git describe --all", projectDir);
 
-                if (tag != null && !tag.Equals(""))
-                {
-                    dict.Add("tag", tag);
+                    if (tag != null && !tag.Equals(""))
+                    {
+                        dict.Add("tag", tag);
+                    }
                 }
+
             }
-
+            catch (Exception ex)
+            {
+                Logger.Error("GetResourceInfo , error :" + ex.Message, ex);
+                
+            }
+          
+            
             return dict;
         }
 
@@ -148,8 +158,8 @@ namespace SoftwareCo
             {
                 return;
             }
-
-            IDictionary<string, string> resourceInfo = this.GetResourceInfo(projectDir);
+            IDictionary<string, string> resourceInfo = null;
+            resourceInfo = this.GetResourceInfo(projectDir);
 
             if (resourceInfo != null && resourceInfo.ContainsKey("identifier"))
             {
@@ -213,214 +223,247 @@ namespace SoftwareCo
          **/
         public async Task<RepoCommit> GetLatestCommitAsync(string projectDir)
         {
-            if (projectDir == null || projectDir.Equals(""))
+            try
             {
-                return null;
-            }
-
-            IDictionary<string, string> resourceInfo = this.GetResourceInfo(projectDir);
-
-            if (resourceInfo != null && resourceInfo.ContainsKey("identifier"))
-            {
-                string identifier = "";
-                resourceInfo.TryGetValue("identifier", out identifier);
-                if (identifier != null && !identifier.Equals(""))
+                if (projectDir == null || projectDir.Equals(""))
                 {
-                    string tag = "";
-                    resourceInfo.TryGetValue("tag", out tag);
-                    string branch = "";
-                    resourceInfo.TryGetValue("branch", out branch);
+                    return null;
+                }
+                IDictionary<string, string> resourceInfo = null;
+                resourceInfo = this.GetResourceInfo(projectDir);
 
-                    string qryString = "?identifier=" + identifier;
-                    qryString += "&tag=" + tag;
-                    qryString += "&branch=" + branch;
-
-                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
-                            HttpMethod.Get, "/commits/latest?" + qryString, null);
-
-                    if (SoftwareHttpManager.IsOk(response))
+                if (resourceInfo != null && resourceInfo.ContainsKey("identifier"))
+                {
+                    string identifier = "";
+                    resourceInfo.TryGetValue("identifier", out identifier);
+                    if (identifier != null && !identifier.Equals(""))
                     {
+                        string tag = "";
+                        resourceInfo.TryGetValue("tag", out tag);
+                        string branch = "";
+                        resourceInfo.TryGetValue("branch", out branch);
 
-                        // get the json data
-                        string responseBody = await response.Content.ReadAsStringAsync();
-                        IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+                        string qryString = "?identifier=" + identifier;
+                        qryString += "&tag=" + tag;
+                        qryString += "&branch=" + branch;
 
-                        jsonObj.TryGetValue("commitId", out object commitIdObj);
-                        string commitId = (commitIdObj == null) ? "" : Convert.ToString(commitIdObj);
+                        HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
+                                HttpMethod.Get, "/commits/latest?" + qryString, null);
 
-                        jsonObj.TryGetValue("message", out object messageObj);
-                        string message = (messageObj == null) ? "" : Convert.ToString(messageObj);
+                        if (SoftwareHttpManager.IsOk(response))
+                        {
 
-                        jsonObj.TryGetValue("message", out object timestampObj);
-                        long timestamp = (timestampObj == null) ? 0L : Convert.ToInt64(timestampObj);
+                            // get the json data
+                            string responseBody = await response.Content.ReadAsStringAsync();
+                            IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
 
-                        RepoCommit repoCommit = new RepoCommit(commitId, message, timestamp);
-                        return repoCommit;
+                            jsonObj.TryGetValue("commitId", out object commitIdObj);
+                            string commitId = (commitIdObj == null) ? "" : Convert.ToString(commitIdObj);
+
+                            jsonObj.TryGetValue("message", out object messageObj);
+                            string message = (messageObj == null) ? "" : Convert.ToString(messageObj);
+
+                            jsonObj.TryGetValue("message", out object timestampObj);
+                            long timestamp = (timestampObj == null) ? 0L : Convert.ToInt64(timestampObj);
+
+                            RepoCommit repoCommit = new RepoCommit(commitId, message, timestamp);
+                            return repoCommit;
+                        }
                     }
                 }
+               
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("GetLatestCommitAsync ,error: " + ex.Message, ex);
+
             }
             return null;
         }
 
         public async void GetHistoricalCommitsAsync(string projectDir)
         {
-            if (!SoftwareUserSession.isOnline || projectDir == null || projectDir.Equals(""))
+            try
             {
-                return;
-            }
-
-            IDictionary<string, string> resourceInfo = this.GetResourceInfo(projectDir);
-
-            if (resourceInfo != null && resourceInfo.ContainsKey("identifier"))
-            {
-                string identifier = "";
-                resourceInfo.TryGetValue("identifier", out identifier);
-                if (identifier != null && !identifier.Equals(""))
+                if (!SoftwareUserSession.isOnline || projectDir == null || projectDir.Equals(""))
                 {
-                    string tag = "";
-                    resourceInfo.TryGetValue("tag", out tag);
-                    string branch = "";
-                    resourceInfo.TryGetValue("branch", out branch);
-                    string email = "";
-                    resourceInfo.TryGetValue("email", out email);
+                    return;
+                }
+                IDictionary<string, string> resourceInfo = null;
+                resourceInfo = this.GetResourceInfo(projectDir);
 
-                    RepoCommit latestCommit = await this.GetLatestCommitAsync(projectDir);
-
-                    string sinceOption = "";
-                    if (latestCommit != null)
+                if (resourceInfo != null && resourceInfo.ContainsKey("identifier"))
+                {
+                    string identifier = "";
+                    resourceInfo.TryGetValue("identifier", out identifier);
+                    if (identifier != null && !identifier.Equals(""))
                     {
-                        sinceOption = " --since=" + latestCommit.timestamp;
-                    } else
-                    {
-                        sinceOption = " --max-count=100";
-                    }
+                        string tag = "";
+                        resourceInfo.TryGetValue("tag", out tag);
+                        string branch = "";
+                        resourceInfo.TryGetValue("branch", out branch);
+                        string email = "";
+                        resourceInfo.TryGetValue("email", out email);
+                        RepoCommit latestCommit = null;
+                        latestCommit = await this.GetLatestCommitAsync(projectDir);
 
-                    string cmd = "git log --stat --pretty=COMMIT:%H,%ct,%cI,%s --author=" + email + "" + sinceOption;
-
-                    string gitCommitData = SoftwareCoUtil.RunCommand(cmd, projectDir);
-
-                    if (gitCommitData != null && !gitCommitData.Equals(""))
-                    {
-                        string[] lines = gitCommitData.Split(
-                            new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-                        RepoCommit currentRepoCommit = null;
-                        List<RepoCommit> repoCommits = new List<RepoCommit>();
-                        if (lines != null && lines.Length > 0)
+                        string sinceOption = "";
+                        if (latestCommit != null)
                         {
-                            for (int i = 0; i < lines.Length; i++)
-                            {
-                                string line = lines[i].Trim();
-                                if (line.Length > 0)
-                                {
-                                    bool hasPipe = line.IndexOf("|") != -1 ? true : false;
-                                    bool isBin = line.ToLower().IndexOf("bin") != -1 ? true : false;
-                                    if (line.IndexOf("COMMIT:") == 0)
-                                    {
-                                        line = line.Substring("COMMIT:".Length);
-                                        if (currentRepoCommit != null)
-                                        {
-                                            repoCommits.Add(currentRepoCommit);
-                                        }
+                            sinceOption = " --since=" + latestCommit.timestamp;
+                        }
+                        else
+                        {
+                            sinceOption = " --max-count=100";
+                        }
 
-                                        string[] commitInfos = line.Split(',');
-                                        if (commitInfos != null && commitInfos.Length > 0)
+                        string cmd = "git log --stat --pretty=COMMIT:%H,%ct,%cI,%s --author=" + email + "" + sinceOption;
+
+                        string gitCommitData = SoftwareCoUtil.RunCommand(cmd, projectDir);
+
+                        if (gitCommitData != null && !gitCommitData.Equals(""))
+                        {
+                            string[] lines = gitCommitData.Split(
+                                new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                            RepoCommit currentRepoCommit = null;
+                            List<RepoCommit> repoCommits = new List<RepoCommit>();
+                            if (lines != null && lines.Length > 0)
+                            {
+                                for (int i = 0; i < lines.Length; i++)
+                                {
+                                    string line = lines[i].Trim();
+                                    if (line.Length > 0)
+                                    {
+                                        bool hasPipe = line.IndexOf("|") != -1 ? true : false;
+                                        bool isBin = line.ToLower().IndexOf("bin") != -1 ? true : false;
+                                        if (line.IndexOf("COMMIT:") == 0)
                                         {
-                                            string commitId = commitInfos[0].Trim();
-                                            // go to the next line if we've already processed this commitId
-                                            if (latestCommit != null && commitId.Equals(latestCommit.commitId))
+                                            line = line.Substring("COMMIT:".Length);
+                                            if (currentRepoCommit != null)
                                             {
-                                                currentRepoCommit = null;
-                                                continue;
+                                                repoCommits.Add(currentRepoCommit);
                                             }
 
-                                            // get the other attributes now
-                                            long timestamp = Convert.ToInt64(commitInfos[1].Trim());
-                                            string date = commitInfos[2].Trim();
-                                            string message = commitInfos[3].Trim();
-                                            currentRepoCommit = new RepoCommit(commitId, message, timestamp);
-                                            currentRepoCommit.date = date;
-
-                                            RepoCommitChanges changesObj = new RepoCommitChanges(0, 0);
-                                            currentRepoCommit.changes.Add("__sftwTotal__", changesObj);
-                                        }
-                                    }
-                                    else if (currentRepoCommit != null && hasPipe && !isBin)
-                                    {
-                                        // get the file and changes
-                                        // i.e. somefile.cs                             | 20 +++++++++---------
-                                        line = string.Join(" ", line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
-                                        string[] lineInfos = line.Split('|');
-                                        if (lineInfos != null && lineInfos.Length > 1)
-                                        {
-                                            string file = lineInfos[0].Trim();
-                                            string[] metricInfos = lineInfos[1].Trim().Split(' ');
-                                            if (metricInfos != null && metricInfos.Length > 1)
+                                            string[] commitInfos = line.Split(',');
+                                            if (commitInfos != null && commitInfos.Length > 0)
                                             {
-                                                string addAndDeletes = metricInfos[1].Trim();
-                                                int len = addAndDeletes.Length;
-                                                int lastPlusIdx = addAndDeletes.LastIndexOf('+');
-                                                int insertions = 0;
-                                                int deletions = 0;
-                                                if (lastPlusIdx != -1)
+                                                string commitId = commitInfos[0].Trim();
+                                                // go to the next line if we've already processed this commitId
+                                                if (latestCommit != null && commitId.Equals(latestCommit.commitId))
                                                 {
-                                                    insertions = lastPlusIdx + 1;
-                                                    deletions = len - insertions;
-                                                }
-                                                else if (len > 0)
-                                                {
-                                                    // all deletions
-                                                    deletions = len;
+                                                    currentRepoCommit = null;
+                                                    continue;
                                                 }
 
-                                                if (!currentRepoCommit.changes.ContainsKey(file))
+                                                // get the other attributes now
+                                                long timestamp = Convert.ToInt64(commitInfos[1].Trim());
+                                                string date = commitInfos[2].Trim();
+                                                string message = commitInfos[3].Trim();
+                                                currentRepoCommit = new RepoCommit(commitId, message, timestamp);
+                                                currentRepoCommit.date = date;
+
+                                                RepoCommitChanges changesObj = new RepoCommitChanges(0, 0);
+                                                currentRepoCommit.changes.Add("__sftwTotal__", changesObj);
+                                            }
+                                        }
+                                        else if (currentRepoCommit != null && hasPipe && !isBin)
+                                        {
+                                            // get the file and changes
+                                            // i.e. somefile.cs                             | 20 +++++++++---------
+                                            line = string.Join(" ", line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+                                            string[] lineInfos = line.Split('|');
+                                            if (lineInfos != null && lineInfos.Length > 1)
+                                            {
+                                                string file = lineInfos[0].Trim();
+                                                string[] metricInfos = lineInfos[1].Trim().Split(' ');
+                                                if (metricInfos != null && metricInfos.Length > 1)
                                                 {
-                                                    RepoCommitChanges changesObj = new RepoCommitChanges(insertions, deletions);
-                                                    currentRepoCommit.changes.Add(file, changesObj);
-                                                } else
-                                                {
-                                                    RepoCommitChanges fileCommitChanges;
-                                                    currentRepoCommit.changes.TryGetValue(file, out fileCommitChanges);
-                                                    if (fileCommitChanges != null)
+                                                    string addAndDeletes = metricInfos[1].Trim();
+                                                    int len = addAndDeletes.Length;
+                                                    int lastPlusIdx = addAndDeletes.LastIndexOf('+');
+                                                    int insertions = 0;
+                                                    int deletions = 0;
+                                                    if (lastPlusIdx != -1)
                                                     {
-                                                        fileCommitChanges.deletions += deletions;
-                                                        fileCommitChanges.insertions += insertions;
+                                                        insertions = lastPlusIdx + 1;
+                                                        deletions = len - insertions;
                                                     }
-                                                }
-                                                
+                                                    else if (len > 0)
+                                                    {
+                                                        // all deletions
+                                                        deletions = len;
+                                                    }
 
-                                                RepoCommitChanges totalRepoCommit;
-                                                currentRepoCommit.changes.TryGetValue("__sftwTotal__", out totalRepoCommit);
-                                                if (totalRepoCommit != null)
-                                                {
-                                                    totalRepoCommit.deletions += deletions;
-                                                    totalRepoCommit.insertions += insertions;
+                                                    if (!currentRepoCommit.changes.ContainsKey(file))
+                                                    {
+                                                        RepoCommitChanges changesObj = new RepoCommitChanges(insertions, deletions);
+                                                        currentRepoCommit.changes.Add(file, changesObj);
+                                                    }
+                                                    else
+                                                    {
+                                                        RepoCommitChanges fileCommitChanges;
+                                                        currentRepoCommit.changes.TryGetValue(file, out fileCommitChanges);
+                                                        if (fileCommitChanges != null)
+                                                        {
+                                                            fileCommitChanges.deletions += deletions;
+                                                            fileCommitChanges.insertions += insertions;
+                                                        }
+                                                    }
+
+
+                                                    RepoCommitChanges totalRepoCommit;
+                                                    currentRepoCommit.changes.TryGetValue("__sftwTotal__", out totalRepoCommit);
+                                                    if (totalRepoCommit != null)
+                                                    {
+                                                        totalRepoCommit.deletions += deletions;
+                                                        totalRepoCommit.insertions += insertions;
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
 
-                        if (currentRepoCommit != null)
-                        {
-                            repoCommits.Add(currentRepoCommit);
-                        }
-
-                        if (repoCommits != null && repoCommits.Count > 0)
-                        {
-                            // batch 25 at a time
-                            List<RepoCommit> batch = new List<RepoCommit>();
-                            for (int i = 0; i < repoCommits.Count; i++)
+                            if (currentRepoCommit != null)
                             {
-                                batch.Add(repoCommits[i]);
-                                if (i > 0 && i % 25 == 0)
+                                repoCommits.Add(currentRepoCommit);
+                            }
+
+                            if (repoCommits != null && repoCommits.Count > 0)
+                            {
+                                // batch 25 at a time
+                                List<RepoCommit> batch = new List<RepoCommit>();
+                                for (int i = 0; i < repoCommits.Count; i++)
                                 {
-                                    // send this batch.
+                                    batch.Add(repoCommits[i]);
+                                    if (i > 0 && i % 25 == 0)
+                                    {
+                                        // send this batch.
+                                        RepoCommitData commitData = new RepoCommitData(identifier, tag, branch, batch);
+
+                                        string jsonContent = commitData.GetAsJson();// SimpleJson.SerializeObject(commitData);
+                                                                                    // send the members
+                                        HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
+                                            HttpMethod.Post, "/commits", jsonContent);
+
+                                        if (SoftwareHttpManager.IsOk(response))
+                                        {
+                                            Logger.Info(response.ToString());
+                                        }
+                                        else
+                                        {
+                                            Logger.Error(response.ToString());
+                                        }
+                                    }
+                                }
+
+                                if (batch.Count > 0)
+                                {
                                     RepoCommitData commitData = new RepoCommitData(identifier, tag, branch, batch);
 
                                     string jsonContent = commitData.GetAsJson();// SimpleJson.SerializeObject(commitData);
-                                    // send the members
+                                                                                // send the members
                                     HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
                                         HttpMethod.Post, "/commits", jsonContent);
 
@@ -428,35 +471,22 @@ namespace SoftwareCo
                                     {
                                         Logger.Info(response.ToString());
                                     }
-                                    else
+                                    else if (response != null)
                                     {
-                                        Logger.Error(response.ToString());
+                                        Logger.Error("Unable to complete commit request, status: " + response.StatusCode);
                                     }
-                                }
-                            }
-
-                            if (batch.Count > 0)
-                            {
-                                RepoCommitData commitData = new RepoCommitData(identifier, tag, branch, batch);
-
-                                string jsonContent = commitData.GetAsJson();// SimpleJson.SerializeObject(commitData);
-                                // send the members
-                                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
-                                    HttpMethod.Post, "/commits", jsonContent);
-
-                                if (SoftwareHttpManager.IsOk(response))
-                                {
-                                    Logger.Info(response.ToString());
-                                }
-                                else if (response != null)
-                                {
-                                    Logger.Error("Unable to complete commit request, status: " + response.StatusCode);
                                 }
                             }
                         }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                Logger.Error("GetHistoricalCommitsAsync ,error: " + ex.Message, ex);
+            
+            }
+           
 
         }
     }

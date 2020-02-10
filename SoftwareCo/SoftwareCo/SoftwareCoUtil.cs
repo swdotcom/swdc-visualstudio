@@ -176,8 +176,17 @@ namespace SoftwareCo
             string softwareDataDir = userHomeDir + "\\.software";
             if (autoCreate && !Directory.Exists(softwareDataDir))
             {
-                // create it
-                Directory.CreateDirectory(softwareDataDir);
+                try
+                {
+                    // create it
+                    Directory.CreateDirectory(softwareDataDir);
+                }
+                catch (Exception ex)
+                {
+
+                    
+                }
+               
             }
             return softwareDataDir;
         }
@@ -231,7 +240,15 @@ namespace SoftwareCo
         {
             return getSoftwareDataDir(true) + "\\data.json";
         }
-        
+        public static bool LogFileExists()
+        {
+            string file = getSoftwareDataDir(true) + "\\Log.txt";
+            return File.Exists(file);
+        }
+        public static String getLogFile()
+        {
+            return getSoftwareDataDir(true) + "\\Log.txt";
+        }
 
         public static string getSectionHeader( string  label)
         {
@@ -261,35 +278,53 @@ namespace SoftwareCo
 
         public static async void launchLogin()
         {
-            bool isOnline = await SoftwareUserSession.IsOnlineAsync();
-            string jwt = SoftwareUserSession.GetJwt();
-            if (jwt == null && isOnline)
+            try
             {
-                // initialize the anon flow
-                await SoftwareUserSession.CreateAnonymousUserAsync(isOnline);
+                bool isOnline = await SoftwareUserSession.IsOnlineAsync();
+                string jwt = SoftwareUserSession.GetJwt();
+                if (jwt == null && isOnline)
+                {
+                    // initialize the anon flow
+                    await SoftwareUserSession.CreateAnonymousUserAsync(isOnline);
+                }
+                jwt = SoftwareUserSession.GetJwt();
+                string url = Constants.url_endpoint + "/onboarding?token=" + jwt;
+                if (!isOnline)
+                {
+                    // just show the app home, which should end up showing up with a no connection message
+                    url = Constants.url_endpoint;
+                }
+
+                Process.Start(url);
+
+                if (!isOnline)
+                {
+                    return;
+                }
+
+                if (!SoftwareUserSession.checkingLoginState)
+                {
+                    SoftwareUserSession.RefetchUserStatusLazily(12);
+                }
             }
-            jwt = SoftwareUserSession.GetJwt();
-            string url = Constants.url_endpoint + "/onboarding?token=" + jwt;
-            if (!isOnline)
+            catch (Exception ex)
             {
-                // just show the app home, which should end up showing up with a no connection message
-                url = Constants.url_endpoint;
+
+                Logger.Error("launchLogin, error : " + ex.Message, ex);
             }
             
-            Process.Start(url);
-
-            if (!isOnline)
-            {
-                return;
-            }
-
-            if (!SoftwareUserSession.checkingLoginState)
-            {
-                SoftwareUserSession.RefetchUserStatusLazily(12);
-            }
 
         }
 
+        public static NowTime GetNowTime()
+        {
+            NowTime timeParam       = new NowTime();   
+            timeParam.now           = DateTimeOffset.Now.ToUnixTimeSeconds();
+            timeParam.offset_now    = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+            timeParam.local_now     = timeParam.now + ((int)timeParam.offset_now * 60);
+    
+            return timeParam;
+        }
         public static long getNowInSeconds()
         {
             long unixSeconds = DateTimeOffset.Now.ToUnixTimeSeconds();
@@ -443,24 +478,18 @@ namespace SoftwareCo
                 return suffix;
             
         }
-
-        private static ReaderWriterLockSlim _readWriteLock = new ReaderWriterLockSlim();
-
-        public static void WriteToFileThreadSafe(string text, string path)
+        /// <summary>
+        /// Function Equibalent to setTimeout 
+        /// </summary>
+        /// <param name="interval"> Time interval to call function</param>
+        /// <param name="function"> Genarliaze function parameter </param>
+        /// <param name="value">Boolean value to call as a setInterval method </param>
+        public static void SetTimeout(int interval, Action function, bool value)
         {
-            // Set Status to Locked
-            _readWriteLock.EnterWriteLock();
-            try
-            {
-                // Append text to the file
-                File.WriteAllText(path, text);
-                File.SetAttributes(path, FileAttributes.ReadOnly);
-            }
-            finally
-            {
-                // Release lock
-                _readWriteLock.ExitWriteLock();
-            }
+            Action functionCopy = (Action)function.Clone(); // if incoming function set to null it could get crashed need to copy it before hand
+            System.Timers.Timer timer = new System.Timers.Timer { Interval = interval, AutoReset = value };
+            timer.Elapsed += (sender, e) => functionCopy();
+            timer.Start();
         }
         public static T FindChildControl<T>(DependencyObject parent, string childName)
           where T : DependencyObject
@@ -533,6 +562,11 @@ namespace SoftwareCo
         }
 
     }
-
-
+    class NowTime
+    {
+        public long now { get; set; }
+        public long local_now { get; set; }
+        public double offset_now { get; set; }
+    }
+    
 }
