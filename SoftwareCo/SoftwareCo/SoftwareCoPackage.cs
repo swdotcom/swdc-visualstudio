@@ -701,7 +701,7 @@ namespace SoftwareCo
             if (File.Exists(datastoreFile))
             {
                 // get the content
-                string[] lines = File.ReadAllLines(datastoreFile);
+                string[] lines = File.ReadAllLines(datastoreFile, System.Text.Encoding.UTF8);
 
                 if (lines != null && lines.Length > 0)
                 {
@@ -879,7 +879,7 @@ namespace SoftwareCo
             try
             {
                 //SoftwareCoUtil.WriteToFileThreadSafe(sessionSummary.GetSessionSummaryAsJson(), sessionSummaryFile);
-                File.WriteAllText(sessionSummaryFile, sessionSummary.GetSessionSummaryAsJson());
+                File.WriteAllText(sessionSummaryFile, sessionSummary.GetSessionSummaryAsJson(),System.Text.Encoding.UTF8);
                 //File.SetAttributes(sessionSummaryFile, FileAttributes.ReadOnly);
             }
             catch (Exception e)
@@ -1084,7 +1084,7 @@ namespace SoftwareCo
                 try
                 {
 
-                    File.WriteAllText(summaryInfoFile, summaryContent);
+                    File.WriteAllText(summaryInfoFile, summaryContent, System.Text.Encoding.UTF8);
                    // File.SetAttributes(summaryInfoFile, FileAttributes.ReadOnly);
                 }
                 catch (Exception e)
@@ -1139,7 +1139,7 @@ namespace SoftwareCo
             try
             {
                 //SoftwareCoUtil.WriteToFileThreadSafe(dashboardContent, dashboardFile);
-                File.WriteAllText(dashboardFile, dashboardContent);
+                File.WriteAllText(dashboardFile, dashboardContent, System.Text.Encoding.UTF8);
                // File.SetAttributes(dashboardFile, FileAttributes.ReadOnly);
 
             }
