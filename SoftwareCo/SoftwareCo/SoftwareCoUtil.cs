@@ -109,7 +109,7 @@ namespace SoftwareCo
             string sessionFile = getSoftwareSessionFile();
             if (File.Exists(sessionFile))
             {
-                string content = File.ReadAllText(sessionFile);
+                string content = File.ReadAllText(sessionFile, System.Text.Encoding.UTF8);
                 if (content != null)
                 {
                     object jsonVal = SimpleJson.GetValue(content, key);
@@ -141,7 +141,7 @@ namespace SoftwareCo
             string content = "";
             if (File.Exists(sessionFile))
             {
-                content = File.ReadAllText(sessionFile);
+                content = File.ReadAllText(sessionFile, System.Text.Encoding.UTF8);
                 // conver to dictionary
                 dict = (IDictionary<string, object>)SimpleJson.DeserializeObject(content);
                 dict.Remove(key);
@@ -149,7 +149,7 @@ namespace SoftwareCo
             dict.Add(key, val);
             content = SimpleJson.SerializeObject(dict);
             // write it back to the file
-            File.WriteAllText(sessionFile, content);
+            File.WriteAllText(sessionFile, content,System.Text.Encoding.UTF8);
         }
 
         public static bool IsValidEmail(string email)
@@ -214,7 +214,7 @@ namespace SoftwareCo
 
         public static String getSessionSummaryFileData()
         {
-            return File.ReadAllText(getSoftwareDataDir(true)+"\\sessionSummary.json");
+            return File.ReadAllText(getSoftwareDataDir(true)+"\\sessionSummary.json", System.Text.Encoding.UTF8);
         }
         public static String getSoftwareSessionFile()
         {
@@ -228,7 +228,7 @@ namespace SoftwareCo
         }
         public static String getSessionSummaryInfoFileData()
         {
-            return  File.ReadAllText(getSoftwareDataDir(false) + "\\SummaryInfo.txt");
+            return  File.ReadAllText(getSoftwareDataDir(false) + "\\SummaryInfo.txt",System.Text.Encoding.UTF8);
         }
         public static bool SessionSummaryInfoFileExists()
         {
