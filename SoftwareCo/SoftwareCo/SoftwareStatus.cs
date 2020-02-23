@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.Shell.Interop;
 
 namespace SoftwareCo
 {
-    class SoftwareStatus
+    public class SoftwareStatus
     {
         private string _lastStatusMsg = "";
         private IVsStatusbar statusbar;

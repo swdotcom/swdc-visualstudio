@@ -69,10 +69,12 @@ namespace SoftwareCo
         private string _solutionName = string.Empty;
         private int postFrequency = 1; // every minute
 
-        private DateTime _lastPostTime = DateTime.UtcNow;
         private SoftwareData _softwareData;
-        private static SessionSummary _sessionSummary;
+        
         private SoftwareRepoManager _softwareRepoUtil;
+        private SessionSummaryManager sessionSummaryMgr;
+        private DocEventManager docEventMgr;
+
         private static SoftwareStatus _softwareStatus;
 
         private static int THIRTY_SECONDS = 1000 * 30;
@@ -147,19 +149,20 @@ namespace SoftwareCo
                 _textDocKeyEvent = events.TextDocumentKeyPressEvents;
                 _docEvents = ObjDte.Events.DocumentEvents;
 
+                docEventMgr = DocEventManager.Instance;
+                DocEventManager.ObjDte = ObjDte;
+                sessionSummaryMgr = SessionSummaryManager.Instance;
+
                 // setup event handlers
-                _textDocKeyEvent.AfterKeyPress += AfterKeyPressedAsync;
-                _docEvents.DocumentOpened += DocEventsOnDocumentOpenedAsync;
-                _docEvents.DocumentClosing += DocEventsOnDocumentClosedAsync;
-                _docEvents.DocumentSaved += DocEventsOnDocumentSaved;
-                _docEvents.DocumentOpening += DocEventsOnDocumentOpeningAsync;
+                _textDocKeyEvent.AfterKeyPress += docEventMgr.AfterKeyPressedAsync;
+                _docEvents.DocumentOpened += docEventMgr.DocEventsOnDocumentOpenedAsync;
+                _docEvents.DocumentClosing += docEventMgr.DocEventsOnDocumentClosedAsync;
+                _docEvents.DocumentSaved += docEventMgr.DocEventsOnDocumentSaved;
+                _docEvents.DocumentOpening += docEventMgr.DocEventsOnDocumentOpeningAsync;
 
                 //initialize the StatusBar 
                 await InitializeSoftwareStatusAsync();
-                if (_sessionSummary == null)
-                {
-                    _sessionSummary = new SessionSummary();
-                }
+
                 // initialize the menu commands
                 await SoftwareLaunchCommand.InitializeAsync(this);
                 await SoftwareDashboardLaunchCommand.InitializeAsync(this);
@@ -172,7 +175,7 @@ namespace SoftwareCo
                     _softwareRepoUtil = new SoftwareRepoManager();
                 }
                 InitializeStatusBarButton();
-                updateStatusBarWithSummaryData();
+                sessionSummaryMgr.UpdateStatusBarWithSummaryData();
 
                 // Create an AutoResetEvent to signal the timeout threshold in the
                 // timer callback has been reached.
@@ -231,11 +234,11 @@ namespace SoftwareCo
         {
             if (timer != null)
             {
-                _textDocKeyEvent.AfterKeyPress -= AfterKeyPressedAsync;
-                _docEvents.DocumentOpened -= DocEventsOnDocumentOpenedAsync;
-                _docEvents.DocumentClosing -= DocEventsOnDocumentClosedAsync;
-                _docEvents.DocumentSaved -= DocEventsOnDocumentSaved;
-                _docEvents.DocumentOpening -= DocEventsOnDocumentOpeningAsync;
+                _textDocKeyEvent.AfterKeyPress -= docEventMgr.AfterKeyPressedAsync;
+                _docEvents.DocumentOpened -= docEventMgr.DocEventsOnDocumentOpenedAsync;
+                _docEvents.DocumentClosing -= docEventMgr.DocEventsOnDocumentClosedAsync;
+                _docEvents.DocumentSaved -= docEventMgr.DocEventsOnDocumentSaved;
+                _docEvents.DocumentOpening -= docEventMgr.DocEventsOnDocumentOpeningAsync;
 
                 timer.Dispose();
                 timer = null;
@@ -244,135 +247,6 @@ namespace SoftwareCo
         #endregion
 
         #region Event Handlers
-
-        private void DocEventsOnDocumentSaved(Document document)
-        {
-            if (document == null || document.FullName == null)
-            {
-                return;
-            }
-            String fileName = document.FullName;
-            if (_softwareData == null || !_softwareData.source.ContainsKey(fileName))
-            {
-                return;
-            }
-
-            InitializeSoftwareData(fileName);
-           
-            FileInfo fi = new FileInfo(fileName);
-
-            _softwareData.UpdateData(fileName, "length", fi.Length);
-
-            try
-            {
-                _softwareStatus.ReloadStatus();
-            }
-            catch (ThreadInterruptedException e)
-            {
-                //
-            }
-        }
-
-        private async void DocEventsOnDocumentOpeningAsync(String docPath, Boolean readOnly)
-        {
-            FileInfo fi = new FileInfo(docPath);
-            String fileName = fi.FullName;
-            InitializeSoftwareData(fileName);
-
-            //Sets end and local_end for source file
-            await _IntialisefileMap(fileName);
-        }
-
-        private async void AfterKeyPressedAsync(
-            string Keypress, TextSelection Selection, bool InStatementCompletion)
-        {
-           String fileName = ObjDte.ActiveWindow.Document.FullName;
-            InitializeSoftwareData(fileName);
-
-            //Sets end and local_end for source file
-            await _IntialisefileMap(fileName);
-
-            if (ObjDte.ActiveWindow.Document.Language != null)
-            {
-                _softwareData.addOrUpdateFileStringInfo(fileName, "syntax", ObjDte.ActiveWindow.Document.Language);
-            }
-            if (!String.IsNullOrEmpty(Keypress))
-            {
-                FileInfo fi = new FileInfo(fileName);
-
-                bool isNewLine = false;
-                if (Keypress == "\b")
-                {
-                    // register a delete event
-                    _softwareData.UpdateData(fileName, "delete", 1);
-                    Logger.Info("Code Time: Delete character incremented");
-                }
-                else if (Keypress == "\r")
-                {
-                    isNewLine = true;
-                }
-                else
-                {
-                    _softwareData.UpdateData(fileName, "add", 1);
-                    Logger.Info("Code Time: KPM incremented");
-                }
-
-                if (isNewLine)
-                {
-                    _softwareData.addOrUpdateFileInfo(fileName, "linesAdded", 1);
-                }
-
-                _softwareData.keystrokes += 1;
-            }
-        }
-
-        private async void DocEventsOnDocumentOpenedAsync(Document document)
-        {
-            if (document == null || document.FullName == null)
-            {
-                return;
-            }
-            String fileName = document.FullName;
-            if (_softwareData == null || !_softwareData.source.ContainsKey(fileName))
-            {
-                return;
-            }
-                //Sets end and local_end for source file
-                await _IntialisefileMap(fileName);
-            try
-            {
-                _softwareData.UpdateData(fileName, "open", 1);
-                Logger.Info("Code Time: File open incremented");
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("DocEventsOnDocumentOpened", ex);
-            }
-        }
-
-        private async void DocEventsOnDocumentClosedAsync(Document document)
-        {
-            if (document == null || document.FullName == null)
-            {
-                return;
-            }
-            String fileName = document.FullName;
-            if (_softwareData == null || !_softwareData.source.ContainsKey(fileName))
-            {
-                return;
-            }
-            //Sets end and local_end for source file
-            await _IntialisefileMap(fileName);
-            try
-            {
-                _softwareData.UpdateData(fileName, "close", 1);
-                Logger.Info("Code Time: File close incremented");
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("DocEventsOnDocumentClosed", ex);
-            }
-        }
 
         private void OnOnStartupComplete()
         {
@@ -410,137 +284,6 @@ namespace SoftwareCo
                 Logger.Error("ProcessHourlyJobs, error: " + ex.Message, ex);
             }
             
-        }
-
-        private async void ProcessMusicTracksAsync(Object stateInfo)
-        {
-            try
-            {
-                await SoftwareSpotifyManager.GetLocalSpotifyTrackInfoAsync();
-            } catch (Exception e)
-            {
-                Logger.Error("Unable to get spotify track info, error: " + e.Message);
-            }
-        }
-
-        public void HasData()
-        {
-           
-            if (_softwareData.initialized && (_softwareData.keystrokes > 0 || _softwareData.source.Count > 0) && _softwareData.project != null && _softwareData.project.name != null)
-            {
-               
-                SoftwareCoUtil.SetTimeout(ZERO_SECOND, PostData, false);
-            }
-            
-        }
-
-        public void PostData()
-        {
-            double offset   = 0;
-            long end        = 0;
-            long local_end  = 0;
-
-            NowTime nowTime = SoftwareCoUtil.GetNowTime();
-            DateTime now    = DateTime.UtcNow;
-            if (_softwareData.source.Count > 0)
-            {
-                offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-                _softwareData.offset = Math.Abs((int)offset);
-                if (TimeZone.CurrentTimeZone.DaylightName != null
-                    && TimeZone.CurrentTimeZone.DaylightName != TimeZone.CurrentTimeZone.StandardName)
-                {
-                    _softwareData.timezone = TimeZone.CurrentTimeZone.DaylightName;
-                }
-                else
-                {
-                    _softwareData.timezone = TimeZone.CurrentTimeZone.StandardName;
-                }
-
-                foreach (KeyValuePair<string, object> sourceFiles in _softwareData.source)
-                {
-                   
-                    JsonObject fileInfoData = null;
-                    fileInfoData = (JsonObject)sourceFiles.Value;
-                    object outend;
-                    fileInfoData.TryGetValue("end", out outend);
-
-                    if (long.Parse(outend.ToString()) == 0)
-                    {
-                       
-                        end = nowTime.now;
-                        local_end = nowTime.local_now;
-                        _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "end", end);
-                        _softwareData.addOrUpdateFileInfo(sourceFiles.Key, "local_end", local_end);
-                    }
-
-                }
-
-                try {
-                    _softwareData.end = nowTime.now;
-                    _softwareData.local_end = nowTime.local_now;
-                } catch (Exception) {}
-                
-                string softwareDataContent = _softwareData.GetAsJson();
-                Logger.Info("Code Time: sending: " + softwareDataContent);
-
-                if (SoftwareCoUtil.isTelemetryOn())
-                {
-                    StorePayload(_softwareData);
-                }
-                else
-                {
-                    Logger.Info("Code Time metrics are currently paused.");
-                }
-
-                _softwareData.ResetData();
-                _lastPostTime = now;
-            }
-            
-        }
-
-        private void StorePayload(SoftwareData _softwareData)
-        {
-            if (_softwareData != null)
-            {
-
-                long keystrokes = _softwareData.keystrokes;
-
-                incrementSessionSummaryData(1 /*minutes*/, keystrokes);
-
-                saveSessionSummaryToDisk(_sessionSummary);
-
-                string softwareDataContent = _softwareData.GetAsJson();
-
-                string datastoreFile = SoftwareCoUtil.getSoftwareDataStoreFile();
-                // append to the file
-                File.AppendAllText(datastoreFile, softwareDataContent + Environment.NewLine);
-
-                //// update the statusbar
-                updateStatusBarWithSummaryData();
-            }
-        }
-
-        private void incrementSessionSummaryData(int minute, long keystrokes)
-        {
-            _sessionSummary = getSessionSummayData();
-            _sessionSummary.currentDayMinutes += minute;
-            _sessionSummary.currentDayKeystrokes += keystrokes;
-        }
-
-
-        private static SessionSummary getSessionSummayData()
-        {
-            if (!SoftwareCoUtil.SessionSummaryFileExists())
-            {
-                // create it
-                saveSessionSummaryToDisk(_sessionSummary);
-            }
-
-            string sessionSummary = SoftwareCoUtil.getSessionSummaryFileData();
-
-            IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(sessionSummary);
-            _sessionSummary = DictionaryToObject<SessionSummary>(jsonObj);
-            return _sessionSummary;
         }
 
         private async void LaunchLoginPrompt()
@@ -600,117 +343,9 @@ namespace SoftwareCo
                 }
             }
 
-            ÇlearSessionSummaryData();
+            sessionSummaryMgr.ÇlearSessionSummaryData();
         }
 
-        private void ÇlearSessionSummaryData()
-        {
-            _sessionSummary = new SessionSummary();
-            saveSessionSummaryToDisk(_sessionSummary);
-        }
-
-        public static async Task fetchSessionSummaryInfoAsync(bool forceRefresh = false)
-        {
-            var sessionSummaryResult = await GetSessionSummaryStatusAsync(forceRefresh);
-
-            if (sessionSummaryResult.status == "OK")
-            {
-                await FetchCodeTimeDashboardAsync(sessionSummaryResult.sessionSummary);
-            }
-        }
-
-        private static async Task<SessionSummaryResult> GetSessionSummaryStatusAsync(bool forceRefresh = false)
-        {
-            SessionSummaryResult sessionSummaryResult = new SessionSummaryResult();
-            _sessionSummary = getSessionSummayData();
-            sessionSummaryResult.sessionSummary = _sessionSummary;
-            sessionSummaryResult.status = "OK";
-            return sessionSummaryResult;
-        }
-
-        private static T DictionaryToObject<T>(IDictionary<string, object> dict) where T : new()
-        {
-            var t = new T();
-            PropertyInfo[] properties = t.GetType().GetProperties();
-
-            foreach (PropertyInfo property in properties)
-            {
-                if (!dict.Any(x => x.Key.Equals(property.Name, StringComparison.InvariantCultureIgnoreCase)))
-                    continue;
-
-                KeyValuePair<string, object> item = dict.First(x => x.Key.Equals(property.Name, StringComparison.InvariantCultureIgnoreCase));
-
-                // Find which property type (int, string, double? etc) the CURRENT property is...
-                Type tPropertyType = t.GetType().GetProperty(property.Name).PropertyType;
-
-                // Fix nullables...
-                Type newT = Nullable.GetUnderlyingType(tPropertyType) ?? tPropertyType;
-
-                // ...and change the type
-                object newA = Convert.ChangeType(item.Value, newT);
-                t.GetType().GetProperty(property.Name).SetValue(t, newA, null);
-            }
-            return t;
-        }
-
-        public static void updateStatusBarWithSummaryData()
-        {
-            string MethodName = "updateStatusBarWithSummaryData";
-            _sessionSummary = getSessionSummayData();
-            string msg = "";
-            long currentDayMinutesVal = _sessionSummary.currentDayMinutes;
-            long averageDailyMinutesVal = _sessionSummary.averageDailyMinutes;
-
-            string currentDayMinutesTime = SoftwareCoUtil.HumanizeMinutes(currentDayMinutesVal);
-            string averageDailyMinutesTime = SoftwareCoUtil.HumanizeMinutes(averageDailyMinutesVal);
-
-            // Code time today:  4 hrs | Avg: 3 hrs 28 min
-            string inFlowIcon = currentDayMinutesVal > averageDailyMinutesVal ? "🚀 " : "";
-            msg = string.Format("{0}{1}", inFlowIcon, currentDayMinutesTime);
-            /**
-            if (averageDailyMinutesVal > 0)
-            {
-                msg += string.Format(" | {0}", averageDailyMinutesTime);
-                _softwareStatus.SetStatus(msg);
-            }
-            else
-            {
-                _softwareStatus.SetStatus(msg);
-            }
-            **/
-
-            SoftwareCoUtil.UpdateStatusBarButtonText(msg);
-
-        }
-
-        private static void saveSessionSummaryToDisk(SessionSummary sessionSummary)
-        {
-            string MethodName = "saveSessionSummaryToDisk";
-            string sessionSummaryFile = SoftwareCoUtil.getSessionSummaryFile();
-
-
-            if (SoftwareCoUtil.SessionSummaryFileExists())
-            {
-                File.SetAttributes(sessionSummaryFile, FileAttributes.Normal);
-            }
-
-            try
-            {
-                //SoftwareCoUtil.WriteToFileThreadSafe(sessionSummary.GetSessionSummaryAsJson(), sessionSummaryFile);
-                File.WriteAllText(sessionSummaryFile, sessionSummary.GetSessionSummaryAsJson(),System.Text.Encoding.UTF8);
-                //File.SetAttributes(sessionSummaryFile, FileAttributes.ReadOnly);
-            }
-            catch (Exception e)
-            {
-                //
-            }
-
-        }
-
-        private bool EnoughTimePassed(DateTime now)
-        {
-            return _lastPostTime < now.AddMinutes(postFrequency);
-        }
 
         private string getSolutionDirectory()
         {
@@ -757,48 +392,11 @@ namespace SoftwareCo
                 _softwareData.start         = nowTime.now;
                 _softwareData.local_start   = nowTime.local_now;
                 _softwareData.initialized   = true;
-                SoftwareCoUtil.SetTimeout(ONE_MINUTE, HasData, false);
+                SoftwareCoUtil.SetTimeout(ONE_MINUTE, docEventMgr.HasData, false);
             }
             _softwareData.EnsureFileInfoDataIsPresent(fileName,nowTime);
         }
-        private async Task _IntialisefileMap(string fileName)
-        {
-            
-            JsonObject localSource = new JsonObject();
-            foreach (var sourceFiles in _softwareData.source)
-            {
-                object outend               = null;
-                JsonObject fileInfoData     = null;
-                NowTime nowTime             = SoftwareCoUtil.GetNowTime();
-            
-                if (fileName != sourceFiles.Key)
-                {
-                    fileInfoData = (JsonObject)sourceFiles.Value;
-                    fileInfoData.TryGetValue("end", out outend);
 
-                    if (long.Parse(outend.ToString()) == 0)
-                    {
-
-                        fileInfoData["end"]         = nowTime.now;
-                        fileInfoData["local_end"]   = nowTime.local_now;
-                       
-                    }
-                    localSource.Add(sourceFiles.Key, fileInfoData);
-                }
-                else
-                {
-                    fileInfoData                = (JsonObject)sourceFiles.Value;
-                    fileInfoData["end"]         = 0;
-                    fileInfoData["local_end"]   = 0;
-                    localSource.Add(sourceFiles.Key, fileInfoData);
-                }
-
-                _softwareData.source = localSource;
-
-            }
-
-           
-        }
         private async void InitializeUserInfo()
         {
             try
@@ -858,133 +456,26 @@ namespace SoftwareCo
             SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(false);
         }
 
-        private static string NO_DATA = "CODE TIME\n\nNo data available\n";
-
-        private static async Task FetchCodeTimeDashboardAsync(SessionSummary _sessionSummary)
+        
+        /**
+        public static async void OpenToolWindow()
         {
-           
-            string summaryContent = "";
-            string summaryInfoFile = SoftwareCoUtil.getSessionSummaryInfoFile();
+            ThreadHelper.ThrowIfNotOnUIThread();
 
-            bool online = await SoftwareUserSession.IsOnlineAsync();
-            
-            long diff = SoftwareCoUtil.getNowInSeconds() - lastDashboardFetchTime;
-            if (lastDashboardFetchTime == 0 || diff >= day_in_sec || !online)
+            // Get the instance number 0 of this tool window. This window is single instance so this instance
+            // is actually the only one.
+            // The last flag is set to true so that if the tool window does not exists it will be created.
+            ToolWindowPane window = AsyncPackage.FindToolWindow(typeof(CodeMetricsTreeWindow), 0, true);
+            if ((null == window) || (null == window.Frame))
             {
-  
-                if (!online)
-                {
-                    lastDashboardFetchTime = 0;
-                }
-                else
-                lastDashboardFetchTime = SoftwareCoUtil.getNowInSeconds();
-
-                HttpResponseMessage resp =
-                await SoftwareHttpManager.SendDashboardRequestAsync(HttpMethod.Get, "/dashboard?showMusic=false&showGit=false&showRank=false&showToday=false");
-
-                if (SoftwareHttpManager.IsOk(resp))
-                {
-                    summaryContent += await resp.Content.ReadAsStringAsync();
-                }
-                else
-                {
-                    summaryContent = NO_DATA;
-                }
-
-
-                if (File.Exists(summaryInfoFile))
-                {
-                    File.SetAttributes(summaryInfoFile, FileAttributes.Normal);
-                }
-
-                try
-                {
-
-                    File.WriteAllText(summaryInfoFile, summaryContent, System.Text.Encoding.UTF8);
-                   // File.SetAttributes(summaryInfoFile, FileAttributes.ReadOnly);
-                }
-                catch (Exception e)
-                {
-
-
-                }
-
-            }
-            string dashboardFile = SoftwareCoUtil.getDashboardFile();
-            string dashboardContent = "";
-            string suffix = SoftwareCoUtil.CreateDateSuffix(DateTime.Now);
-            string formattedDate = DateTime.Now.ToString("ddd, MMM ") + suffix + DateTime.Now.ToString(" h:mm tt");
-
-            dashboardContent = "CODE TIME          " + "(Last updated on " + formattedDate + " )";
-            dashboardContent += "\n\n";
-
-            string todayDate = DateTime.Now.ToString("ddd, MMM ") + suffix;
-            string today_date = "Today " + "(" + todayDate + ")";
-            dashboardContent += SoftwareCoUtil.getSectionHeader(today_date);
-
-            if (_sessionSummary != null)
-            {
-
-                string averageTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.averageDailyMinutes);
-                string hoursCodedToday = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.currentDayMinutes);
-                String liveshareTime = "";
-                //if (_sessionSummary.liveshareMinutes != 0)
-                //{
-                //    liveshareTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.liveshareMinutes);
-                //}
-                dashboardContent += SoftwareCoUtil.getDashboardRow("Hours Coded", hoursCodedToday);
-                dashboardContent += SoftwareCoUtil.getDashboardRow("90-day avg", averageTime);
-                //if (liveshareTime != "0")
-                //{
-                //    dashboardContent += SoftwareCoUtil.getDashboardRow("Live Share", liveshareTime);
-                //}
-                dashboardContent += "\n";
+                throw new NotSupportedException("Cannot create tool window");
             }
 
-            if (SoftwareCoUtil.SessionSummaryInfoFileExists())
-            {
-                string SummaryData = SoftwareCoUtil.getSessionSummaryInfoFileData();
-                dashboardContent += SummaryData;
-            }
+            IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
+            Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
+        }**/
 
-
-            if (File.Exists(dashboardFile))
-            {
-                File.SetAttributes(dashboardFile, FileAttributes.Normal);
-            }
-            try
-            {
-                //SoftwareCoUtil.WriteToFileThreadSafe(dashboardContent, dashboardFile);
-                File.WriteAllText(dashboardFile, dashboardContent, System.Text.Encoding.UTF8);
-               // File.SetAttributes(dashboardFile, FileAttributes.ReadOnly);
-
-            }
-            catch (Exception e)
-            {
-
-            }
-
-
-        }
-
-        public static async void LaunchCodeTimeDashboardAsync()
-        {
-            try
-            {
-                await fetchSessionSummaryInfoAsync();
-                string dashboardFile = SoftwareCoUtil.getDashboardFile();
-                if (File.Exists(dashboardFile))
-                    ObjDte.ItemOperations.OpenFile(dashboardFile);
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("LaunchCodeTimeDashboardAsync, error : " + ex.Message, ex);
-                    
-            }
-           
-        }
-
-        protected async Task ShowOfflinePromptAsync()
+        private async Task ShowOfflinePromptAsync()
         {
 
             string msg = "Our service is temporarily unavailable. We will try to reconnect again in 10 minutes. Your status bar will not update at this time.";
@@ -1001,11 +492,6 @@ namespace SoftwareCo
         {
             static readonly Assembly Reference = typeof(CodeTimeAssembly).Assembly;
             public static readonly Version Version = Reference.GetName().Version;
-        }
-        internal class SessionSummaryResult
-        {
-            public SessionSummary sessionSummary { get; set; }
-            public string status { get; set; }
         }
     }
 }

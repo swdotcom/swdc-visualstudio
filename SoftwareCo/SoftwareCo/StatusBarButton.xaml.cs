@@ -21,7 +21,7 @@ namespace SoftwareCo
         {
             try
             {
-                SoftwareCoPackage.LaunchCodeTimeDashboardAsync();
+                DashboardManager.Instance.LaunchCodeTimeDashboardAsync();
             }
             catch (Exception ex)
             {

@@ -81,7 +81,7 @@ namespace SoftwareCo
         /// <param name="e">Event args.</param>
         private void Execute(object sender, EventArgs e)
         {
-            SoftwareCoPackage.LaunchCodeTimeDashboardAsync();
+            DashboardManager.Instance.LaunchCodeTimeDashboardAsync();
         }
     }
 }

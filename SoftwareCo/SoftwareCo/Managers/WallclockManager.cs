@@ -11,6 +11,7 @@ namespace SoftwareCo
         private static int THIRTY_SECONDS_IN_MILLIS = 1000 * SECONDS_TO_INCREMENT;
 
         private long _wctime = 0;
+        private SessionSummaryManager sessionSummaryMgr;
 
         public static WallclockManager Instance { get { return lazy.Value; } }
 
@@ -21,6 +22,7 @@ namespace SoftwareCo
                       null,
                       THIRTY_SECONDS_IN_MILLIS,
                       THIRTY_SECONDS_IN_MILLIS);
+            sessionSummaryMgr = SessionSummaryManager.Instance;
         }
 
         private void WallclcockTimerHandler(object stateinfo)
@@ -32,7 +34,7 @@ namespace SoftwareCo
 
         private void DispatchStatusViewUpdate()
         {
-            SoftwareCoPackage.updateStatusBarWithSummaryData();
+            sessionSummaryMgr.UpdateStatusBarWithSummaryData();
 
             // refresh the tree
         }

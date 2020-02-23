@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace SoftwareCo
 {
 
-     class SessionSummary
+     public class SessionSummary
      {
         public long currentDayMinutes { get; set; }
         public long currentDayKeystrokes { get; set; }
