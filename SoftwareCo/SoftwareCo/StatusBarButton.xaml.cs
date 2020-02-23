@@ -21,7 +21,8 @@ namespace SoftwareCo
         {
             try
             {
-                DashboardManager.Instance.LaunchCodeTimeDashboardAsync();
+                //  DashboardManager.Instance.LaunchCodeTimeDashboardAsync();
+                CodeMetricsTreeManager.Instance.OpenCodeMetricsPane();
             }
             catch (Exception ex)
             {

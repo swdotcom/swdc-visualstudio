@@ -41,6 +41,7 @@ namespace SoftwareCo
     [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     [ProvideMenuResource("Menus.ctmenu", 1)]
+    [ProvideToolWindow(typeof(CodeMetricsToolPane))]
     public sealed class SoftwareCoPackage : AsyncPackage
     {
         #region fields
@@ -67,7 +68,6 @@ namespace SoftwareCo
 
         // this is the solution full name
         private string _solutionName = string.Empty;
-        private int postFrequency = 1; // every minute
 
         private SoftwareData _softwareData;
         
@@ -81,9 +81,7 @@ namespace SoftwareCo
         private static int ONE_MINUTE = THIRTY_SECONDS * 2;
         private static int ONE_HOUR = ONE_MINUTE * 60;
         private static int THIRTY_MINUTES = ONE_MINUTE * 30;
-        private static long lastDashboardFetchTime = 0;
-        private static long day_in_sec = 60 * 60 * 24;
-        private static int ZERO_SECOND = 1;
+
         #endregion
 
         /// <summary>
@@ -115,7 +113,6 @@ namespace SoftwareCo
                 _dteEvents.OnStartupComplete += OnOnStartupComplete;
 
                 InitializeListenersAsync();
-
             }
             catch (Exception ex)
             {
@@ -149,9 +146,13 @@ namespace SoftwareCo
                 _textDocKeyEvent = events.TextDocumentKeyPressEvents;
                 _docEvents = ObjDte.Events.DocumentEvents;
 
+                // init the doc event mgr and inject ObjDte
                 docEventMgr = DocEventManager.Instance;
                 DocEventManager.ObjDte = ObjDte;
+                // init the session summary mgr
                 sessionSummaryMgr = SessionSummaryManager.Instance;
+                // init the code metrics tree mgr
+                CodeMetricsTreeManager.Instance.InjectAsyncPackage(this);
 
                 // setup event handlers
                 _textDocKeyEvent.AfterKeyPress += docEventMgr.AfterKeyPressedAsync;
@@ -271,7 +272,7 @@ namespace SoftwareCo
             {
                 SoftwareUserSession.SendHeartbeat("HOURLY");
 
-                string dir = getSolutionDirectory();
+                string dir = GetSolutionDirectory();
 
                 if (dir != null)
                 {
@@ -347,54 +348,14 @@ namespace SoftwareCo
         }
 
 
-        private string getSolutionDirectory()
+        private string GetSolutionDirectory()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
             {
                 return Path.GetDirectoryName(ObjDte.Solution.FileName);
             }
             return null;
-        }
-
-        private void InitializeSoftwareData(string fileName)
-        {
-            string MethodName = "InitializeSoftwareData";
-            NowTime nowTime = SoftwareCoUtil.GetNowTime();
-            if (_softwareData == null || !_softwareData.initialized)
-            {
-               
-                     
-                // get the project name
-                String projectName      = "Untitled";
-                String directoryName    = "Unknown";
-                if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
-                {
-                    projectName         = Path.GetFileNameWithoutExtension(ObjDte.Solution.FullName);
-                    string solutionFile = ObjDte.Solution.FullName;
-                    directoryName       = Path.GetDirectoryName(solutionFile);
-                }
-                else
-                {
-                    directoryName = Path.GetDirectoryName(fileName);
-                }
-
-                if (_softwareData == null)
-                {
-                    ProjectInfo projectInfo = new ProjectInfo(projectName, directoryName);
-                    _softwareData           = new SoftwareData(projectInfo);
-                  
-                }
-                else
-                {
-                    _softwareData.project.name = projectName;
-                    _softwareData.project.directory = directoryName;
-                }
-                _softwareData.start         = nowTime.now;
-                _softwareData.local_start   = nowTime.local_now;
-                _softwareData.initialized   = true;
-                SoftwareCoUtil.SetTimeout(ONE_MINUTE, docEventMgr.HasData, false);
-            }
-            _softwareData.EnsureFileInfoDataIsPresent(fileName,nowTime);
         }
 
         private async void InitializeUserInfo()
@@ -456,16 +417,10 @@ namespace SoftwareCo
             SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(false);
         }
 
-        
-        /**
-        public static async void OpenToolWindow()
+        public async Task OpenCodeMetricsPane()
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
-            // Get the instance number 0 of this tool window. This window is single instance so this instance
-            // is actually the only one.
-            // The last flag is set to true so that if the tool window does not exists it will be created.
-            ToolWindowPane window = AsyncPackage.FindToolWindow(typeof(CodeMetricsTreeWindow), 0, true);
+            await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
+            ToolWindowPane window = this.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
             if ((null == window) || (null == window.Frame))
             {
                 throw new NotSupportedException("Cannot create tool window");
@@ -473,7 +428,7 @@ namespace SoftwareCo
 
             IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
             Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
-        }**/
+        }
 
         private async Task ShowOfflinePromptAsync()
         {
