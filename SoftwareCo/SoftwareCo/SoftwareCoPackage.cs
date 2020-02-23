@@ -41,7 +41,9 @@ namespace SoftwareCo
     [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     [ProvideMenuResource("Menus.ctmenu", 1)]
-    [ProvideToolWindow(typeof(CodeMetricsToolPane))]
+    [ProvideToolWindow(typeof(CodeMetricsToolPane),
+        Window = Microsoft.VisualStudio.Shell.Interop.ToolWindowGuids.SolutionExplorer,
+        MultiInstances=false)]
     public sealed class SoftwareCoPackage : AsyncPackage
     {
         #region fields

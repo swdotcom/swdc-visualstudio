@@ -4,7 +4,6 @@
     using System.Runtime.InteropServices;
     using Microsoft.VisualStudio.Shell;
 
-
     [Guid("B9ADECFD-3D3C-451D-AE3A-90994DB55AA4")]
     public class CodeMetricsToolPane : ToolWindowPane
     {
