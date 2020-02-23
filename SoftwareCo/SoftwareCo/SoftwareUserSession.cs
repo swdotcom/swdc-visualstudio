@@ -260,16 +260,6 @@ namespace SoftwareCo
                 {
                     // change in logged in state, send heatbeat and fetch kpm
                     SendHeartbeat("STATE_CHANGE:LOGGED_IN:" + loggedIn);
-
-                    try
-                    {
-                        Thread.Sleep(1000);
-                        SoftwareCoPackage.fetchSessionSummaryInfoAsync();
-                    }
-                    catch (ThreadInterruptedException e)
-                    {
-                        //
-                    }
                 }
 
                 loggedInCacheState = loggedIn;
@@ -312,7 +302,6 @@ namespace SoftwareCo
                 }
                 else
                 {
-                    SoftwareCoPackage.fetchSessionSummaryInfoAsync();
                     checkingLoginState = false;
                 }
             }

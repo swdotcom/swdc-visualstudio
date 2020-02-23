@@ -96,6 +96,12 @@ namespace SoftwareCo
             return hostname;
         }
 
+        public static long getItemAsLong(string key)
+        {
+            object val = getItem(key);
+            return long.Parse(val.ToString());
+        }
+
         public static object getItem(string key)
         {
             sessionMap.TryGetValue(key, out string valObject);
@@ -366,16 +372,8 @@ namespace SoftwareCo
             }
             else if (minutes > 60)
             {
-                string formatedHrs;
                 float hours = (float)minutes / 60;
-                if (hours % 1 == 0)
-                {
-                    formatedHrs = String.Format("{0:n0}", hours);
-                }
-                else
-                {
-                    formatedHrs = String.Format("{0:0.00}", hours);
-                }
+                string formatedHrs = String.Format("{0:0.00}", hours);
                 minutesStr = formatedHrs + " hrs";
             }
             else if (minutes == 1)

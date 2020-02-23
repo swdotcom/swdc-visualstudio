@@ -76,6 +76,7 @@
     <Compile Include="StatusBarButton.xaml.cs">
       <DependentUpon>StatusBarButton.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Managers\WallclockManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">

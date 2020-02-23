@@ -10,7 +10,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="23"></ColumnDefinition>
         </Grid.ColumnDefinitions>
-        <Button Grid.Column="0"  Name="StatusBar" 
+        <Button Grid.Column="0" Name="StatusBar" 
                 Background="Transparent"  Click="LaunchDashBoard" Visibility="Visible" >
             <Image Source="Resources\PAW.png" ></Image>
         </Button>
