@@ -25,6 +25,8 @@ namespace SoftwareCo
         public static int DASHBOARD_LABEL_WIDTH = 25;
         public static int DASHBOARD_VALUE_WIDTH = 25;
 
+        private static StatusBarButton _statusBarButton;
+
         /***
         private SpotifyLocalAPI _spotify = null;
 
@@ -387,36 +389,6 @@ namespace SoftwareCo
             return minutesStr;
         }
 
-        public static string GetCurrentSessionIcon(double currentSessionGoalPercentVal)
-        {
-            string sessionTimeIcon = "";
-            if (currentSessionGoalPercentVal > 0)
-            {
-                if (currentSessionGoalPercentVal < 0.4)
-                {
-                    sessionTimeIcon = "🌘";
-                }
-                else if (currentSessionGoalPercentVal < 0.7)
-                {
-                    sessionTimeIcon = "🌗";
-                }
-                else if (currentSessionGoalPercentVal < 0.93)
-                {
-                    sessionTimeIcon = "🌖";
-                }
-                else if (currentSessionGoalPercentVal < 1.3)
-                {
-                    sessionTimeIcon = "🌕";
-                }
-                else
-                {
-                    sessionTimeIcon = "🌔";
-
-                }
-            }
-            return sessionTimeIcon;
-        }
-
        public static string getDashboardRow(string label, string value)
         {
             string result = "";
@@ -532,15 +504,28 @@ namespace SoftwareCo
             return foundChild;
         }
 
+        public static void UpdateStatusBarButtonText(String text)
+        {
+            if (_statusBarButton == null)
+            {
+                GetStatusBar(true);
+            }
+            _statusBarButton.TimeLabel = text;
+        }
+
         public static void GetStatusBar(bool forceEnabled)
         {
+            if (_statusBarButton == null)
+            {
+                _statusBarButton = new StatusBarButton();
+            }
             var statusBarObj = FindChildControl<DockPanel>(System.Windows.Application.Current.MainWindow, "StatusBarPanel");
 
             if (statusBarObj != null)
             {
 
-                statusBarObj.Children.Insert(0, new StatusBarButton());
-
+                // statusBarObj.Children.Insert(2, _statusBarButton);
+                statusBarObj.Children.Add(_statusBarButton);
             }
         }
 

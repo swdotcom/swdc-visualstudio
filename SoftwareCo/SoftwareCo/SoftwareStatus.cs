@@ -44,6 +44,7 @@ namespace SoftwareCo
             {
                 return;
             }
+            
             statusbar.SetText(msg);
             this._lastStatusMsg = msg;
         }

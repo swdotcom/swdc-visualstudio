@@ -12,7 +12,11 @@ namespace SoftwareCo
         public StatusBarButton()
         {
             InitializeComponent();
+            this.DataContext = this;
         }
+
+        public string TimeLabel { get; set; }
+
         private void LaunchDashBoard(object sender, RoutedEventArgs e)
         {
             try
@@ -24,6 +28,11 @@ namespace SoftwareCo
                
             }
             
+        }
+
+        private void ColumnDefinition_TouchEnter(object sender, System.Windows.Input.TouchEventArgs e)
+        {
+
         }
     }
 }
