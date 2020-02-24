@@ -85,7 +85,6 @@ namespace SoftwareCo
             return jsonObj.ToString();
         }
 
-
         private IDictionary<string, object> GetSourceDictionary()
         {
             IDictionary<string, object> dict = new Dictionary<string, object>();

@@ -33,13 +33,41 @@ namespace SoftwareCo
             GetSessionSummayData();
         }
 
-        public void IncrementSessionSummaryData(int minute, long keystrokes)
+        public void IncrementSessionSummaryData(KeystrokeAggregates aggregate)
         {
+            WallclockManager wcMgr = WallclockManager.Instance;
             _sessionSummary = GetSessionSummayData();
-            _sessionSummary.currentDayMinutes += minute;
-            _sessionSummary.currentDayKeystrokes += keystrokes;
+
+            long incrementMinutes = GetMinutesSinceLastPayload();
+            _sessionSummary.currentDayMinutes += incrementMinutes;
+
+            wcMgr.UpdateBasedOnSessionSeconds(_sessionSummary.currentDayMinutes * 60);
+
+            long editorSeconds = wcMgr.GetWcTimeInMinutes() * 60;
+
+            _sessionSummary.currentDayKeystrokes += aggregate.keystrokes;
+            _sessionSummary.currentDayLinesAdded += aggregate.linesAdded;
+            _sessionSummary.currentDayLinesRemoved += aggregate.linesRemoved;
 
             SaveSessionSummaryToDisk(_sessionSummary);
+        }
+
+        private long GetMinutesSinceLastPayload()
+        {
+            long minutesSinceLastPayload = 1;
+            long lastPayloadEnd = SoftwareCoUtil.getItemAsLong("latestPayloadTimestampEntUtc");
+            if (lastPayloadEnd > 0)
+            {
+                NowTime nowTime = SoftwareCoUtil.GetNowTime();
+                long diffInSec = nowTime.now - lastPayloadEnd;
+                long sessionThresholdSeconds = 60 * 15;
+                if (diffInSec > 0 && diffInSec <= sessionThresholdSeconds)
+                {
+                    minutesSinceLastPayload = diffInSec / 60;
+                }
+            }
+            return minutesSinceLastPayload;
+
         }
 
         public void ÇlearSessionSummaryData()

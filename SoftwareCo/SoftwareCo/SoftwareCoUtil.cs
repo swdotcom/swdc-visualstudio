@@ -329,11 +329,21 @@ namespace SoftwareCo
 
         public static NowTime GetNowTime()
         {
-            NowTime timeParam       = new NowTime();   
-            timeParam.now           = DateTimeOffset.Now.ToUnixTimeSeconds();
-            timeParam.offset_now    = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-            timeParam.local_now     = timeParam.now + ((int)timeParam.offset_now * 60);
-    
+            NowTime timeParam = new NowTime();
+            DateTime nowTime = new DateTime();
+            DateTimeOffset offset = DateTimeOffset.Now;
+            timeParam.now = offset.ToUnixTimeSeconds();
+            timeParam.local_now = offset.ToLocalTime().ToUnixTimeSeconds();
+            
+            // DateTime utcNow = DateTime.UtcNow;
+            // timeParam.now = DateTimeOffset.Now.ToUnixTimeSeconds();
+            timeParam.offset_now = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+            // timeParam.local_now = timeParam.now + ((int)timeParam.offset_now * 60);
+            // timeParam.utc_end_of_day = GetEndOfDay(new DateTime());
+            // new DateTime(timeParam.now, DateTimeKind.Local);
+
+            timeParam.local_day = nowTime.ToLocalTime().ToString(@"YYYY-MM-dd");
+            
             return timeParam;
         }
         public static long getNowInSeconds()
@@ -577,6 +587,10 @@ namespace SoftwareCo
         public long now { get; set; }
         public long local_now { get; set; }
         public double offset_now { get; set; }
+        public string local_day { get; set; }
+        public long local_start_of_day { get; set; }
+        public long local_end_of_day { get; set; }
+        public long utc_end_of_day { get; set; }
     }
     
 }
