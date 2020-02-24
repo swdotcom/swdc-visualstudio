@@ -161,6 +161,35 @@ namespace SoftwareCo
             }
         }
 
+        public List<FileInfo> GetSourceFileInfoList()
+        {
+            List<FileInfo> fileInfoList = new List<FileInfo>();
+
+            foreach (String key in source.Keys)
+            {
+                IDictionary<string, object> innerDict = new Dictionary<string, object>();
+                JsonObject fileInfoData = (JsonObject)source[key];
+                // go through the properties of this and check if any have data
+                // close, open, paste, delete, keys
+                FileInfo fileInfo = new FileInfo();
+                fileInfo.close = long.Parse(((JsonObject)fileInfoData["close"]).ToString());
+                fileInfo.open = long.Parse(((JsonObject)fileInfoData["open"]).ToString());
+                fileInfo.paste = long.Parse(((JsonObject)fileInfoData["paste"]).ToString());
+                fileInfo.linesAdded = long.Parse(((JsonObject)fileInfoData["linesAdded"]).ToString());
+                fileInfo.linesRemoved = long.Parse(((JsonObject)fileInfoData["linesRemoved"]).ToString());
+                fileInfo.delete = long.Parse(((JsonObject)fileInfoData["delete"]).ToString());
+                fileInfo.add = long.Parse(((JsonObject)fileInfoData["add"]).ToString());
+                fileInfo.keystrokes = fileInfo.add + fileInfo.delete + fileInfo.paste + fileInfo.linesAdded + fileInfo.linesRemoved;
+                fileInfo.syntax = ((JsonObject)fileInfoData["syntax"]).ToString();
+                fileInfo.local_start = long.Parse(((JsonObject)fileInfoData["local_start"]).ToString());
+                fileInfo.local_end = long.Parse(((JsonObject)fileInfoData["local_end"]).ToString());
+                fileInfo.start = long.Parse(((JsonObject)fileInfoData["start"]).ToString());
+                fileInfo.end = long.Parse(((JsonObject)fileInfoData["end"]).ToString());
+            }
+
+            return fileInfoList;
+        }
+
         public void addOrUpdateFileInfo(String fileName, String property, long count)
         {
             JsonObject fileInfoData = null;

@@ -320,7 +320,7 @@ namespace SoftwareCo
 
                 long keystrokes = _softwareData.keystrokes;
 
-                sessionSummaryMgr.IncrementSessionSummaryData(1 /*minutes*/, keystrokes);
+                UpdateAggregates();
 
                 string softwareDataContent = _softwareData.GetAsJson();
 
@@ -331,6 +331,14 @@ namespace SoftwareCo
                 //// update the statusbar
                 sessionSummaryMgr.UpdateStatusBarWithSummaryData();
             }
+        }
+
+        private void UpdateAggregates()
+        {
+            List<FileInfo> fileInfoList = _softwareData.GetSourceFileInfoList();
+            KeystrokeAggregates aggregates = new KeystrokeAggregates();
+
+            sessionSummaryMgr.IncrementSessionSummaryData(aggregates);
         }
     }
 }

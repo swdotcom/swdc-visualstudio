@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
-    class KeystrokeAggregates
+    public class KeystrokeAggregates
     {
         public long add { get; set; }
         public long close { get; set; }
