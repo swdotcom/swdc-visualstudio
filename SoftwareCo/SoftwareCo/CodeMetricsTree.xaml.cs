@@ -108,12 +108,21 @@ namespace SoftwareCo
 
         private void ConnectClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
-            //
+            object name = SoftwareCoUtil.getItem("name");
+            if (name != null && !name.ToString().Equals(""))
+            {
+                // logged in
+                SoftwareCoUtil.launchWebDashboard();
+            }
+            else
+            {
+                SoftwareCoUtil.launchLogin();
+            }
         }
 
         private void DashboardClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
-            //
+            DashboardManager.Instance.LaunchCodeTimeDashboardAsync();
         }
 
         private void ToggleClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)

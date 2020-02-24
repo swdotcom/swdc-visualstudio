@@ -242,7 +242,7 @@ namespace SoftwareCo
 
         public static async Task<UserStatus> GetUserStatusAsync(bool isInitialCall)
         {
-             UserStatus currentUserStatus = new UserStatus();
+            UserStatus currentUserStatus = new UserStatus();
             try
             {
                 bool online = await IsOnlineAsync();
