@@ -12,9 +12,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Media;
-// using SpotifyAPI.Local;
-// using SpotifyAPI.Local.Enums;
-// using SpotifyAPI.Local.Models;
+using System.Windows.Media.Imaging;
 
 namespace SoftwareCo
 {
@@ -26,6 +24,7 @@ namespace SoftwareCo
         public static int DASHBOARD_VALUE_WIDTH = 25;
 
         private static StatusBarButton _statusBarButton;
+        private static bool _addedStatusBarButton = false;
 
         /***
         private SpotifyLocalAPI _spotify = null;
@@ -461,6 +460,7 @@ namespace SoftwareCo
             timer.Elapsed += (sender, e) => functionCopy();
             timer.Start();
         }
+
         public static T FindChildControl<T>(DependencyObject parent, string childName)
           where T : DependencyObject
         {
@@ -504,31 +504,57 @@ namespace SoftwareCo
             return foundChild;
         }
 
-        public static void UpdateStatusBarButtonText(String text)
-        {
-            if (_statusBarButton == null)
-            {
-                GetStatusBar(true);
-            }
-            _statusBarButton.TimeLabel = text;
-        }
-
-        public static void GetStatusBar(bool forceEnabled)
+        public static void UpdateStatusBarButtonText(String text, String iconName = null)
         {
             if (_statusBarButton == null)
             {
                 _statusBarButton = new StatusBarButton();
             }
-            var statusBarObj = FindChildControl<DockPanel>(System.Windows.Application.Current.MainWindow, "StatusBarPanel");
-
-            if (statusBarObj != null)
+            if (!SoftwareCoPackage.IsStatusInfoShowing()) {
+                text = "";
+                iconName = "clock.png";
+            }
+            
+            if (iconName == null || iconName.Equals(""))
             {
+                iconName = "Resources/cpaw.png";
+            } else
+            {
+                iconName = "Resources/" + iconName;
+            }
+            _statusBarButton.UpdateDisplay(text, iconName);
+            InitStatusBarControl();
+        }
 
-                // statusBarObj.Children.Insert(2, _statusBarButton);
-                statusBarObj.Children.Add(_statusBarButton);
+        public static Image CreateImage(string imagePath)
+        {
+            // create Image
+            Image image = new Image();
+            image.Source = new BitmapImage(new Uri(imagePath, UriKind.Relative));
+            return image;
+        }
+
+        public static void InitStatusBarControl()
+        {
+            DockPanel statusBarObj = FindChildControl<DockPanel>(System.Windows.Application.Current.MainWindow, "StatusBarPanel");
+            if (_statusBarButton != null && statusBarObj != null && !_addedStatusBarButton)
+            {
+                statusBarObj.Children.Insert(0, _statusBarButton);
+                _addedStatusBarButton = true;
             }
         }
 
+        private static void ReloadStatusBarButton()
+        {
+            DockPanel statusBarObj = FindChildControl<DockPanel>(System.Windows.Application.Current.MainWindow, "StatusBarPanel");
+
+            if (statusBarObj != null)
+            {
+                statusBarObj.Children.RemoveAt(0);
+
+                statusBarObj.Children.Insert(0, _statusBarButton);
+            }
+        }
 
     }
    

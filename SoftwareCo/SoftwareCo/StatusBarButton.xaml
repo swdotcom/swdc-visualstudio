@@ -13,12 +13,12 @@
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <Button Grid.Column="0" Name="StatusBar" Grid.ColumnSpan="2" HorizontalAlignment="Right"
-                Height="23" Click="LaunchCodeMetricsView"
+                Height="23" Click="LaunchCodeMetricsView" Width="23"
                 Background="Transparent" BorderBrush="Transparent" BorderThickness="0"
                 Visibility="Visible" >
-            <Image Source="Resources\cpaw.png" ></Image>
+            <Image x:Name="TimeIcon" Height="23" Width="23" Visibility="Visible"></Image>
         </Button>
-        <Label Grid.Column="2" Content="{Binding TimeLabel}"
-               Height="23" Width="Auto" Foreground="White" />
+        <Label Grid.Column="2" x:Name="TimeLabel" Visibility="Visible"
+               Height="23" Width="50" Foreground="White"></Label>
     </Grid>
 </UserControl>

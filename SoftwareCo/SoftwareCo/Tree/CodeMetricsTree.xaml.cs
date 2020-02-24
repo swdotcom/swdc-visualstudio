@@ -36,23 +36,29 @@ namespace SoftwareCo
         {
             // connect label
             ConnectLabel.Content = "See advanced metrics";
-            ConnectImage.Source = CodeMetricsTreeProvider.CreateImage("cpaw.png").Source;
+            ConnectImage.Source = SoftwareCoUtil.CreateImage("../Resources/cpaw.png").Source;
 
             // dashboard label
             DashboardLabel.Content = "Generate dashboard";
-            DashboardImage.Source = CodeMetricsTreeProvider.CreateImage("dashboard.png").Source;
+            DashboardImage.Source = SoftwareCoUtil.CreateImage("../Resources/dashboard.png").Source;
 
             // Toggle status label
-            ToggleStatusLabel.Content = "Hide status bar metrics";
-            ToggleStatusImage.Source = CodeMetricsTreeProvider.CreateImage("visible.png").Source;
+            if (SoftwareCoPackage.IsStatusInfoShowing())
+            {
+                ToggleStatusLabel.Content = "Hide status bar metrics";
+            } else
+            {
+                ToggleStatusLabel.Content = "Show status bar metrics";
+            }
+            ToggleStatusImage.Source = SoftwareCoUtil.CreateImage("../Resources/visible.png").Source;
 
             // Learn more label
             LearnMoreLabel.Content = "Learn more";
-            LearnMoreImage.Source = CodeMetricsTreeProvider.CreateImage("readme.png").Source;
+            LearnMoreImage.Source = SoftwareCoUtil.CreateImage("../Resources/readme.png").Source;
 
             // Feedback label
             FeedbackLabel.Content = "Submit feedback";
-            FeedbackImage.Source = CodeMetricsTreeProvider.CreateImage("message.png").Source;
+            FeedbackImage.Source = SoftwareCoUtil.CreateImage("../Resources/message.png").Source;
         }
 
         private void ConnectClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
@@ -67,7 +73,7 @@ namespace SoftwareCo
 
         private void ToggleClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
-            //
+            SoftwareCoPackage.ToggleStatusInfo();
         }
 
         private void LearnMoreClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)

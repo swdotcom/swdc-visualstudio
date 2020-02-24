@@ -9,7 +9,6 @@ namespace SoftwareCo
         private IVsStatusbar statusbar;
         private bool showStatusText = true;
         private string lastMsg = "";
-        private string lastTooltip = "";
 
         public SoftwareStatus(IVsStatusbar statusbar)
         {
@@ -20,41 +19,13 @@ namespace SoftwareCo
         {
             showStatusText = !showStatusText;
 
-            if (showStatusText)
-            {
-                SetStatus(lastMsg);
-            }
-            else
-            {
-                SetStatus("");
-            }
+            SessionSummaryManager.Instance.UpdateStatusBarWithSummaryData();
         }
 
-        public void SetStatus(string msg)
+        public bool ShowingStatusText()
         {
-            if (showStatusText)
-            {
-                lastMsg = msg;
-            } else
-            {
-                // make sure the message is the clock
-                msg = " 🕒 ";
-            }
-            if (statusbar == null)
-            {
-                return;
-            }
-            
-            statusbar.SetText(msg);
-            this._lastStatusMsg = msg;
+            return showStatusText;
         }
 
-        public void ReloadStatus()
-        {
-            if (_lastStatusMsg != null)
-            {
-                this.SetStatus(_lastStatusMsg);
-            }
-        }
     }
 }

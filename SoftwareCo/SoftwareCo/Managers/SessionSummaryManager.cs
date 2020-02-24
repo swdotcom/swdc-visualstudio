@@ -124,19 +124,21 @@ namespace SoftwareCo
         public void UpdateStatusBarWithSummaryData()
         {
             string MethodName = "updateStatusBarWithSummaryData";
+
+            string iconName = "";
+            string currentDayMinutesTime = "";
             _sessionSummary = GetSessionSummayData();
-            string msg = "";
             long currentDayMinutesVal = _sessionSummary.currentDayMinutes;
             long averageDailyMinutesVal = _sessionSummary.averageDailyMinutes;
 
-            string currentDayMinutesTime = SoftwareCoUtil.HumanizeMinutes(currentDayMinutesVal);
-            string averageDailyMinutesTime = SoftwareCoUtil.HumanizeMinutes(averageDailyMinutesVal);
+            currentDayMinutesTime = SoftwareCoUtil.HumanizeMinutes(currentDayMinutesVal);
+            // string averageDailyMinutesTime = SoftwareCoUtil.HumanizeMinutes(averageDailyMinutesVal);
 
             // Code time today:  4 hrs | Avg: 3 hrs 28 min
-            string inFlowIcon = currentDayMinutesVal > averageDailyMinutesVal ? "🚀 " : "";
-            msg = string.Format("{0}{1}", inFlowIcon, currentDayMinutesTime);
+            iconName = currentDayMinutesVal > averageDailyMinutesVal ? "rocket.png" : "cpaw.png";
+            // string msg = string.Format("{0}{1}", inFlowIcon, currentDayMinutesTime);
 
-            SoftwareCoUtil.UpdateStatusBarButtonText(msg);
+            SoftwareCoUtil.UpdateStatusBarButtonText(currentDayMinutesTime, iconName);
 
         }
 

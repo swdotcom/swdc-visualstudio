@@ -114,6 +114,7 @@
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Resource Include="Resources\cpaw.png" />
+    <Content Include="Resources\app-icon-blue-16x16.png" />
     <Content Include="Resources\bolt-grey.png" />
     <Content Include="Resources\bolt.png" />
     <Content Include="Resources\clock-blue.png" />
@@ -128,6 +129,7 @@
     <Content Include="Resources\insertion.png" />
     <Content Include="Resources\like.png" />
     <Content Include="Resources\message.png" />
+    <Content Include="Resources\Microsoft.VisualStudio.Services.Icons.Default.png" />
     <Content Include="Resources\next.png" />
     <Content Include="Resources\pause.png" />
     <Content Include="Resources\play.png" />
@@ -148,6 +150,7 @@
     <Content Include="Resources\SoftwareLoginCommand.png" />
     <Content Include="Resources\SoftwareTopFortyCommand.png" />
     <Content Include="Resources\spotify.png" />
+    <Content Include="Resources\sw.png" />
     <Content Include="Resources\unlike.png" />
     <Content Include="Resources\visible.png" />
     <Content Include="Resources\warning.png" />

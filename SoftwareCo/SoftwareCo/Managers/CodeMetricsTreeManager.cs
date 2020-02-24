@@ -42,5 +42,10 @@ namespace SoftwareCo
         {
             await package.OpenCodeMetricsPane();
         }
+
+        public async void RefreshMenuButtons()
+        {
+            package.RefreshMenuButtonsAsync();
+        }
     }
 }

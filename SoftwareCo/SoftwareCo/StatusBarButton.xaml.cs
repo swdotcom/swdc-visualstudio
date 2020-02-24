@@ -15,7 +15,12 @@ namespace SoftwareCo
             this.DataContext = this;
         }
 
-        public string TimeLabel { get; set; }
+        public void UpdateDisplay(string label, string iconName)
+        {
+            TimeLabel.Content = label;
+            Image img = SoftwareCoUtil.CreateImage(iconName);
+            TimeIcon.Source = img.Source;
+        }
 
         private void LaunchCodeMetricsView(object sender, RoutedEventArgs args)
         {
@@ -28,11 +33,6 @@ namespace SoftwareCo
                 Logger.Error("Error launching the code metrics view", e);
             }
             
-        }
-
-        private void ColumnDefinition_TouchEnter(object sender, System.Windows.Input.TouchEventArgs e)
-        {
-
         }
     }
 }

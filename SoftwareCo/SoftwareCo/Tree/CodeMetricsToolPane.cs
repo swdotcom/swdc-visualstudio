@@ -21,6 +21,9 @@
 
         }
 
-
+        public void RefreshMenuButtons()
+        {
+            ((CodeMetricsTree)this.Content).RebuildMenuButtons();
+        }
     }
 }

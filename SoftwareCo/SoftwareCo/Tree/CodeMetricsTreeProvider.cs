@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace SoftwareCo
 {
@@ -39,7 +38,7 @@ namespace SoftwareCo
 
             if (!string.IsNullOrEmpty(imagePath))
             {
-                stack.Children.Add(CreateImage(imagePath));
+                stack.Children.Add(SoftwareCoUtil.CreateImage(imagePath));
             }
 
             Label label = new Label();
@@ -54,12 +53,5 @@ namespace SoftwareCo
             return treeItem;
         }
 
-        public static Image CreateImage(string imagePath)
-        {
-            // create Image
-            Image image = new Image();
-            image.Source = new BitmapImage(new Uri("../Resources/" + imagePath, UriKind.Relative));
-            return image;
-        }
     }
 }

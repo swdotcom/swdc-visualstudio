@@ -58,10 +58,7 @@ namespace SoftwareCo
         private TextDocumentKeyPressEvents _textDocKeyEvent;
 
         private System.Threading.Timer timer;
-        private System.Threading.Timer kpmTimer;
         private System.Threading.Timer repoCommitsTimer;
-        private System.Threading.Timer musicTimer;
-        private System.Threading.Timer statusMsgTimer;
         private System.Threading.Timer userStatusTimer;
         private System.Threading.Timer offlineDataTimer;
 
@@ -216,7 +213,7 @@ namespace SoftwareCo
 
         private void InitializeStatusBarButton()
         {
-            SoftwareCoUtil.GetStatusBar(false);
+            SoftwareCoUtil.InitStatusBarControl();
         }
 
         private async Task InitializeSoftwareStatusAsync()
@@ -258,8 +255,18 @@ namespace SoftwareCo
             if (_softwareStatus != null)
             {
                 _softwareStatus.ToggleStatusInfo();
-
+                CodeMetricsTreeManager.Instance.RefreshMenuButtons();
+                SoftwareCoUtil.UpdateStatusBarButtonText("");
             }
+        }
+
+        public static bool IsStatusInfoShowing()
+        {
+            if (_softwareStatus != null)
+            {
+                return _softwareStatus.ShowingStatusText();
+            }
+            return true;
         }
 
         private void ProcessHourlyJobs(Object stateInfo)
@@ -406,6 +413,17 @@ namespace SoftwareCo
         public async void UpdateUserStatus(Object stateInfo)
         {
             SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(false);
+        }
+
+        public async Task RefreshMenuButtonsAsync()
+        {
+            await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
+            ToolWindowPane window = this.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
+            if ((null == window) || (null == window.Frame))
+            {
+                throw new NotSupportedException("Cannot create tool window");
+            }
+            ((CodeMetricsToolPane)window).RefreshMenuButtons();
         }
 
         public async Task OpenCodeMetricsPane()
