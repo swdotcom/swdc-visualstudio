@@ -17,16 +17,15 @@ namespace SoftwareCo
 
         public string TimeLabel { get; set; }
 
-        private void LaunchDashBoard(object sender, RoutedEventArgs e)
+        private void LaunchCodeMetricsView(object sender, RoutedEventArgs args)
         {
             try
             {
-                //  DashboardManager.Instance.LaunchCodeTimeDashboardAsync();
                 CodeMetricsTreeManager.Instance.OpenCodeMetricsPane();
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-               
+                Logger.Error("Error launching the code metrics view", e);
             }
             
         }

@@ -200,12 +200,6 @@ namespace SoftwareCo
                     delay,
                     ONE_HOUR);
 
-                statusMsgTimer = new System.Threading.Timer(
-                    UpdateStatusMsg,
-                    autoEvent,
-                    1000 * 30,
-                    1000 * 10);
-
                 userStatusTimer = new System.Threading.Timer(
                     UpdateUserStatus,
                     autoEvent,
@@ -407,11 +401,6 @@ namespace SoftwareCo
         private String getDownloadDestinationDirectory()
         {
             return Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-        }
-
-        public void UpdateStatusMsg(Object stateInfo)
-        {
-            _softwareStatus.ReloadStatus();
         }
 
         public async void UpdateUserStatus(Object stateInfo)

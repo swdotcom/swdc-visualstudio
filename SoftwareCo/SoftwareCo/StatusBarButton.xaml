@@ -5,19 +5,20 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:SoftwareCo"
              mc:Ignorable="d" 
-             d:DesignHeight="23" Width="auto">
+             d:DesignHeight="23" Width="auto" Height="23">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="5" />
             <ColumnDefinition Width="23" />
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <Button Grid.Column="0" Name="StatusBar" Grid.ColumnSpan="2" HorizontalAlignment="Right"
-                Height="23"
-                Background="Transparent"  Click="LaunchDashBoard" Visibility="Visible" >
-            <Image Source="Resources\PAW.png" ></Image>
+                Height="23" Click="LaunchCodeMetricsView"
+                Background="Transparent" BorderBrush="Transparent" BorderThickness="0"
+                Visibility="Visible" >
+            <Image Source="Resources\cpaw.png" ></Image>
         </Button>
         <Label Grid.Column="2" Content="{Binding TimeLabel}"
-               Height="23"  Width="50" Foreground="White" />
+               Height="23" Width="Auto" Foreground="White" />
     </Grid>
 </UserControl>

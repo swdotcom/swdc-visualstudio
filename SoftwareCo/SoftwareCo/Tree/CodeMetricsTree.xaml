@@ -8,15 +8,31 @@
              Height="auto" Width="auto">
     <ScrollViewer Background="Transparent" BorderBrush="Transparent" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel>
-            <DockPanel>
-                <Grid DockPanel.Dock="Left" >
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="15*"/>
-                        <ColumnDefinition Width="1.5*"/>
-                        <ColumnDefinition Width="1.5*"/>
-                    </Grid.ColumnDefinitions>
-                </Grid>
-            </DockPanel>
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
+                    <Image x:Name="ConnectImage" Width="15" Height="15"></Image>
+                    <Label x:Name="ConnectLabel" Foreground="DarkCyan" MouseDown="ConnectClickHandler" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" ></Label>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
+                    <Image x:Name="DashboardImage"  Width="15" Height="15"></Image>
+                    <Label x:Name="DashboardLabel" Foreground="DarkCyan" MouseDown="DashboardClickHandler" Background="Transparent" BorderBrush="Transparent" BorderThickness="0"></Label>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
+                    <Image x:Name="ToggleStatusImage" Width="15" Height="15"></Image>
+                    <Label x:Name="ToggleStatusLabel" Foreground="DarkCyan" MouseDown="ToggleClickHandler" Background="Transparent" BorderBrush="Transparent" BorderThickness="0"></Label>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
+                    <Image x:Name="LearnMoreImage" Width="15" Height="15"></Image>
+                    <Label x:Name="LearnMoreLabel" Foreground="DarkCyan" MouseDown="LearnMoreClickHandler" Background="Transparent" BorderBrush="Transparent" BorderThickness="0"></Label>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
+                    <Image x:Name="FeedbackImage" Width="15" Height="15"></Image>
+                    <Label x:Name="FeedbackLabel" Foreground="DarkCyan" MouseDown="FeedbackClickHandler" Background="Transparent" BorderBrush="Transparent" BorderThickness="0"></Label>
+                </StackPanel>
+                <ItemsControl>
+                    <Separator x:Name="Seperator1" Visibility="Hidden" Margin="0,5,0,5"></Separator>
+                </ItemsControl>
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
