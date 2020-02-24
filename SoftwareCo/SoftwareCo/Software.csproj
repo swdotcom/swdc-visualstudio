@@ -80,12 +80,12 @@
       <DependentUpon>StatusBarButton.xaml</DependentUpon>
     </Compile>
     <Compile Include="Managers\WallclockManager.cs" />
-    <Compile Include="Tree\CodeMetricsToolPane.cs" />
-    <Compile Include="Tree\CodeMetricsTree.xaml.cs">
+    <Compile Include="CodeMetricsToolPane.cs" />
+    <Compile Include="CodeMetricsTree.xaml.cs">
       <DependentUpon>CodeMetricsTree.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Tree\CodeMetricsTreeItem.cs" />
-    <Compile Include="Tree\CodeMetricsTreeProvider.cs" />
+    <Compile Include="CodeMetricsTreeItem.cs" />
+    <Compile Include="CodeMetricsTreeProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">
@@ -114,32 +114,32 @@
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Resource Include="Resources\cpaw.png" />
-    <Content Include="Resources\app-icon-blue-16x16.png" />
-    <Content Include="Resources\bolt-grey.png" />
-    <Content Include="Resources\bolt.png" />
-    <Content Include="Resources\clock-blue.png" />
-    <Content Include="Resources\clock.png" />
-    <Content Include="Resources\commit.png" />
-    <Content Include="Resources\dashboard.png" />
-    <Content Include="Resources\deletion.png" />
-    <Content Include="Resources\files.png" />
-    <Content Include="Resources\global-grey.png" />
-    <Content Include="Resources\global.png" />
-    <Content Include="Resources\headphone.png" />
-    <Content Include="Resources\insertion.png" />
-    <Content Include="Resources\like.png" />
-    <Content Include="Resources\message.png" />
+    <Resource Include="Resources\app-icon-blue-16x16.png" />
+    <Resource Include="Resources\bolt-grey.png" />
+    <Resource Include="Resources\bolt.png" />
+    <Resource Include="Resources\clock-blue.png" />
+    <Resource Include="Resources\clock.png" />
+    <Resource Include="Resources\commit.png" />
+    <Resource Include="Resources\dashboard.png" />
+    <Resource Include="Resources\deletion.png" />
+    <Resource Include="Resources\files.png" />
+    <Resource Include="Resources\global-grey.png" />
+    <Resource Include="Resources\global.png" />
+    <Resource Include="Resources\headphone.png" />
+    <Resource Include="Resources\insertion.png" />
+    <Resource Include="Resources\like.png" />
+    <Resource Include="Resources\message.png" />
     <Content Include="Resources\Microsoft.VisualStudio.Services.Icons.Default.png" />
-    <Content Include="Resources\next.png" />
-    <Content Include="Resources\pause.png" />
-    <Content Include="Resources\play.png" />
-    <Content Include="Resources\playlist.png" />
-    <Content Include="Resources\previous.png" />
-    <Content Include="Resources\readme.png" />
-    <Content Include="Resources\refresh.png" />
-    <Content Include="Resources\rocket-grey.png" />
-    <Content Include="Resources\rocket.png" />
-    <Content Include="Resources\software-paw.png" />
+    <Resource Include="Resources\next.png" />
+    <Resource Include="Resources\pause.png" />
+    <Resource Include="Resources\play.png" />
+    <Resource Include="Resources\playlist.png" />
+    <Resource Include="Resources\previous.png" />
+    <Resource Include="Resources\readme.png" />
+    <Resource Include="Resources\refresh.png" />
+    <Resource Include="Resources\rocket-grey.png" />
+    <Resource Include="Resources\rocket.png" />
+    <Resource Include="Resources\software-paw.png" />
     <Content Include="Resources\SoftwareCoPackage.ico" />
     <VSCTCompile Include="SoftwareCoPackage.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
@@ -149,11 +149,11 @@
     <Content Include="Resources\SoftwareLaunchCommand.png" />
     <Content Include="Resources\SoftwareLoginCommand.png" />
     <Content Include="Resources\SoftwareTopFortyCommand.png" />
-    <Content Include="Resources\spotify.png" />
-    <Content Include="Resources\sw.png" />
-    <Content Include="Resources\unlike.png" />
-    <Content Include="Resources\visible.png" />
-    <Content Include="Resources\warning.png" />
+    <Resource Include="Resources\spotify.png" />
+    <Resource Include="Resources\sw.png" />
+    <Resource Include="Resources\unlike.png" />
+    <Resource Include="Resources\visible.png" />
+    <Resource Include="Resources\warning.png" />
     <Content Include="stylesheet.css" />
   </ItemGroup>
   <ItemGroup>
@@ -354,7 +354,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Tree\CodeMetricsTree.xaml">
+    <Page Include="CodeMetricsTree.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

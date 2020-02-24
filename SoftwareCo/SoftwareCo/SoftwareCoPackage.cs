@@ -256,7 +256,7 @@ namespace SoftwareCo
             {
                 _softwareStatus.ToggleStatusInfo();
                 CodeMetricsTreeManager.Instance.RefreshMenuButtons();
-                SoftwareCoUtil.UpdateStatusBarButtonText("");
+                SessionSummaryManager.Instance.UpdateStatusBarWithSummaryData();
             }
         }
 

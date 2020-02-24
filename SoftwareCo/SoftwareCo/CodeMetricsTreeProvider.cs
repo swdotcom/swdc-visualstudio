@@ -28,7 +28,7 @@ namespace SoftwareCo
             return parent as CodeMetricsTreeItem;
         }
 
-        public static TreeViewItem BuildTreeItem(string id, string text, string imagePath = null)
+        public static TreeViewItem BuildTreeItem(string id, string text, string iconName = null)
         {
             CodeMetricsTreeItem treeItem = new CodeMetricsTreeItem(id);
 
@@ -36,9 +36,9 @@ namespace SoftwareCo
             StackPanel stack = new StackPanel();
             stack.Orientation = Orientation.Horizontal;
 
-            if (!string.IsNullOrEmpty(imagePath))
+            if (!string.IsNullOrEmpty(iconName))
             {
-                stack.Children.Add(SoftwareCoUtil.CreateImage(imagePath));
+                stack.Children.Add(SoftwareCoUtil.CreateImage(iconName));
             }
 
             Label label = new Label();

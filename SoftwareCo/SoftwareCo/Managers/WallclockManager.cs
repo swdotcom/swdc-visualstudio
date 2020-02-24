@@ -29,7 +29,7 @@ namespace SoftwareCo
         {
             this._wctime = SoftwareCoUtil.getItemAsLong("wctime");
             this._wctime += SECONDS_TO_INCREMENT;
-            SoftwareCoUtil.setItem("_wctime", this._wctime.ToString());
+            SoftwareCoUtil.setItem("wctime", this._wctime.ToString());
         }
 
         private void DispatchStatusViewUpdate()
@@ -39,13 +39,18 @@ namespace SoftwareCo
             // refresh the tree
         }
 
+        public long GetWcTimeInMinutes()
+        {
+            return this._wctime / 60;
+        }
+
         public void ClearWcTime()
         {
             this._wctime = 0L;
-            SoftwareCoUtil.setItem("_wctime", this._wctime.ToString());
+            SoftwareCoUtil.setItem("wctime", this._wctime.ToString());
         }
 
-        public void updateBasedOnSessionSeconds(long session_seconds)
+        public void UpdateBasedOnSessionSeconds(long session_seconds)
         {
 
             // check to see if the session seconds has gained before the editor seconds
@@ -53,7 +58,7 @@ namespace SoftwareCo
             if (this._wctime < session_seconds)
             {
                 this._wctime = session_seconds + 1;
-                SoftwareCoUtil.setItem("_wctime", this._wctime.ToString());
+                SoftwareCoUtil.setItem("wctime", this._wctime.ToString());
 
                 // refresh the tree
             }

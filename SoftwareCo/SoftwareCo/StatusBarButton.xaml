@@ -16,7 +16,8 @@
                 Height="23" Click="LaunchCodeMetricsView" Width="23"
                 Background="Transparent" BorderBrush="Transparent" BorderThickness="0"
                 Visibility="Visible" >
-            <Image x:Name="TimeIcon" Height="23" Width="23" Visibility="Visible"></Image>
+            <Image x:Name="TimeIcon" Height="16" Width="16"
+                   Visibility="Visible"></Image>
         </Button>
         <Label Grid.Column="2" x:Name="TimeLabel" Visibility="Visible"
                Height="23" Width="50" Foreground="White"></Label>

@@ -100,7 +100,11 @@ namespace SoftwareCo
         public static long getItemAsLong(string key)
         {
             object val = getItem(key);
-            return long.Parse(val.ToString());
+            if (val != null)
+            {
+                return long.Parse(val.ToString());
+            }
+            return 0l;
         }
 
         public static object getItem(string key)
@@ -517,20 +521,17 @@ namespace SoftwareCo
             
             if (iconName == null || iconName.Equals(""))
             {
-                iconName = "Resources/cpaw.png";
-            } else
-            {
-                iconName = "Resources/" + iconName;
+                iconName = "cpaw.png";
             }
             _statusBarButton.UpdateDisplay(text, iconName);
             InitStatusBarControl();
         }
 
-        public static Image CreateImage(string imagePath)
+        public static Image CreateImage(string iconName)
         {
             // create Image
             Image image = new Image();
-            image.Source = new BitmapImage(new Uri(imagePath, UriKind.Relative));
+            image.Source = new BitmapImage(new Uri("Resources/" + iconName, UriKind.Relative));
             return image;
         }
 
