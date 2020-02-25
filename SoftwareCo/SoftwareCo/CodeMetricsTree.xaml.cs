@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -215,9 +216,53 @@ namespace SoftwareCo
             GitUtilManager gitUtilMgr = GitUtilManager.Instance;
             string dir = SoftwareCoPackage.GetSolutionDirectory();
 
-            CommitChangeStats todaysStats = gitUtilMgr.GetTodaysCommits(dir);
+            string name = "";
+            try
+            {
+                FileInfo fi = new FileInfo(dir);
+                name = fi.Name;
+            } catch (Exception e)
+            {
+                //
+            }
 
             CommitChangeStats uncommited = gitUtilMgr.GetUncommitedChanges(dir);
+            string uncommittedInsertions = "Insertion(s): " + uncommited.insertions;
+            string uncommittedDeletions = "Deletion(s): " + uncommited.deletions;
+            if (Uncommitted.HasItems)
+            {
+                // update
+                TreeViewItem parentItem = await GetParent(CommittedToday, "uncommitted");
+                UpdateNodeValue(parentItem, "uncommittedinsertions", uncommittedInsertions, "insertion.png");
+                UpdateNodeValue(parentItem, "uncommitteddeltions", uncommittedDeletions, "deletion.png");
+            }
+            else
+            {
+                List<TreeViewItem> uncommitedChilren = new List<TreeViewItem>();
+                uncommitedChilren.Add(BuildMetricNode("uncommittedinsertions", uncommittedInsertions, "insertion.png"));
+                uncommitedChilren.Add(BuildMetricNode("uncommitteddeltions", uncommittedDeletions, "deletion.png"));
+                TreeViewItem uncommittedParent = BuildMetricNodes("uncommitted", "Open changes", uncommitedChilren);
+                Uncommitted.Items.Add(uncommittedParent);
+            }
+
+            CommitChangeStats todaysStats = gitUtilMgr.GetTodaysCommits(dir);
+            string committedInsertions = "Insertion(s): " + todaysStats.insertions;
+            string committedDeletions = "Deletion(s): " + todaysStats.deletions;
+            if (CommittedToday.HasItems)
+            {
+                // update
+                TreeViewItem parentItem = await GetParent(CommittedToday, "committed");
+                UpdateNodeValue(parentItem, "committedinsertions", committedInsertions, "insertion.png");
+                UpdateNodeValue(parentItem, "committeddeltions", committedDeletions, "deletion.png");
+            }
+            else
+            {
+                List<TreeViewItem> committedChilren = new List<TreeViewItem>();
+                committedChilren.Add(BuildMetricNode("committedinsertions", committedInsertions, "insertion.png"));
+                committedChilren.Add(BuildMetricNode("committeddeltions", committedDeletions, "deletion.png"));
+                TreeViewItem committedParent = BuildMetricNodes("committed", "Committed today", committedChilren);
+                CommittedToday.Items.Add(committedParent);
+            }
         }
 
         private void ConnectClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)

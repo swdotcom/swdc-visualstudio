@@ -109,6 +109,42 @@
                 </TreeView>
             </StackPanel>
 
+            <StackPanel>
+                <ItemsControl>
+                    <Separator x:Name="Seperator2" Visibility="Visible" Margin="0,5,0,5"></Separator>
+                </ItemsControl>
+            </StackPanel>
+
+            <StackPanel>
+                <TreeView x:Name="Uncommitted" Background="Transparent" BorderBrush="Transparent" Width="auto" Height="auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
+                    <TreeView.Resources>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
+                      Color="Transparent" />
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
+                      Color="Transparent" />
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
+                      Color="Transparent" />
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
+                      Color="Transparent" />
+                    </TreeView.Resources>
+                </TreeView>
+            </StackPanel>
+
+            <StackPanel>
+                <TreeView x:Name="CommittedToday" Background="Transparent" BorderBrush="Transparent" Width="auto" Height="auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
+                    <TreeView.Resources>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
+                      Color="Transparent" />
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
+                      Color="Transparent" />
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
+                      Color="Transparent" />
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
+                      Color="Transparent" />
+                    </TreeView.Resources>
+                </TreeView>
+            </StackPanel>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

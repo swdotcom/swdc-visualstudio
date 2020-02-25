@@ -87,7 +87,8 @@ namespace SoftwareCo
                     string email = SoftwareCoUtil.RunCommand("git config user.email", projectDir);
                     if (email != null && !email.Equals(""))
                     {
-                        info.email = email;
+                        info.email = SoftwareCoUtil.NormalizeGithubEmail(email);
+
                     }
                     string branch = SoftwareCoUtil.RunCommand("git symbolic-ref --short HEAD", projectDir);
                     if (branch != null && !branch.Equals(""))
@@ -477,7 +478,21 @@ namespace SoftwareCo
             return minutesStr;
         }
 
-       public static string getDashboardRow(string label, string value)
+        public static string NormalizeGithubEmail(string email)
+        {
+            Regex regex = new Regex(@"^[0-9]+[\+]");
+            if (email != null)
+            {
+                email = Regex.Replace(email, @"users.noreply", "");
+                if (regex.IsMatch(email))
+                {
+                    email = email.Substring(email.IndexOf("+") + 1);
+                }
+            }
+            return email;
+        }
+
+        public static string getDashboardRow(string label, string value)
         {
             string result = "";
             result =  getDashboardLabel(label) +":"+  getDashboardValue(value)+ "\n";

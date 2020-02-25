@@ -63,6 +63,9 @@ namespace SoftwareCo
 
             // rebuild the code metrics data in the tree
             package.RebuildCodeMetricsAsync();
+
+            // update the git metrics
+            package.RebuildGitMetricsAsync();
         }
 
         private long GetMinutesSinceLastPayload()

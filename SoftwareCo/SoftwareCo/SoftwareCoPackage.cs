@@ -222,6 +222,12 @@ namespace SoftwareCo
                     ONE_MINUTE,
                     1000 * 120);
 
+                // rebuild the code metrics data in the tree
+                this.RebuildCodeMetricsAsync();
+
+                // update the git metrics
+                this.RebuildGitMetricsAsync();
+
                 this.InitializeUserInfo();
             }
             catch (Exception ex)
@@ -504,6 +510,22 @@ namespace SoftwareCo
                 throw new NotSupportedException("Cannot create tool window");
             }
             _codeMetricsWindow.RebuildCodeMetrics();
+        }
+
+        public async Task RebuildGitMetricsAsync()
+        {
+            if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
+            {
+                _codeMetricsWindow.RebuildCodeMetrics();
+            }
+
+            await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
+            _codeMetricsWindow = (CodeMetricsToolPane)this.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
+            if ((null == _codeMetricsWindow) || (null == _codeMetricsWindow.Frame))
+            {
+                throw new NotSupportedException("Cannot create tool window");
+            }
+            _codeMetricsWindow.RebuildGitMetricsAsync();
         }
 
         public async Task OpenCodeMetricsPane()

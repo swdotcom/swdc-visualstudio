@@ -36,5 +36,13 @@
                 ((CodeMetricsTree)this.Content).RebuildCodeMetricsAsync();
             }
         }
+
+        public void RebuildGitMetricsAsync()
+        {
+            if (this.Content != null)
+            {
+                ((CodeMetricsTree)this.Content).RebuildGitMetricsAsync();
+            }
+        }
     }
 }
