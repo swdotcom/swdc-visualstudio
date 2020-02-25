@@ -156,6 +156,9 @@ namespace SoftwareCo
                 sessionSummaryMgr = SessionSummaryManager.Instance;
                 sessionSummaryMgr.InjectAsyncPackage(this);
 
+                // init the GitUtilManager
+                GitUtilManager.Instance.InjectAsyncPackage(this);
+
                 // init the code metrics tree mgr
                 CodeMetricsTreeManager.Instance.InjectAsyncPackage(this);
 

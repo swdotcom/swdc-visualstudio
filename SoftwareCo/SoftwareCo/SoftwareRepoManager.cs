@@ -112,65 +112,22 @@ namespace SoftwareCo
             }
         }
 
-        public IDictionary<string, string> GetResourceInfo(string projectDir)
-        {
-            IDictionary<string, string> dict = new Dictionary<string, string>();
-            try
-            {
-                string identifier = SoftwareCoUtil.RunCommand("git config remote.origin.url", projectDir);
-                if (identifier != null && !identifier.Equals(""))
-                {
-                    dict.Add("identifier", identifier);
-
-                    // only get these since identifier is available
-                    string email = SoftwareCoUtil.RunCommand("git config user.email", projectDir);
-                    if (email != null && !email.Equals(""))
-                    {
-                        dict.Add("email", email);
-                    }
-                    string branch = SoftwareCoUtil.RunCommand("git symbolic-ref --short HEAD", projectDir);
-                    if (branch != null && !branch.Equals(""))
-                    {
-                        dict.Add("branch", branch);
-                    }
-                    string tag = SoftwareCoUtil.RunCommand("git describe --all", projectDir);
-
-                    if (tag != null && !tag.Equals(""))
-                    {
-                        dict.Add("tag", tag);
-                    }
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("GetResourceInfo , error :" + ex.Message, ex);
-                
-            }
-          
-            
-            return dict;
-        }
-
         public async void GetRepoUsers(string projectDir)
         {
             if (projectDir == null || projectDir.Equals(""))
             {
                 return;
             }
-            IDictionary<string, string> resourceInfo = null;
-            resourceInfo = this.GetResourceInfo(projectDir);
 
-            if (resourceInfo != null && resourceInfo.ContainsKey("identifier"))
+            RepoResourceInfo info = SoftwareCoUtil.GetResourceInfo(projectDir);
+
+            if (info != null && info.identifier != null)
             {
-                string identifier = "";
-                resourceInfo.TryGetValue("identifier", out identifier);
+                string identifier = info.identifier;
                 if (identifier != null && !identifier.Equals(""))
                 {
-                    string tag = "";
-                    resourceInfo.TryGetValue("tag", out tag);
-                    string branch = "";
-                    resourceInfo.TryGetValue("branch", out branch);
+                    string tag = info.tag;
+                    string branch = info.branch;
 
                     string gitLogData = SoftwareCoUtil.RunCommand("git log --pretty=%an,%ae | sort", projectDir);
 
@@ -229,19 +186,15 @@ namespace SoftwareCo
                 {
                     return null;
                 }
-                IDictionary<string, string> resourceInfo = null;
-                resourceInfo = this.GetResourceInfo(projectDir);
+                RepoResourceInfo info = SoftwareCoUtil.GetResourceInfo(projectDir);
 
-                if (resourceInfo != null && resourceInfo.ContainsKey("identifier"))
+                if (info != null && info.identifier != null)
                 {
-                    string identifier = "";
-                    resourceInfo.TryGetValue("identifier", out identifier);
+                    string identifier = info.identifier;
                     if (identifier != null && !identifier.Equals(""))
                     {
-                        string tag = "";
-                        resourceInfo.TryGetValue("tag", out tag);
-                        string branch = "";
-                        resourceInfo.TryGetValue("branch", out branch);
+                        string tag = info.tag;
+                        string branch = info.branch;
 
                         string qryString = "?identifier=" + identifier;
                         qryString += "&tag=" + tag;
@@ -289,21 +242,17 @@ namespace SoftwareCo
                 {
                     return;
                 }
-                IDictionary<string, string> resourceInfo = null;
-                resourceInfo = this.GetResourceInfo(projectDir);
+                RepoResourceInfo info = SoftwareCoUtil.GetResourceInfo(projectDir);
 
-                if (resourceInfo != null && resourceInfo.ContainsKey("identifier"))
+                if (info != null && info.identifier != null)
                 {
-                    string identifier = "";
-                    resourceInfo.TryGetValue("identifier", out identifier);
+                    string identifier = info.identifier;
                     if (identifier != null && !identifier.Equals(""))
                     {
-                        string tag = "";
-                        resourceInfo.TryGetValue("tag", out tag);
-                        string branch = "";
-                        resourceInfo.TryGetValue("branch", out branch);
-                        string email = "";
-                        resourceInfo.TryGetValue("email", out email);
+                        string tag = info.tag;
+                        string branch = info.branch;
+                        string email = info.email;
+
                         RepoCommit latestCommit = null;
                         latestCommit = await this.GetLatestCommitAsync(projectDir);
 

@@ -60,9 +60,12 @@
     <Compile Include="Managers\DashboardManager.cs" />
     <Compile Include="Managers\DocEventManager.cs" />
     <Compile Include="Managers\EventManager.cs" />
+    <Compile Include="Managers\GitUtilManager.cs" />
     <Compile Include="Managers\SessionSummaryManager.cs" />
+    <Compile Include="Models\CommitChangeStats.cs" />
     <Compile Include="Models\FileInfoSummary.cs" />
     <Compile Include="Models\KeystrokeAggregates.cs" />
+    <Compile Include="Models\RepoResourceInfo.cs" />
     <Compile Include="Models\SessionSummary.cs" />
     <Compile Include="SoftwareDashboardLaunchCommand.cs" />
     <Compile Include="SoftwareHttpManager.cs" />

@@ -59,6 +59,60 @@ namespace SoftwareCo
             return "";
         }
 
+        public static List<string> GetCommandResultList(string cmd, string dir)
+        {
+            List<string> resultList = new List<string>();
+            string commandResult = SoftwareCoUtil.RunCommand(cmd, dir);
+
+            if (commandResult != null && !commandResult.Equals(""))
+            {
+                string[] lines = commandResult.Split(
+                    new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                resultList = new List<string>(lines);
+            }
+            return resultList;
+        }
+
+        public static RepoResourceInfo GetResourceInfo(string projectDir)
+        {
+            RepoResourceInfo info = new RepoResourceInfo();
+            try
+            {
+                string identifier = SoftwareCoUtil.RunCommand("git config remote.origin.url", projectDir);
+                if (identifier != null && !identifier.Equals(""))
+                {
+                    info.identifier = identifier;
+
+                    // only get these since identifier is available
+                    string email = SoftwareCoUtil.RunCommand("git config user.email", projectDir);
+                    if (email != null && !email.Equals(""))
+                    {
+                        info.email = email;
+                    }
+                    string branch = SoftwareCoUtil.RunCommand("git symbolic-ref --short HEAD", projectDir);
+                    if (branch != null && !branch.Equals(""))
+                    {
+                        info.branch = branch;
+                    }
+                    string tag = SoftwareCoUtil.RunCommand("git describe --all", projectDir);
+
+                    if (tag != null && !tag.Equals(""))
+                    {
+                        info.tag = tag;
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("GetResourceInfo , error :" + ex.Message, ex);
+
+            }
+
+
+            return info;
+        }
+
         public static void UpdateTelemetry(bool isOn)
         {
             _telemetryOn = isOn;
