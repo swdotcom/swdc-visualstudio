@@ -151,13 +151,19 @@ namespace SoftwareCo
                 // init the doc event mgr and inject ObjDte
                 docEventMgr = DocEventManager.Instance;
                 DocEventManager.ObjDte = ObjDte;
+
                 // init the session summary mgr
                 sessionSummaryMgr = SessionSummaryManager.Instance;
                 sessionSummaryMgr.InjectAsyncPackage(this);
+
                 // init the code metrics tree mgr
                 CodeMetricsTreeManager.Instance.InjectAsyncPackage(this);
+
                 // init the event manager and inject this
                 EventManager.Instance.InjectAsyncPackage(this);
+
+                // init the wallclock
+                WallclockManager wallclockMgr = WallclockManager.Instance;
 
                 // setup event handlers
                 _textDocKeyEvent.AfterKeyPress += docEventMgr.AfterKeyPressedAsync;
@@ -177,6 +183,9 @@ namespace SoftwareCo
                 {
                     _softwareRepoUtil = new SoftwareRepoManager();
                 }
+
+                // fetch the session summary
+                await wallclockMgr.UpdateSessionSummaryFromServerAsync();
 
                 await InitializeStatusBar();
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace SoftwareCo
 {
@@ -96,12 +97,11 @@ namespace SoftwareCo
                 SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", latestPayloadTimestampEndUtc);
 
                 // update the session summary global and averages for the new day
-                // SoftwareCoUtil.SetTimeout(ONE_MINUTE, UpdateSessionSummaryFromServer, false);
-                //
+                Task.Delay(ONE_MINUTE).ContinueWith((task) => { UpdateSessionSummaryFromServerAsync(); });
             }
         }
 
-        private async Task UpdateSessionSummaryFromServer()
+        public async Task UpdateSessionSummaryFromServerAsync()
         {
             object jwt = SoftwareCoUtil.getItem("jwt");
             if (jwt != null)
@@ -110,11 +110,14 @@ namespace SoftwareCo
                 HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, jwt.ToString());
                 if (SoftwareHttpManager.IsOk(response))
                 {
+                    SessionSummary summary = SessionSummaryManager.Instance.GetSessionSummayData();
                     string responseBody = await response.Content.ReadAsStringAsync();
                     IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
                     if (jsonObj != null)
                     {
-
+                        SessionSummary incomingSummary = SoftwareCoUtil.DictionaryToObject<SessionSummary>(jsonObj);
+                        summary.CloneSessionSummary(incomingSummary);
+                        SessionSummaryManager.Instance.SaveSessionSummaryToDisk(summary);
                     }
                 }
             }

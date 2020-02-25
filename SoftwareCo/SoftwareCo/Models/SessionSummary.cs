@@ -77,6 +77,44 @@ namespace SoftwareCo
             jsonObj.Add("dailyMinutesGoal", this.dailyMinutesGoal);
             return jsonObj.ToString();
         }
+
+        public void CloneSessionSummary(SessionSummary summary)
+        {
+            if (this.currentDayMinutes < summary.currentDayMinutes)
+            {
+                // add the current attributes
+                this.currentDayMinutes = summary.currentDayMinutes;
+                this.currentDayKeystrokes = summary.currentDayKeystrokes;
+                this.currentDayKpm = summary.currentDayKpm;
+                this.currentDayLinesAdded = summary.currentDayLinesAdded;
+                this.currentDayLinesRemoved = summary.currentDayLinesRemoved;
+            }
+
+            this.currentSessionGoalPercent = summary.currentSessionGoalPercent;
+            this.averageDailyMinutes = summary.averageDailyMinutes;
+            this.averageDailyKeystrokes = summary.averageDailyKeystrokes;
+            this.averageDailyKpm = summary.averageDailyKpm;
+            this.averageDailyLinesAdded = summary.averageDailyLinesAdded;
+            this.averageDailyLinesRemoved = summary.averageDailyLinesRemoved;
+
+            this.globalAverageSeconds = summary.globalAverageSeconds;
+            this.globalAverageDailyMinutes = summary.globalAverageDailyMinutes;
+            this.globalAverageDailyKeystrokes = summary.globalAverageDailyKeystrokes;
+            this.globalAverageLinesAdded = summary.globalAverageLinesAdded;
+            this.globalAverageLinesRemoved = summary.globalAverageLinesRemoved;
+
+            this.inflow = summary.inflow;
+            this.timePercent = summary.timePercent;
+            this.volumePercent = summary.volumePercent;
+            this.velocityPercent = summary.velocityPercent;
+
+            this.liveshareMinutes = summary.liveshareMinutes;
+            this.latestPayloadTimestamp = summary.latestPayloadTimestamp;
+            this.latestPayloadTimestampEndUtc = summary.latestPayloadTimestampEndUtc;
+            this.lastUpdatedToday = summary.lastUpdatedToday;
+
+            this.dailyMinutesGoal = summary.dailyMinutesGoal;
+        }
       
     }
 }
