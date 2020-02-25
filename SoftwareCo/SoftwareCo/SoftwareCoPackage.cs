@@ -164,6 +164,7 @@ namespace SoftwareCo
 
                 // init the wallclock
                 WallclockManager wallclockMgr = WallclockManager.Instance;
+                wallclockMgr.InjectAsyncPackage(this);
 
                 // setup event handlers
                 _textDocKeyEvent.AfterKeyPress += docEventMgr.AfterKeyPressedAsync;
@@ -184,10 +185,11 @@ namespace SoftwareCo
                     _softwareRepoUtil = new SoftwareRepoManager();
                 }
 
+                // initialize the status bar before we fetch the summary data
+                await InitializeStatusBar();
+
                 // fetch the session summary
                 await wallclockMgr.UpdateSessionSummaryFromServerAsync();
-
-                await InitializeStatusBar();
 
                 sessionSummaryMgr.UpdateStatusBarWithSummaryData();
 

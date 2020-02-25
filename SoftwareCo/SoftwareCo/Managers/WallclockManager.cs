@@ -17,6 +17,7 @@ namespace SoftwareCo
 
         private long _wctime = 0;
         private string _currentDay = "";
+        private SoftwareCoPackage package;
         private SessionSummaryManager sessionSummaryMgr;
 
         public static WallclockManager Instance { get { return lazy.Value; } }
@@ -36,13 +37,12 @@ namespace SoftwareCo
             this._wctime = SoftwareCoUtil.getItemAsLong("wctime");
             this._wctime += SECONDS_TO_INCREMENT;
             SoftwareCoUtil.setNumericItem("wctime", this._wctime);
+            DispatchUpdateAsync();
         }
 
-        public void DispatchStatusViewUpdate()
+        public void InjectAsyncPackage(SoftwareCoPackage package)
         {
-            sessionSummaryMgr.UpdateStatusBarWithSummaryData();
-
-            // refresh the tree
+            this.package = package;
         }
 
         public long GetWcTimeInMinutes()
@@ -54,6 +54,12 @@ namespace SoftwareCo
         {
             this._wctime = 0L;
             SoftwareCoUtil.setItem("wctime", this._wctime.ToString());
+            DispatchUpdateAsync();
+        }
+
+        private async Task DispatchUpdateAsync()
+        {
+            package.RebuildCodeMetricsAsync();
         }
 
         public void UpdateBasedOnSessionSeconds(long session_seconds)
@@ -65,6 +71,9 @@ namespace SoftwareCo
             {
                 this._wctime = session_seconds + 1;
                 SoftwareCoUtil.setItem("wctime", this._wctime.ToString());
+
+                // update the code metrics part of the tree since this value has changed
+                DispatchUpdateAsync();
             }
         }
 
@@ -118,44 +127,13 @@ namespace SoftwareCo
                         SessionSummary incomingSummary = SoftwareCoUtil.DictionaryToObject<SessionSummary>(jsonObj);
                         summary.CloneSessionSummary(incomingSummary);
                         SessionSummaryManager.Instance.SaveSessionSummaryToDisk(summary);
+
+                        // update the wallclock time if the session seconds is greater. this can happen when using multiple editor types
+                        WallclockManager.Instance.UpdateBasedOnSessionSeconds(summary.currentDayMinutes * 60);
                     }
                 }
             }
         }
-
-        /**
-        async updateSessionSummaryFromServer()
-        {
-            const jwt = getItem("jwt");
-            const result = await softwareGet(`/ sessions / summary`, jwt);
-            if (isResponseOk(result) && result.data)
-            {
-                const data = result.data;
-
-                // update the session summary data
-                const summary: SessionSummary = getSessionSummaryData();
-                const updateCurrents =
-                    summary.currentDayMinutes < data.currentDayMinutes
-                        ? true
-                        : false;
-                Object.keys(data).forEach(key => {
-                    const val = data[key];
-                    if (val !== null && val !== undefined)
-                    {
-                        if (updateCurrents && key.indexOf("current") === 0)
-                        {
-                            summary[key] = val;
-                        }
-                        else if (key.indexOf("current") === -1)
-                        {
-                            summary[key] = val;
-                        }
-                    }
-                });
-
-                saveSessionSummaryToDisk(summary);
-            }
-        }**/
     }
 }
 
