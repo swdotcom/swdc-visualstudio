@@ -34,7 +34,7 @@ namespace SoftwareCo
         {
             this._wctime = SoftwareCoUtil.getItemAsLong("wctime");
             this._wctime += SECONDS_TO_INCREMENT;
-            SoftwareCoUtil.setItem("wctime", this._wctime.ToString());
+            SoftwareCoUtil.setNumericItem("wctime", this._wctime);
         }
 
         public void DispatchStatusViewUpdate()
@@ -93,7 +93,7 @@ namespace SoftwareCo
                 SoftwareCoUtil.setItem("currentDay", _currentDay);
                 // update the last payload timestamp
                 long latestPayloadTimestampEndUtc = 0;
-                SoftwareCoUtil.setItem("latestPayloadTimestampEndUtc", latestPayloadTimestampEndUtc.ToString());
+                SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", latestPayloadTimestampEndUtc);
 
                 // update the session summary global and averages for the new day
                 // SoftwareCoUtil.SetTimeout(ONE_MINUTE, UpdateSessionSummaryFromServer, false);

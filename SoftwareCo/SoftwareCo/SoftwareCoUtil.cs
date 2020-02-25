@@ -109,6 +109,24 @@ namespace SoftwareCo
             return null;
         }
 
+        public static void setNumericItem(string key, long val)
+        {
+            string sessionFile = getSoftwareSessionFile();
+            IDictionary<string, object> dict = new Dictionary<string, object>();
+            string content = "";
+            if (File.Exists(sessionFile))
+            {
+                content = File.ReadAllText(sessionFile, System.Text.Encoding.UTF8);
+                // conver to dictionary
+                dict = (IDictionary<string, object>)SimpleJson.DeserializeObject(content);
+                dict.Remove(key);
+            }
+            dict.Add(key, val);
+            content = SimpleJson.SerializeObject(dict);
+            // write it back to the file
+            File.WriteAllText(sessionFile, content, System.Text.Encoding.UTF8);
+        }
+
         public static void setItem(String key, string val)
         {
             if (sessionMap.TryGetValue(key, out string outval))

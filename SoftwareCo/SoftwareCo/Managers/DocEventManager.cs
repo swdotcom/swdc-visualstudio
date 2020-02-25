@@ -257,8 +257,12 @@ namespace SoftwareCo
 
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             DateTime now = DateTime.UtcNow;
+
             if (_softwareData.source.Count > 0)
             {
+                // update the latestPayloadTimestampEndUtc
+                SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
+
                 offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
                 _softwareData.offset = Math.Abs((int)offset);
                 if (TimeZone.CurrentTimeZone.DaylightName != null
