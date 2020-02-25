@@ -336,7 +336,7 @@ namespace SoftwareCo
         }
 
 
-        private string GetSolutionDirectory()
+        public static string GetSolutionDirectory()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))

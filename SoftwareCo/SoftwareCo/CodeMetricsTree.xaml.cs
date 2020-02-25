@@ -32,6 +32,8 @@ namespace SoftwareCo
             RebuildMenuButtonsAsync();
             // update the metric nodes
             RebuildCodeMetricsAsync();
+            // update the git metric nodes
+            RebuildGitMetricsAsync();
         }
 
         public async Task RebuildMenuButtonsAsync()
@@ -206,6 +208,16 @@ namespace SoftwareCo
                 TreeViewItem keystrokesParent = BuildMetricNodes("keystrokes", "Keystrokes", keystrokeChildren);
                 Keystrokes.Items.Add(keystrokesParent);
             }
+        }
+
+        public async Task RebuildGitMetricsAsync()
+        {
+            GitUtilManager gitUtilMgr = GitUtilManager.Instance;
+            string dir = SoftwareCoPackage.GetSolutionDirectory();
+
+            CommitChangeStats todaysStats = gitUtilMgr.GetTodaysCommits(dir);
+
+            CommitChangeStats uncommited = gitUtilMgr.GetUncommitedChanges(dir);
         }
 
         private void ConnectClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
