@@ -283,7 +283,7 @@ namespace SoftwareCo
             }
         }
 
-        private async void SendOfflineData(object stateinfo)
+        public static async void SendOfflineData(object stateinfo)
         {
             string MethodName = "SendOfflineData";
             Logger.Info(DateTime.Now.ToString());
@@ -319,8 +319,6 @@ namespace SoftwareCo
                     }
                 }
             }
-
-            sessionSummaryMgr.ÇlearSessionSummaryData();
         }
 
 
@@ -454,7 +452,6 @@ namespace SoftwareCo
                 }
                 else
                 {
-
                     foundChild = (T)child;
                     break;
                 }
