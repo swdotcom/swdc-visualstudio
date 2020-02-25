@@ -53,7 +53,7 @@ namespace SoftwareCo
             }
 
             InitializeSoftwareData(fileName);
-
+            // wrapper for a file path
             FileInfo fi = new FileInfo(fileName);
 
             _softwareData.UpdateData(fileName, "length", fi.Length);
@@ -61,6 +61,7 @@ namespace SoftwareCo
 
         public async void DocEventsOnDocumentOpeningAsync(String docPath, Boolean readOnly)
         {
+            // wrapper for a file path
             FileInfo fi = new FileInfo(docPath);
             String fileName = fi.FullName;
             InitializeSoftwareData(fileName);
@@ -327,16 +328,25 @@ namespace SoftwareCo
                 string datastoreFile = SoftwareCoUtil.getSoftwareDataStoreFile();
                 // append to the file
                 File.AppendAllText(datastoreFile, softwareDataContent + Environment.NewLine);
-
-                //// update the statusbar
-                sessionSummaryMgr.UpdateStatusBarWithSummaryData();
             }
         }
 
         private void UpdateAggregates()
         {
-            List<FileInfo> fileInfoList = _softwareData.GetSourceFileInfoList();
+            List<FileInfoSummary> fileInfoList = _softwareData.GetSourceFileInfoList();
             KeystrokeAggregates aggregates = new KeystrokeAggregates();
+            if (_softwareData.project != null)
+            {
+                aggregates.directory = _softwareData.project.directory;
+            } else
+            {
+                aggregates.directory = "Unamed";
+            }
+
+            foreach (FileInfoSummary fileInfo in fileInfoList)
+            {
+                aggregates.Aggregate(fileInfo);
+            }
 
             sessionSummaryMgr.IncrementSessionSummaryData(aggregates);
         }

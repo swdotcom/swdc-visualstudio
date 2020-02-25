@@ -21,9 +21,20 @@
 
         }
 
-        public void RefreshMenuButtons()
+        public void RebuildMenuButtons()
         {
-            ((CodeMetricsTree)this.Content).RebuildMenuButtons();
+            if (this.Content != null)
+            {
+                ((CodeMetricsTree)this.Content).RebuildMenuButtonsAsync();
+            }
+        }
+
+        public void RebuildCodeMetrics()
+        {
+            if (this.Content != null)
+            {
+                ((CodeMetricsTree)this.Content).RebuildCodeMetricsAsync();
+            }
         }
     }
 }

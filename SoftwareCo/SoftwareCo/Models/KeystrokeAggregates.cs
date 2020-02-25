@@ -18,7 +18,7 @@ namespace SoftwareCo
         public long keystrokes { get; set; }
         public string directory { get; set; }
 
-        public void Aggregate(FileInfo fileInfo)
+        public void Aggregate(FileInfoSummary fileInfo)
         {
             this.add += fileInfo.add;
             this.close += fileInfo.close;
@@ -28,6 +28,7 @@ namespace SoftwareCo
             this.open += fileInfo.open;
             this.paste += fileInfo.paste;
             this.keystrokes += fileInfo.keystrokes;
+            
         }
     }
 }

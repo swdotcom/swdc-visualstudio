@@ -23,30 +23,6 @@ namespace SoftwareCo
         public static int DASHBOARD_LABEL_WIDTH = 25;
         public static int DASHBOARD_VALUE_WIDTH = 25;
 
-        private static StatusBarButton _statusBarButton;
-        private static bool _addedStatusBarButton = false;
-
-        /***
-        private SpotifyLocalAPI _spotify = null;
-
-        public IDictionary<string, string> getTrackInfo()
-        {
-            IDictionary<string, string> dict = new Dictionary<string, string>();
-
-            if (_spotify == null)
-            {
-                _spotify = new SpotifyLocalAPI();
-            }
-
-            if (SpotifyLocalAPI.IsSpotifyRunning() && _spotify.Connect())
-            {
-                StatusResponse status = _spotify.GetStatus();
-                Logger.Info("got spotify status: " + status.ToString());
-            }
-
-            return dict;
-        }
-        **/
 
         public static string RunCommand(String cmd, String dir)
         {
@@ -364,7 +340,7 @@ namespace SoftwareCo
             return ((DateTimeOffset)begOfToday).ToUnixTimeSeconds();
         }
 
-        public static string FormatNumber(float number)
+        public static string FormatNumber(double number)
         {
             string numberStr = "";
             if (number >= 1000 || number % 1 == 0)
@@ -475,68 +451,6 @@ namespace SoftwareCo
             timer.Start();
         }
 
-        public static T FindChildControl<T>(DependencyObject parent, string childName)
-          where T : DependencyObject
-        {
-
-            if (parent == null) return null;
-
-            T foundChild = null;
-
-            int childrenCount = VisualTreeHelper.GetChildrenCount(parent);
-            for (int i = 0; i < childrenCount; i++)
-            {
-                var child = VisualTreeHelper.GetChild(parent, i);
-
-                T childType = child as T;
-                if (childType == null)
-                {
-
-                    foundChild = FindChildControl<T>(child, childName);
-
-
-                    if (foundChild != null) break;
-                }
-                else if (!string.IsNullOrEmpty(childName))
-                {
-
-                    if (child is FrameworkElement frameworkElement && frameworkElement.Name == childName)
-                    {
-
-                        foundChild = (T)child;
-                        break;
-                    }
-                }
-                else
-                {
-
-                    foundChild = (T)child;
-                    break;
-                }
-            }
-
-            return foundChild;
-        }
-
-        public static void UpdateStatusBarButtonText(String text, String iconName = null)
-        {
-            if (_statusBarButton == null)
-            {
-                _statusBarButton = new StatusBarButton();
-            }
-            if (!SoftwareCoPackage.IsStatusInfoShowing()) {
-                text = "";
-                iconName = "clock.png";
-            }
-            
-            if (iconName == null || iconName.Equals(""))
-            {
-                iconName = "cpaw.png";
-            }
-            _statusBarButton.UpdateDisplay(text, iconName);
-            InitStatusBarControl();
-        }
-
         public static Image CreateImage(string iconName)
         {
             // create Image
@@ -544,29 +458,6 @@ namespace SoftwareCo
             image.Source = new BitmapImage(new Uri("Resources/" + iconName, UriKind.Relative));
             return image;
         }
-
-        public static void InitStatusBarControl()
-        {
-            DockPanel statusBarObj = FindChildControl<DockPanel>(System.Windows.Application.Current.MainWindow, "StatusBarPanel");
-            if (_statusBarButton != null && statusBarObj != null && !_addedStatusBarButton)
-            {
-                statusBarObj.Children.Insert(0, _statusBarButton);
-                _addedStatusBarButton = true;
-            }
-        }
-
-        private static void ReloadStatusBarButton()
-        {
-            DockPanel statusBarObj = FindChildControl<DockPanel>(System.Windows.Application.Current.MainWindow, "StatusBarPanel");
-
-            if (statusBarObj != null)
-            {
-                statusBarObj.Children.RemoveAt(0);
-
-                statusBarObj.Children.Insert(0, _statusBarButton);
-            }
-        }
-
     }
    
     struct Date

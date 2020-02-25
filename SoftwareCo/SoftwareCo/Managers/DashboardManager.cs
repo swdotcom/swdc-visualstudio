@@ -23,9 +23,6 @@ namespace SoftwareCo
     {
         private static readonly Lazy<DashboardManager> lazy = new Lazy<DashboardManager>(() => new DashboardManager());
 
-        // Used by Constants for version info
-        public static DTE2 ObjDte;
-
         public static DashboardManager Instance { get { return lazy.Value; } }
 
         private DashboardManager()
@@ -138,7 +135,7 @@ namespace SoftwareCo
                 string dashboardFile = SoftwareCoUtil.getDashboardFile();
                 if (File.Exists(dashboardFile))
                 {
-                    ObjDte.ItemOperations.OpenFile(dashboardFile);
+                    SoftwareCoPackage.ObjDte.ItemOperations.OpenFile(dashboardFile);
                 }
             }
             catch (Exception ex)

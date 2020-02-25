@@ -32,7 +32,7 @@ namespace SoftwareCo
             SoftwareCoUtil.setItem("wctime", this._wctime.ToString());
         }
 
-        private void DispatchStatusViewUpdate()
+        public void DispatchStatusViewUpdate()
         {
             sessionSummaryMgr.UpdateStatusBarWithSummaryData();
 
@@ -59,8 +59,6 @@ namespace SoftwareCo
             {
                 this._wctime = session_seconds + 1;
                 SoftwareCoUtil.setItem("wctime", this._wctime.ToString());
-
-                // refresh the tree
             }
         }
     }

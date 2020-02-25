@@ -59,8 +59,11 @@
     <Compile Include="Managers\CodeMetricsTreeManager.cs" />
     <Compile Include="Managers\DashboardManager.cs" />
     <Compile Include="Managers\DocEventManager.cs" />
+    <Compile Include="Managers\EventManager.cs" />
     <Compile Include="Managers\SessionSummaryManager.cs" />
-    <Compile Include="SessionSummary.cs" />
+    <Compile Include="Models\FileInfoSummary.cs" />
+    <Compile Include="Models\KeystrokeAggregates.cs" />
+    <Compile Include="Models\SessionSummary.cs" />
     <Compile Include="SoftwareDashboardLaunchCommand.cs" />
     <Compile Include="SoftwareHttpManager.cs" />
     <Compile Include="SoftwareLoginCommand.cs" />
@@ -72,7 +75,6 @@
     <Compile Include="SoftwareData.cs" />
     <Compile Include="SoftwareLaunchCommand.cs" />
     <Compile Include="SoftwareRepoManager.cs" />
-    <Compile Include="SoftwareStatus.cs" />
     <Compile Include="SoftwareTopFortyCommand.cs" />
     <Compile Include="SoftwareUserSession.cs" />
     <Compile Include="SoftwareToggleStatusInfoCommand.cs" />
@@ -86,6 +88,7 @@
     </Compile>
     <Compile Include="CodeMetricsTreeItem.cs" />
     <Compile Include="CodeMetricsTreeProvider.cs" />
+    <Compile Include="WpfUtility.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">

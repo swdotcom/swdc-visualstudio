@@ -16,6 +16,8 @@ using System.Net.Http;
 using System.Reflection;
 using Microsoft.VisualStudio;
 using System.Windows.Forms;
+using System.Windows.Threading;
+using System.Windows.Controls;
 
 namespace SoftwareCo
 {
@@ -24,6 +26,7 @@ namespace SoftwareCo
         private static readonly Lazy<SessionSummaryManager> lazy = new Lazy<SessionSummaryManager>(() => new SessionSummaryManager());
 
         private SessionSummary _sessionSummary;
+        private SoftwareCoPackage package;
 
         public static SessionSummaryManager Instance { get { return lazy.Value; } }
 
@@ -31,6 +34,11 @@ namespace SoftwareCo
         {
             // initialize the session summary
             GetSessionSummayData();
+        }
+
+        public void InjectAsyncPackage(SoftwareCoPackage package)
+        {
+            this.package = package;
         }
 
         public void IncrementSessionSummaryData(KeystrokeAggregates aggregate)
@@ -50,6 +58,11 @@ namespace SoftwareCo
             _sessionSummary.currentDayLinesRemoved += aggregate.linesRemoved;
 
             SaveSessionSummaryToDisk(_sessionSummary);
+            // update the status bar text
+            UpdateStatusBarWithSummaryData();
+
+            // rebuild the code metrics data in the tree
+            package.RebuildCodeMetricsAsync();
         }
 
         private long GetMinutesSinceLastPayload()
@@ -166,8 +179,8 @@ namespace SoftwareCo
             iconName = currentDayMinutesVal > averageDailyMinutesVal ? "rocket.png" : "cpaw.png";
             // string msg = string.Format("{0}{1}", inFlowIcon, currentDayMinutesTime);
 
-            SoftwareCoUtil.UpdateStatusBarButtonText(currentDayMinutesTime, iconName);
-
+            // it's ok not to await on this
+            package.UpdateStatusBarButtonText(currentDayMinutesTime, iconName);
         }
 
         internal class SessionSummaryResult

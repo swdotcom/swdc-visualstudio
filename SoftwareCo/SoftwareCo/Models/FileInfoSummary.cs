@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
-    class FileInfo
+    public class FileInfoSummary
     {
         public long add { get; set; }
         public long close { get; set; }

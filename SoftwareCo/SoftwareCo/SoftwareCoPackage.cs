@@ -15,6 +15,9 @@ using Microsoft.VisualStudio;
 using System.Windows.Forms;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Controls;
+using System.Windows;
+using System.Windows.Media;
 
 namespace SoftwareCo
 {
@@ -54,7 +57,6 @@ namespace SoftwareCo
 
         private DTEEvents _dteEvents;
         private DocumentEvents _docEvents;
-        private WindowEvents _windowEvents;
         private TextDocumentKeyPressEvents _textDocKeyEvent;
 
         private System.Threading.Timer timer;
@@ -68,13 +70,14 @@ namespace SoftwareCo
         // this is the solution full name
         private string _solutionName = string.Empty;
 
-        private SoftwareData _softwareData;
-        
+        private StatusBarButton _statusBarButton = new StatusBarButton();
+        private bool _addedStatusBarButton = false;
+
+        private CodeMetricsToolPane _codeMetricsWindow;
+
         private SoftwareRepoManager _softwareRepoUtil;
         private SessionSummaryManager sessionSummaryMgr;
         private DocEventManager docEventMgr;
-
-        private static SoftwareStatus _softwareStatus;
 
         private static int THIRTY_SECONDS = 1000 * 30;
         private static int ONE_MINUTE = THIRTY_SECONDS * 2;
@@ -150,8 +153,11 @@ namespace SoftwareCo
                 DocEventManager.ObjDte = ObjDte;
                 // init the session summary mgr
                 sessionSummaryMgr = SessionSummaryManager.Instance;
+                sessionSummaryMgr.InjectAsyncPackage(this);
                 // init the code metrics tree mgr
                 CodeMetricsTreeManager.Instance.InjectAsyncPackage(this);
+                // init the event manager and inject this
+                EventManager.Instance.InjectAsyncPackage(this);
 
                 // setup event handlers
                 _textDocKeyEvent.AfterKeyPress += docEventMgr.AfterKeyPressedAsync;
@@ -159,9 +165,6 @@ namespace SoftwareCo
                 _docEvents.DocumentClosing += docEventMgr.DocEventsOnDocumentClosedAsync;
                 _docEvents.DocumentSaved += docEventMgr.DocEventsOnDocumentSaved;
                 _docEvents.DocumentOpening += docEventMgr.DocEventsOnDocumentOpeningAsync;
-
-                //initialize the StatusBar 
-                await InitializeSoftwareStatusAsync();
 
                 // initialize the menu commands
                 await SoftwareLaunchCommand.InitializeAsync(this);
@@ -174,7 +177,9 @@ namespace SoftwareCo
                 {
                     _softwareRepoUtil = new SoftwareRepoManager();
                 }
-                InitializeStatusBarButton();
+
+                await InitializeStatusBar();
+
                 sessionSummaryMgr.UpdateStatusBarWithSummaryData();
 
                 // Create an AutoResetEvent to signal the timeout threshold in the
@@ -211,19 +216,6 @@ namespace SoftwareCo
             }
         }
 
-        private void InitializeStatusBarButton()
-        {
-            SoftwareCoUtil.InitStatusBarControl();
-        }
-
-        private async Task InitializeSoftwareStatusAsync()
-        {
-            if (_softwareStatus == null)
-            {
-                IVsStatusbar statusbar = await GetServiceAsync(typeof(SVsStatusbar)) as IVsStatusbar;
-                _softwareStatus = new SoftwareStatus(statusbar);
-            }
-        }
         public void Dispose()
         {
             if (timer != null)
@@ -249,25 +241,6 @@ namespace SoftwareCo
         #endregion
 
         #region Methods
-
-        public static void ToggleStatusInfo()
-        {
-            if (_softwareStatus != null)
-            {
-                _softwareStatus.ToggleStatusInfo();
-                CodeMetricsTreeManager.Instance.RefreshMenuButtons();
-                SessionSummaryManager.Instance.UpdateStatusBarWithSummaryData();
-            }
-        }
-
-        public static bool IsStatusInfoShowing()
-        {
-            if (_softwareStatus != null)
-            {
-                return _softwareStatus.ShowingStatusText();
-            }
-            return true;
-        }
 
         private void ProcessHourlyJobs(Object stateInfo)
         {
@@ -299,7 +272,7 @@ namespace SoftwareCo
             {
                 string msg = "Finish creating your account and see rich data visualizations.";
                 const string caption = "Code Time";
-                DialogResult result = MessageBox.Show(msg, caption, MessageBoxButtons.OKCancel);
+                DialogResult result = System.Windows.Forms.MessageBox.Show(msg, caption, MessageBoxButtons.OKCancel);
 
                 // If the no button was pressed ...
                 if (result == DialogResult.Yes)
@@ -415,15 +388,111 @@ namespace SoftwareCo
             SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(false);
         }
 
-        public async Task RefreshMenuButtonsAsync()
+        public async Task UpdateStatusBarButtonText(String text, String iconName = null)
         {
+            await InitializeStatusBar();
+
+            if (!EventManager.Instance.IsShowingStatusText())
+            {
+                text = "";
+                iconName = "clock.png";
+            }
+
+            if (iconName == null || iconName.Equals(""))
+            {
+                iconName = "cpaw.png";
+            }
+
+            await _statusBarButton.UpdateDisplayAsync(text, iconName);
+        }
+
+        public async Task InitializeStatusBar()
+        {
+            if (_addedStatusBarButton)
+            {
+                return;
+            }
             await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
-            ToolWindowPane window = this.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
-            if ((null == window) || (null == window.Frame))
+            DockPanel statusBarObj = FindChildControl<DockPanel>(System.Windows.Application.Current.MainWindow, "StatusBarPanel");
+            if (statusBarObj != null)
+            {
+                statusBarObj.Children.Insert(0, _statusBarButton);
+                _addedStatusBarButton = true;
+            }
+        }
+
+        public T FindChildControl<T>(DependencyObject parent, string childName)
+          where T : DependencyObject
+        {
+            if (parent == null) return null;
+
+            T foundChild = null;
+
+            int childrenCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childrenCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+
+                T childType = child as T;
+                if (childType == null)
+                {
+
+                    foundChild = FindChildControl<T>(child, childName);
+
+
+                    if (foundChild != null) break;
+                }
+                else if (!string.IsNullOrEmpty(childName))
+                {
+
+                    if (child is FrameworkElement frameworkElement && frameworkElement.Name == childName)
+                    {
+
+                        foundChild = (T)child;
+                        break;
+                    }
+                }
+                else
+                {
+
+                    foundChild = (T)child;
+                    break;
+                }
+            }
+
+            return foundChild;
+        }
+
+        public async Task RebuildMenuButtonsAsync()
+        {
+            if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
+            {
+                _codeMetricsWindow.RebuildMenuButtons();
+            }
+
+            await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
+            _codeMetricsWindow = (CodeMetricsToolPane)this.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
+            if ((null == _codeMetricsWindow) || (null == _codeMetricsWindow.Frame))
             {
                 throw new NotSupportedException("Cannot create tool window");
             }
-            ((CodeMetricsToolPane)window).RefreshMenuButtons();
+            _codeMetricsWindow.RebuildMenuButtons();
+        }
+
+        public async Task RebuildCodeMetricsAsync()
+        {
+            if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
+            {
+                _codeMetricsWindow.RebuildCodeMetrics();
+            }
+
+            await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
+            _codeMetricsWindow = (CodeMetricsToolPane)this.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
+            if ((null == _codeMetricsWindow) || (null == _codeMetricsWindow.Frame))
+            {
+                throw new NotSupportedException("Cannot create tool window");
+            }
+            _codeMetricsWindow.RebuildCodeMetrics();
         }
 
         public async Task OpenCodeMetricsPane()
@@ -441,13 +510,12 @@ namespace SoftwareCo
 
         private async Task ShowOfflinePromptAsync()
         {
-
             string msg = "Our service is temporarily unavailable. We will try to reconnect again in 10 minutes. Your status bar will not update at this time.";
             string caption = "Code Time";
             MessageBoxButtons buttons = MessageBoxButtons.OK;
 
             // Displays the MessageBox.
-            MessageBox.Show(msg, caption, buttons);
+            System.Windows.Forms.MessageBox.Show(msg, caption, buttons);
         }
 
         #endregion

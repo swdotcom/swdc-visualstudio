@@ -30,7 +30,7 @@
                     <Label x:Name="FeedbackLabel" Foreground="DarkCyan" MouseDown="FeedbackClickHandler" Background="Transparent" BorderBrush="Transparent" BorderThickness="0"></Label>
                 </StackPanel>
                 <ItemsControl>
-                    <Separator x:Name="Seperator1" Visibility="Hidden" Margin="0,5,0,5"></Separator>
+                    <Separator x:Name="Seperator1" Visibility="Visible" Margin="0,5,0,5"></Separator>
                 </ItemsControl>
             </StackPanel>
 

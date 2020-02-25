@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
@@ -15,11 +16,13 @@ namespace SoftwareCo
             this.DataContext = this;
         }
 
-        public void UpdateDisplay(string label, string iconName)
+        public async Task UpdateDisplayAsync(string label, string iconName)
         {
-            TimeLabel.Content = label;
-            Image img = SoftwareCoUtil.CreateImage(iconName);
-            TimeIcon.Source = img.Source;
+            await Dispatcher.BeginInvoke(new Action(() => {
+                TimeLabel.Content = label;
+                Image img = SoftwareCoUtil.CreateImage(iconName);
+                TimeIcon.Source = img.Source;
+            }));
         }
 
         private void LaunchCodeMetricsView(object sender, RoutedEventArgs args)

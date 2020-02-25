@@ -26,15 +26,15 @@ namespace SoftwareCo
             Init();
         }
 
-        private void Init()
+        private async Task Init()
         {
             // update the menu buttons
-            RebuildMenuButtons();
+            RebuildMenuButtonsAsync();
             // update the metric nodes
-            RebuildMetricNodes();
+            RebuildCodeMetricsAsync();
         }
 
-        public void RebuildMenuButtons()
+        public async Task RebuildMenuButtonsAsync()
         {
             // connect label
             ConnectLabel.Content = "See advanced metrics";
@@ -45,7 +45,7 @@ namespace SoftwareCo
             DashboardImage.Source = SoftwareCoUtil.CreateImage("dashboard.png").Source;
 
             // Toggle status label
-            if (SoftwareCoPackage.IsStatusInfoShowing())
+            if (EventManager.Instance.IsShowingStatusText())
             {
                 ToggleStatusLabel.Content = "Hide status bar metrics";
             } else
@@ -63,47 +63,149 @@ namespace SoftwareCo
             FeedbackImage.Source = SoftwareCoUtil.CreateImage("message.png").Source;
         }
 
-        public void RebuildMetricNodes()
+        private async Task<TreeViewItem> GetParent(TreeView treeView, string parentId)
+        {
+            foreach (CodeMetricsTreeItem item in treeView.Items)
+            {
+                if (item.ItemId.Equals(parentId))
+                {
+                    return item;
+                }
+            }
+            return null;
+        }
+
+        private async Task UpdateNodeValue(TreeViewItem viewItem, string id, string value, string iconName = null)
+        {
+            foreach (CodeMetricsTreeItem child in viewItem.Items)
+            {
+                if (child.ItemId.Equals(id))
+                {
+                    StackPanel stack = (StackPanel)child.Header;
+                    
+                    foreach (object obj in stack.Children)
+                    {
+                        if (obj is Label)
+                        {
+                            ((Label)obj).Content = value;
+                        } else if (iconName != null && obj is Image)
+                        {
+                            Image img = SoftwareCoUtil.CreateImage(iconName);
+                            ((Image)obj).Source = img.Source;
+                        }
+                    }
+                }
+            }
+        }
+
+        public async Task RebuildCodeMetricsAsync()
         {
             SessionSummary summary = SessionSummaryManager.Instance.GetSessionSummayData();
             long wcTimeMin = WallclockManager.Instance.GetWcTimeInMinutes();
 
-            List<TreeViewItem> editortimeChildren = new List<TreeViewItem>();
-            editortimeChildren.Add(BuildMetricNode("editortimetodayval", "Today: " + SoftwareCoUtil.HumanizeMinutes(wcTimeMin), "rocket.png"));
-            TreeViewItem editorParent = BuildMetricNodes("editortime", "Editor time", editortimeChildren);
-            Editortime.Items.Add(editorParent);
+            string editortimeToday = "Today: " + SoftwareCoUtil.HumanizeMinutes(wcTimeMin);
+            if (Editortime.HasItems)
+            {
+                // update
+                TreeViewItem parentItem = await GetParent(Editortime, "editortime");
+                UpdateNodeValue(parentItem, "editortimetodayval", editortimeToday, "rocket.png");
 
-            List<TreeViewItem> codetimeChildren = new List<TreeViewItem>();
-            codetimeChildren.Add(BuildMetricNode("codetimetodayval", "Today: " + SoftwareCoUtil.HumanizeMinutes(summary.currentDayMinutes), "rocket.png"));
+            }
+            else
+            {
+                List<TreeViewItem> editortimeChildren = new List<TreeViewItem>();
+                editortimeChildren.Add(BuildMetricNode("editortimetodayval", editortimeToday, "rocket.png"));
+                TreeViewItem editorParent = BuildMetricNodes("editortime", "Editor time", editortimeChildren);
+                Editortime.Items.Add(editorParent);
+            }
+
             string codetimeBoltIcon = summary.currentDayMinutes > summary.averageDailyMinutes ? "bolt.png" : "bolt-grey.png";
-            codetimeChildren.Add(BuildMetricNode("codetimeavgval", "Your average: " + SoftwareCoUtil.HumanizeMinutes(summary.averageDailyMinutes), codetimeBoltIcon));
-            codetimeChildren.Add(BuildMetricNode("codetimeglobalval", "Global average: " + SoftwareCoUtil.HumanizeMinutes(summary.globalAverageDailyMinutes), "global-grey.png"));
-            TreeViewItem codetimeParent = BuildMetricNodes("codetime", "Code time", codetimeChildren);
-            Codetime.Items.Add(codetimeParent);
+            string codetimeToday = "Today: " + SoftwareCoUtil.HumanizeMinutes(summary.currentDayMinutes);
+            string codetimeAvg = "Your average: " + SoftwareCoUtil.HumanizeMinutes(summary.averageDailyMinutes);
+            string codetimeGlobal = "Global average: " + SoftwareCoUtil.HumanizeMinutes(summary.globalAverageDailyMinutes);
+            if (Codetime.HasItems)
+            {
+                // update
+                TreeViewItem parentItem = await GetParent(Codetime, "codetime");
+                UpdateNodeValue(parentItem, "codetimetodayval", codetimeToday, "rocket.png");
+                UpdateNodeValue(parentItem, "codetimeavgval", codetimeAvg, codetimeBoltIcon);
+                UpdateNodeValue(parentItem, "codetimeglobalval", codetimeGlobal, "global-grey.png");
+            }
+            else
+            {
+                List<TreeViewItem> codetimeChildren = new List<TreeViewItem>();
+                codetimeChildren.Add(BuildMetricNode("codetimetodayval", codetimeToday, "rocket.png"));
+                codetimeChildren.Add(BuildMetricNode("codetimeavgval", codetimeAvg, codetimeBoltIcon));
+                codetimeChildren.Add(BuildMetricNode("codetimeglobalval", codetimeGlobal, "global-grey.png"));
+                TreeViewItem codetimeParent = BuildMetricNodes("codetime", "Code time", codetimeChildren);
+                Codetime.Items.Add(codetimeParent);
+            }
 
-            List<TreeViewItem> linesaddedChildren = new List<TreeViewItem>();
-            linesaddedChildren.Add(BuildMetricNode("linesaddedtodayval", "Today: " + summary.currentDayLinesAdded.ToString("F"), "rocket.png"));
             string linesaddedBoltIcon = summary.currentDayLinesAdded > summary.averageDailyLinesAdded ? "bolt.png" : "bolt-grey.png";
-            linesaddedChildren.Add(BuildMetricNode("linesaddedavgval", "Your average: " + summary.averageDailyLinesAdded.ToString("F"), linesaddedBoltIcon));
-            linesaddedChildren.Add(BuildMetricNode("linesaddedglobalval", "Global average: " + summary.globalAverageLinesAdded.ToString("F"), "global-grey.png"));
-            TreeViewItem linesaddedParent = BuildMetricNodes("linesadded", "Lines added", linesaddedChildren);
-            Linesadded.Items.Add(linesaddedParent);
+            string linesaddedToday = "Today: " + SoftwareCoUtil.FormatNumber(summary.currentDayLinesAdded);
+            string linesaddedAvg = "Your average: " + SoftwareCoUtil.FormatNumber(summary.averageDailyLinesAdded);
+            string linesaddedGlobal = "Global average: " + SoftwareCoUtil.FormatNumber(summary.globalAverageLinesAdded);
+            if (Linesadded.HasItems)
+            {
+                // update
+                TreeViewItem parentItem = await GetParent(Linesadded, "linesadded");
+                UpdateNodeValue(parentItem, "linesaddedtodayval", linesaddedToday, "rocket.png");
+                UpdateNodeValue(parentItem, "linesaddedavgval", linesaddedAvg, linesaddedBoltIcon);
+                UpdateNodeValue(parentItem, "linesaddedglobalval", linesaddedGlobal, "global-grey.png");
+            }
+            else
+            {
+                List<TreeViewItem> linesaddedChildren = new List<TreeViewItem>();
+                linesaddedChildren.Add(BuildMetricNode("linesaddedtodayval", linesaddedToday, "rocket.png"));
+                linesaddedChildren.Add(BuildMetricNode("linesaddedavgval", linesaddedAvg, linesaddedBoltIcon));
+                linesaddedChildren.Add(BuildMetricNode("linesaddedglobalval", linesaddedGlobal, "global-grey.png"));
+                TreeViewItem linesaddedParent = BuildMetricNodes("linesadded", "Lines added", linesaddedChildren);
+                Linesadded.Items.Add(linesaddedParent);
+            }
 
-            List<TreeViewItem> linesremovedChildren = new List<TreeViewItem>();
-            linesremovedChildren.Add(BuildMetricNode("linesremovedtodayval", "Today: " + summary.currentDayLinesRemoved.ToString("F"), "rocket.png"));
             string linesremovedBoltIcon = summary.currentDayLinesRemoved > summary.averageDailyLinesRemoved ? "bolt.png" : "bolt-grey.png";
-            linesremovedChildren.Add(BuildMetricNode("linesremovedavgval", "Your average: " + summary.averageDailyLinesRemoved.ToString("F"), linesremovedBoltIcon));
-            linesremovedChildren.Add(BuildMetricNode("linesremovedglobalval", "Global average: " + summary.globalAverageLinesRemoved.ToString("F"), "global-grey.png"));
-            TreeViewItem linesremovedParent = BuildMetricNodes("linesremoved", "Lines removed", linesremovedChildren);
-            Linesremoved.Items.Add(linesremovedParent);
+            string linesremovedToday = "Today: " + SoftwareCoUtil.FormatNumber(summary.currentDayLinesRemoved);
+            string linesremovedAvg = "Your average: " + SoftwareCoUtil.FormatNumber(summary.averageDailyLinesRemoved);
+            string linesremovedGlobal = "Global average: " + SoftwareCoUtil.FormatNumber(summary.globalAverageLinesRemoved);
+            if (Linesremoved.HasItems)
+            {
+                // update
+                TreeViewItem parentItem = await GetParent(Codetime, "linesremoved");
+                UpdateNodeValue(parentItem, "linesremovedtodayval", linesremovedToday, "rocket.png");
+                UpdateNodeValue(parentItem, "linesremovedavgval", linesremovedAvg, linesremovedBoltIcon);
+                UpdateNodeValue(parentItem, "linesremovedglobalval", linesremovedGlobal, "global-grey.png");
+            }
+            else
+            {
+                List<TreeViewItem> linesremovedChildren = new List<TreeViewItem>();
+                linesremovedChildren.Add(BuildMetricNode("linesremovedtodayval", linesremovedToday, "rocket.png"));
+                linesremovedChildren.Add(BuildMetricNode("linesremovedavgval", linesremovedAvg, linesremovedBoltIcon));
+                linesremovedChildren.Add(BuildMetricNode("linesremovedglobalval", linesremovedGlobal, "global-grey.png"));
+                TreeViewItem linesremovedParent = BuildMetricNodes("linesremoved", "Lines removed", linesremovedChildren);
+                Linesremoved.Items.Add(linesremovedParent);
+            }
 
-            List<TreeViewItem> keystrokeChildren = new List<TreeViewItem>();
-            keystrokeChildren.Add(BuildMetricNode("keystrokestodayval", "Today: " + summary.currentDayKeystrokes.ToString("F"), "rocket.png"));
-            string keystrokesBoltIcon = summary.currentDayKeystrokes > summary.averageDailyKeystrokes ? "bolt.png" : "bolt-grey.png";
-            keystrokeChildren.Add(BuildMetricNode("keystrokesavgval", "Your average: " + summary.averageDailyKeystrokes.ToString("F"), keystrokesBoltIcon));
-            keystrokeChildren.Add(BuildMetricNode("keystrokesglobalval", "Global average: " + summary.globalAverageDailyKeystrokes.ToString("F"), "global-grey.png"));
-            TreeViewItem keystrokesParent = BuildMetricNodes("keystrokes", "Keystrokes", keystrokeChildren);
-            Keystrokes.Items.Add(keystrokesParent);
+            string keystrokesBoltIcon = summary.currentDayLinesRemoved > summary.averageDailyLinesRemoved ? "bolt.png" : "bolt-grey.png";
+            string keystrokesToday = "Today: " + SoftwareCoUtil.FormatNumber(summary.currentDayKeystrokes);
+            string keystrokesAvg = "Your average: " + SoftwareCoUtil.FormatNumber(summary.averageDailyKeystrokes);
+            string keystrokesGlobal = "Global average: " + SoftwareCoUtil.FormatNumber(summary.globalAverageDailyKeystrokes);
+            if (Linesremoved.HasItems)
+            {
+                // update
+                TreeViewItem parentItem = await GetParent(Keystrokes, "keystrokes");
+                UpdateNodeValue(parentItem, "keystrokestodayval", keystrokesToday, "rocket.png");
+                UpdateNodeValue(parentItem, "keystrokesavgval", keystrokesAvg, keystrokesBoltIcon);
+                UpdateNodeValue(parentItem, "keystrokesglobalval", keystrokesGlobal, "global-grey.png");
+            }
+            else
+            {
+                List<TreeViewItem> keystrokeChildren = new List<TreeViewItem>();
+                keystrokeChildren.Add(BuildMetricNode("keystrokestodayval", keystrokesToday, "rocket.png"));
+                keystrokeChildren.Add(BuildMetricNode("keystrokesavgval", keystrokesAvg, keystrokesBoltIcon));
+                keystrokeChildren.Add(BuildMetricNode("keystrokesglobalval", keystrokesGlobal, "global-grey.png"));
+                TreeViewItem keystrokesParent = BuildMetricNodes("keystrokes", "Keystrokes", keystrokeChildren);
+                Keystrokes.Items.Add(keystrokesParent);
+            }
         }
 
         private void ConnectClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
@@ -127,7 +229,7 @@ namespace SoftwareCo
 
         private void ToggleClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
-            SoftwareCoPackage.ToggleStatusInfo();
+            EventManager.Instance.ToggleStatusInfo();
         }
 
         private void LearnMoreClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
