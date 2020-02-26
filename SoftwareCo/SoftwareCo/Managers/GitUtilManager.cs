@@ -33,6 +33,10 @@ namespace SoftwareCo
 
         public CommitChangeStats GetTodaysCommits(string projectDir)
         {
+            if (projectDir == null || projectDir.Equals(""))
+            {
+                return new CommitChangeStats();
+            }
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             RepoResourceInfo info = SoftwareCoUtil.GetResourceInfo(projectDir);
             
@@ -46,6 +50,10 @@ namespace SoftwareCo
 
         private CommitChangeStats GetChangeStats(string cmd, string projectDir)
         {
+            if (projectDir == null || projectDir.Equals(""))
+            {
+                return new CommitChangeStats();
+            }
             CommitChangeStats stats = new CommitChangeStats();
 
             /**

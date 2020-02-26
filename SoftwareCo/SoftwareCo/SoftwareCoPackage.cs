@@ -516,7 +516,7 @@ namespace SoftwareCo
         {
             if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
             {
-                _codeMetricsWindow.RebuildCodeMetrics();
+                _codeMetricsWindow.RebuildGitMetricsAsync();
             }
 
             await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);

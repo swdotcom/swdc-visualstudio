@@ -406,37 +406,47 @@ namespace SoftwareCo
         public static NowTime GetNowTime()
         {
             NowTime timeParam = new NowTime();
-            DateTime nowTime = new DateTime();
             DateTimeOffset offset = DateTimeOffset.Now;
+            // utc now in seconds
             timeParam.now = offset.ToUnixTimeSeconds();
-            timeParam.local_now = offset.ToLocalTime().ToUnixTimeSeconds();
-            
-            // DateTime utcNow = DateTime.UtcNow;
-            // timeParam.now = DateTimeOffset.Now.ToUnixTimeSeconds();
-            timeParam.offset_now = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-            // timeParam.local_now = timeParam.now + ((int)timeParam.offset_now * 60);
-            // timeParam.utc_end_of_day = GetEndOfDay(new DateTime());
-            // new DateTime(timeParam.now, DateTimeKind.Local);
+            // set the offset (will be negative before utc and positive after)
+            timeParam.offset_minutes = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+            timeParam.offset_seconds = timeParam.offset_minutes * 60;
+            // local now in seconds
+            timeParam.local_now = Convert.ToInt64(timeParam.now + timeParam.offset_seconds);
+            timeParam.local_day = offset.ToLocalTime().ToString(@"yyyy-MM-dd");
 
-            timeParam.local_day = nowTime.ToLocalTime().ToString(@"YYYY-MM-dd");
-            
+            long startOfDay = StartOfDay();
+            timeParam.local_start_of_day = Convert.ToInt64(startOfDay + timeParam.offset_seconds);
+            timeParam.local_end_of_day = Convert.ToInt64(EndOfDay() + timeParam.offset_seconds);
+
+            Logger.Info("time param: " + timeParam.ToString());
+
             return timeParam;
         }
+
+        public static long DateTimeToUnixTimestamp(DateTime date)
+        {
+            return (long)(date.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000);
+        }
+
         public static long getNowInSeconds()
         {
             long unixSeconds = DateTimeOffset.Now.ToUnixTimeSeconds();
             return unixSeconds;
         }
 
-        public static long GetBeginningOfDay(DateTime now)
+        public static long EndOfDay()
         {
-            DateTime begOfToday = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0);
-            return ((DateTimeOffset)begOfToday).ToUnixTimeSeconds();
+            DateTime now = DateTime.Now;
+            DateTime endOfDay = new DateTime(now.Year, now.Month, now.Day, 23, 59, 59);
+            return ((DateTimeOffset)endOfDay).ToUnixTimeSeconds();
         }
 
-        public static long GetEndOfDay(DateTime now)
+        public static long StartOfDay()
         {
-            DateTime begOfToday = new DateTime(now.Year, now.Month, now.Day, 23, 59, 59);
+            DateTime now = DateTime.Now;
+            DateTime begOfToday = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0);
             return ((DateTimeOffset)begOfToday).ToUnixTimeSeconds();
         }
 
@@ -591,11 +601,13 @@ namespace SoftwareCo
     {
         public long now { get; set; }
         public long local_now { get; set; }
-        public double offset_now { get; set; }
+        public double offset_minutes { get; set; }
+        public double offset_seconds { get; set; }
         public string local_day { get; set; }
         public long local_start_of_day { get; set; }
         public long local_end_of_day { get; set; }
         public long utc_end_of_day { get; set; }
+
     }
     
 }
