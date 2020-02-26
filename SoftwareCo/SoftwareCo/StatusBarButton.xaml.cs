@@ -29,7 +29,7 @@ namespace SoftwareCo
         {
             try
             {
-                CodeMetricsTreeManager.Instance.OpenCodeMetricsPane();
+                CodeMetricsTreeManager.Instance.OpenCodeMetricsPaneAsync();
             }
             catch (Exception e)
             {

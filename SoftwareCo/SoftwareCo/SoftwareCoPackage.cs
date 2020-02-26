@@ -113,6 +113,7 @@ namespace SoftwareCo
                 ObjDte = await GetServiceAsync(typeof(DTE)) as DTE2;
                 _dteEvents = ObjDte.Events.DTEEvents;
                 _dteEvents.OnStartupComplete += OnOnStartupComplete;
+                
 
                 InitializeListenersAsync();
             }
@@ -167,7 +168,7 @@ namespace SoftwareCo
 
                 // init the wallclock
                 WallclockManager wallclockMgr = WallclockManager.Instance;
-                wallclockMgr.InjectAsyncPackage(this);
+                wallclockMgr.InjectAsyncPackage(this, ObjDte);
 
                 // setup event handlers
                 _textDocKeyEvent.AfterKeyPress += docEventMgr.AfterKeyPressedAsync;
@@ -257,6 +258,11 @@ namespace SoftwareCo
         private void OnOnStartupComplete()
         {
             //
+        }
+
+        private void OnActiveWindow()
+        {
+
         }
         #endregion
 
@@ -528,7 +534,7 @@ namespace SoftwareCo
             _codeMetricsWindow.RebuildGitMetricsAsync();
         }
 
-        public async Task OpenCodeMetricsPane()
+        public async Task OpenCodeMetricsPaneAsync()
         {
             await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
             ToolWindowPane window = this.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);

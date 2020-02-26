@@ -29,7 +29,7 @@ namespace SoftwareCo
 
         public static async Task<bool> IsOnlineAsync()
         {
-            long nowInSec = SoftwareCoUtil.getNowInSeconds();
+            long nowInSec = SoftwareCoUtil.GetNowInSeconds();
             long thresholdSeconds = nowInSec - lastOnlineCheck;
             if (thresholdSeconds > 60) {
                 // 3 second timeout
@@ -112,7 +112,7 @@ namespace SoftwareCo
             {
                 if (online)
                 {
-                    long seconds = SoftwareCoUtil.getNowInSeconds();
+                    long seconds = SoftwareCoUtil.GetNowInSeconds();
                     HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
                             HttpMethod.Get, "/data/apptoken?token=" + seconds, null);
 
@@ -327,7 +327,7 @@ namespace SoftwareCo
                 jsonObj.Add("version", SoftwareCoPackage.GetVersion());
                 jsonObj.Add("os", SoftwareCoPackage.GetOs());
                 jsonObj.Add("pluginId", Constants.PluginId);
-                jsonObj.Add("start", SoftwareCoUtil.getNowInSeconds());
+                jsonObj.Add("start", SoftwareCoUtil.GetNowInSeconds());
                 jsonObj.Add("trigger_annotation", reason);
                 jsonObj.Add("hostname", SoftwareCoUtil.getHostname());
 

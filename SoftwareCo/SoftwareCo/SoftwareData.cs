@@ -32,7 +32,7 @@ namespace SoftwareCo
   
         public SoftwareData(ProjectInfo projectInfo)
         {
-            start = SoftwareCoUtil.getNowInSeconds();
+            start = SoftwareCoUtil.GetNowInSeconds();
             project = projectInfo;
             version = SoftwareCoPackage.GetVersion();
             os = SoftwareCoPackage.GetOs();
@@ -46,7 +46,6 @@ namespace SoftwareCo
             {
                 project.ResetData();
             }
-            //start = SoftwareCoUtil.getNowInSeconds();
             start = 0L;
             local_start = 0L;
             initialized = false;
@@ -258,9 +257,6 @@ namespace SoftwareCo
             try
             {
                 JsonObject fileInfoData = new JsonObject();
-                //long start                  = SoftwareCoUtil.getNowInSeconds();
-                //double offset               = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-                //long local_start            = start + ((int)offset * 60);\
                 long start = nowTime.now;
                 long local_start = nowTime.local_now;
                 if (!source.ContainsKey(fileName))

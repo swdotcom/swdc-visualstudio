@@ -87,7 +87,7 @@ namespace SoftwareCo
                     string email = SoftwareCoUtil.RunCommand("git config user.email", projectDir);
                     if (email != null && !email.Equals(""))
                     {
-                        info.email = SoftwareCoUtil.NormalizeGithubEmail(email);
+                        info.email = email;
 
                     }
                     string branch = SoftwareCoUtil.RunCommand("git symbolic-ref --short HEAD", projectDir);
@@ -416,21 +416,15 @@ namespace SoftwareCo
             timeParam.local_now = Convert.ToInt64(timeParam.now + timeParam.offset_seconds);
             timeParam.local_day = offset.ToLocalTime().ToString(@"yyyy-MM-dd");
 
-            long startOfDay = StartOfDay();
-            timeParam.local_start_of_day = Convert.ToInt64(startOfDay + timeParam.offset_seconds);
+            // start and end of day
+            timeParam.local_start_of_day = Convert.ToInt64(StartOfDay() + timeParam.offset_seconds);
             timeParam.local_end_of_day = Convert.ToInt64(EndOfDay() + timeParam.offset_seconds);
-
-            Logger.Info("time param: " + timeParam.ToString());
+            timeParam.utc_end_of_day = EndOfDay();
 
             return timeParam;
         }
 
-        public static long DateTimeToUnixTimestamp(DateTime date)
-        {
-            return (long)(date.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000);
-        }
-
-        public static long getNowInSeconds()
+        public static long GetNowInSeconds()
         {
             long unixSeconds = DateTimeOffset.Now.ToUnixTimeSeconds();
             return unixSeconds;

@@ -38,9 +38,9 @@ namespace SoftwareCo
             this.package = package;
         }
 
-        public async void OpenCodeMetricsPane()
+        public async void OpenCodeMetricsPaneAsync()
         {
-            await package.OpenCodeMetricsPane();
+            await package.OpenCodeMetricsPaneAsync();
         }
     }
 }

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Timers;
+using EnvDTE;
+using EnvDTE80;
 
 namespace SoftwareCo
 {
@@ -17,6 +19,8 @@ namespace SoftwareCo
 
         private long _wctime = 0;
         private string _currentDay = "";
+
+        private DTE2 ObjDte;
         private SoftwareCoPackage package;
         private SessionSummaryManager sessionSummaryMgr;
 
@@ -34,15 +38,17 @@ namespace SoftwareCo
 
         private void WallclcockTimerHandler(object stateinfo)
         {
+            // Logger.Info("window: " + ObjDte.ActiveWindow.Caption);
             this._wctime = SoftwareCoUtil.getItemAsLong("wctime");
             this._wctime += SECONDS_TO_INCREMENT;
             SoftwareCoUtil.setNumericItem("wctime", this._wctime);
             DispatchUpdateAsync();
         }
 
-        public void InjectAsyncPackage(SoftwareCoPackage package)
+        public void InjectAsyncPackage(SoftwareCoPackage package, DTE2 ObjDte)
         {
             this.package = package;
+            this.ObjDte = ObjDte;
         }
 
         public long GetWcTimeInMinutes()
@@ -53,7 +59,7 @@ namespace SoftwareCo
         public void ClearWcTime()
         {
             this._wctime = 0L;
-            SoftwareCoUtil.setItem("wctime", this._wctime.ToString());
+            SoftwareCoUtil.setNumericItem("wctime", this._wctime);
             DispatchUpdateAsync();
         }
 
@@ -70,7 +76,7 @@ namespace SoftwareCo
             if (this._wctime < session_seconds)
             {
                 this._wctime = session_seconds + 1;
-                SoftwareCoUtil.setItem("wctime", this._wctime.ToString());
+                SoftwareCoUtil.setNumericItem("wctime", this._wctime);
 
                 // update the code metrics part of the tree since this value has changed
                 DispatchUpdateAsync();
