@@ -112,8 +112,6 @@ namespace SoftwareCo
 
                 ObjDte = await GetServiceAsync(typeof(DTE)) as DTE2;
                 _dteEvents = ObjDte.Events.DTEEvents;
-                _dteEvents.OnStartupComplete += OnOnStartupComplete;
-                
 
                 InitializeListenersAsync();
             }
@@ -147,7 +145,7 @@ namespace SoftwareCo
                 // VisualStudio Object
                 Events2 events = (Events2)ObjDte.Events;
                 _textDocKeyEvent = events.TextDocumentKeyPressEvents;
-                _docEvents = ObjDte.Events.DocumentEvents;
+                _docEvents = events.DocumentEvents;
 
                 // init the doc event mgr and inject ObjDte
                 docEventMgr = DocEventManager.Instance;
@@ -189,9 +187,6 @@ namespace SoftwareCo
                     _softwareRepoUtil = new SoftwareRepoManager();
                 }
 
-                // initialize the status bar before we fetch the summary data
-                await InitializeStatusBar();
-
                 // fetch the session summary
                 await wallclockMgr.UpdateSessionSummaryFromServerAsync();
 
@@ -223,13 +218,17 @@ namespace SoftwareCo
                     ONE_MINUTE,
                     1000 * 120);
 
+                this.InitializeUserInfo();
+
+                // update the session summary global and averages for the new day
                 // rebuild the code metrics data in the tree
                 this.RebuildCodeMetricsAsync();
 
                 // update the git metrics
                 this.RebuildGitMetricsAsync();
 
-                this.InitializeUserInfo();
+                // initialize the status bar before we fetch the summary data
+                InitializeStatusBar();
             }
             catch (Exception ex)
             {
@@ -254,11 +253,6 @@ namespace SoftwareCo
         #endregion
 
         #region Event Handlers
-
-        private void OnOnStartupComplete()
-        {
-            //
-        }
 
         private void OnActiveWindow()
         {
@@ -564,5 +558,7 @@ namespace SoftwareCo
             static readonly Assembly Reference = typeof(CodeTimeAssembly).Assembly;
             public static readonly Version Version = Reference.GetName().Version;
         }
+
+
     }
 }

@@ -303,12 +303,27 @@ namespace SoftwareCo
         {
             return File.ReadAllText(getSoftwareDataDir(true)+"\\sessionSummary.json", System.Text.Encoding.UTF8);
         }
+
         public static String getSoftwareSessionFile()
         {
             return getSoftwareDataDir(true) + "\\session.json";
         }
 
-        
+        public static bool TimeDataSummaryFileExists()
+        {
+            string file = getSoftwareDataDir(false) + "\\timeDataSummary.json";
+            return File.Exists(file);
+        }
+        public static String getTimeDataFileData()
+        {
+            return File.ReadAllText(getSoftwareDataDir(true) + "\\timeDataSummary.json", System.Text.Encoding.UTF8);
+        }
+
+        public static String getTimeDataFile()
+        {
+            return getSoftwareDataDir(true) + "\\timeDataSummary.json";
+        }
+
         public static String getSessionSummaryInfoFile()
         {
             return getSoftwareDataDir(true) + "\\SummaryInfo.txt";

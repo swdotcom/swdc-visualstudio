@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using System.Windows.Threading;
 using EnvDTE;
 using EnvDTE80;
 
@@ -26,19 +28,20 @@ namespace SoftwareCo
 
         public static WallclockManager Instance { get { return lazy.Value; } }
 
+        public CancellationToken DisposalToken { get; private set; }
+
         private WallclockManager()
         {
             timer = new System.Threading.Timer(
-                      WallclcockTimerHandler,
+                      WallclcockTimerHandlerAsync,
                       null,
                       THIRTY_SECONDS_IN_MILLIS,
                       THIRTY_SECONDS_IN_MILLIS);
             sessionSummaryMgr = SessionSummaryManager.Instance;
         }
 
-        private void WallclcockTimerHandler(object stateinfo)
+        private void WallclcockTimerHandlerAsync(object stateinfo)
         {
-            // Logger.Info("window: " + ObjDte.ActiveWindow.Caption);
             this._wctime = SoftwareCoUtil.getItemAsLong("wctime");
             this._wctime += SECONDS_TO_INCREMENT;
             SoftwareCoUtil.setNumericItem("wctime", this._wctime);
@@ -66,6 +69,7 @@ namespace SoftwareCo
         private async Task DispatchUpdateAsync()
         {
             package.RebuildCodeMetricsAsync();
+            package.RebuildGitMetricsAsync();
         }
 
         public void UpdateBasedOnSessionSeconds(long session_seconds)
@@ -98,7 +102,7 @@ namespace SoftwareCo
                 // the session summary, time data summary,
                 // and the file change info summary data
                 ClearWcTime();
-                // clearTimeDataSummary();
+                TimeDataManager.Instance.ClearTimeDataSummary();
                 SessionSummaryManager.Instance.ÇlearSessionSummaryData();
                 // clearFileChangeInfoSummaryData();
 

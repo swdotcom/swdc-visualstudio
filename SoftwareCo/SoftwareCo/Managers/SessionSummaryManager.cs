@@ -129,9 +129,7 @@ namespace SoftwareCo
 
             try
             {
-                //SoftwareCoUtil.WriteToFileThreadSafe(sessionSummary.GetSessionSummaryAsJson(), sessionSummaryFile);
                 File.WriteAllText(sessionSummaryFile, sessionSummary.GetSessionSummaryAsJson(), System.Text.Encoding.UTF8);
-                //File.SetAttributes(sessionSummaryFile, FileAttributes.ReadOnly);
             }
             catch (Exception e)
             {

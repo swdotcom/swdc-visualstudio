@@ -192,7 +192,7 @@ namespace SoftwareCo
             string keystrokesToday = "Today: " + SoftwareCoUtil.FormatNumber(summary.currentDayKeystrokes);
             string keystrokesAvg = "Your average: " + SoftwareCoUtil.FormatNumber(summary.averageDailyKeystrokes);
             string keystrokesGlobal = "Global average: " + SoftwareCoUtil.FormatNumber(summary.globalAverageDailyKeystrokes);
-            if (Linesremoved.HasItems)
+            if (Keystrokes.HasItems)
             {
                 // update
                 TreeViewItem parentItem = await GetParent(Keystrokes, "keystrokes");
@@ -216,6 +216,17 @@ namespace SoftwareCo
             GitUtilManager gitUtilMgr = GitUtilManager.Instance;
             string dir = SoftwareCoPackage.GetSolutionDirectory();
 
+            if (dir == null || dir.Equals(""))
+            {
+                Uncommitted.Visibility = Visibility.Hidden;
+                CommittedToday.Visibility = Visibility.Hidden;
+                return;
+            } else
+            {
+                Uncommitted.Visibility = Visibility.Visible;
+                CommittedToday.Visibility = Visibility.Visible;
+            }
+
             string name = "";
             try
             {
@@ -232,15 +243,15 @@ namespace SoftwareCo
             if (Uncommitted.HasItems)
             {
                 // update
-                TreeViewItem parentItem = await GetParent(CommittedToday, "uncommitted");
+                TreeViewItem parentItem = await GetParent(Uncommitted, "uncommitted");
                 UpdateNodeValue(parentItem, "uncommittedinsertions", uncommittedInsertions, "insertion.png");
-                UpdateNodeValue(parentItem, "uncommitteddeltions", uncommittedDeletions, "deletion.png");
+                UpdateNodeValue(parentItem, "uncommitteddeletions", uncommittedDeletions, "deletion.png");
             }
             else
             {
                 List<TreeViewItem> uncommitedChilren = new List<TreeViewItem>();
                 uncommitedChilren.Add(BuildMetricNode("uncommittedinsertions", uncommittedInsertions, "insertion.png"));
-                uncommitedChilren.Add(BuildMetricNode("uncommitteddeltions", uncommittedDeletions, "deletion.png"));
+                uncommitedChilren.Add(BuildMetricNode("uncommitteddeletions", uncommittedDeletions, "deletion.png"));
                 TreeViewItem uncommittedParent = BuildMetricNodes("uncommitted", "Open changes", uncommitedChilren);
                 Uncommitted.Items.Add(uncommittedParent);
             }
@@ -248,18 +259,24 @@ namespace SoftwareCo
             CommitChangeStats todaysStats = gitUtilMgr.GetTodaysCommits(dir);
             string committedInsertions = "Insertion(s): " + todaysStats.insertions;
             string committedDeletions = "Deletion(s): " + todaysStats.deletions;
+            string committedCount = "Commit(s): " + todaysStats.commitCount;
+            string committedFilecount = "Files changed: " + todaysStats.fileCount;
             if (CommittedToday.HasItems)
             {
                 // update
                 TreeViewItem parentItem = await GetParent(CommittedToday, "committed");
                 UpdateNodeValue(parentItem, "committedinsertions", committedInsertions, "insertion.png");
-                UpdateNodeValue(parentItem, "committeddeltions", committedDeletions, "deletion.png");
+                UpdateNodeValue(parentItem, "committeddeletions", committedDeletions, "deletion.png");
+                UpdateNodeValue(parentItem, "committedcount", committedCount, "commit.png");
+                UpdateNodeValue(parentItem, "committedfilecount", committedFilecount, "files.png");
             }
             else
             {
                 List<TreeViewItem> committedChilren = new List<TreeViewItem>();
                 committedChilren.Add(BuildMetricNode("committedinsertions", committedInsertions, "insertion.png"));
-                committedChilren.Add(BuildMetricNode("committeddeltions", committedDeletions, "deletion.png"));
+                committedChilren.Add(BuildMetricNode("committeddeletions", committedDeletions, "deletion.png"));
+                committedChilren.Add(BuildMetricNode("committedcount", committedCount, "commit.png"));
+                committedChilren.Add(BuildMetricNode("committedfilecount", committedFilecount, "files.png"));
                 TreeViewItem committedParent = BuildMetricNodes("committed", "Committed today", committedChilren);
                 CommittedToday.Items.Add(committedParent);
             }

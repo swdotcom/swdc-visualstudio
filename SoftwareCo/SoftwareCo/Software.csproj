@@ -62,11 +62,13 @@
     <Compile Include="Managers\EventManager.cs" />
     <Compile Include="Managers\GitUtilManager.cs" />
     <Compile Include="Managers\SessionSummaryManager.cs" />
+    <Compile Include="Managers\TimeDataManager.cs" />
     <Compile Include="Models\CommitChangeStats.cs" />
     <Compile Include="Models\FileInfoSummary.cs" />
     <Compile Include="Models\KeystrokeAggregates.cs" />
     <Compile Include="Models\RepoResourceInfo.cs" />
     <Compile Include="Models\SessionSummary.cs" />
+    <Compile Include="Models\TimeData.cs" />
     <Compile Include="SoftwareDashboardLaunchCommand.cs" />
     <Compile Include="SoftwareHttpManager.cs" />
     <Compile Include="SoftwareLoginCommand.cs" />
@@ -91,7 +93,6 @@
     </Compile>
     <Compile Include="CodeMetricsTreeItem.cs" />
     <Compile Include="CodeMetricsTreeProvider.cs" />
-    <Compile Include="WpfUtility.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">
