@@ -66,6 +66,9 @@
     <Compile Include="Models\CommitChangeStats.cs" />
     <Compile Include="Models\FileInfoSummary.cs" />
     <Compile Include="Models\KeystrokeAggregates.cs" />
+    <Compile Include="Models\PluginData.cs" />
+    <Compile Include="Models\PluginDataFileInfo.cs" />
+    <Compile Include="Models\PluginDataProject.cs" />
     <Compile Include="Models\RepoResourceInfo.cs" />
     <Compile Include="Models\SessionSummary.cs" />
     <Compile Include="Models\TimeData.cs" />

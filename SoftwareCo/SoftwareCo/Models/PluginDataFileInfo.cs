@@ -19,6 +19,7 @@ namespace SoftwareCo
         public long keystrokes { get; set; }
         public long netkeys { get; set; }
         public string syntax { get; set; }
+        public long length { get; set; }
         public long start { get; set; }
         public long local_start { get; set; }
         public long end { get; set; }
@@ -30,6 +31,16 @@ namespace SoftwareCo
             this.file = file;
             this.start = nowTime.now;
             this.local_start = nowTime.local_now;
+            this.add = 0;
+            this.close = 0;
+            this.linesAdded = 0;
+            this.open = 0;
+            this.keystrokes = 0;
+            this.netkeys = 0;
+            this.syntax = "";
+            this.length = 0;
+            this.end = this.start + 60;
+            this.local_end = this.local_start + 60;
         }
 
         public JsonObject GetPluginDataFileInfoAsJson()

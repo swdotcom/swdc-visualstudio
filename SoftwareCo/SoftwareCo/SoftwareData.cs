@@ -103,15 +103,6 @@ namespace SoftwareCo
             return dict;
         }
 
-        public Boolean HasData()
-        {
-
-            if (this.initialized && (this.keystrokes > 0 || this.source.Count>0) && this.project != null && this.project.name != null) {
-                return true;
-            }
-            return false;
-        }
-
         public void UpdateData(String fileName, String property, long dataVal)
         {
             // update the keys count for the file info object

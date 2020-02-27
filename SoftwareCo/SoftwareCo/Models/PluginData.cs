@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ namespace SoftwareCo
         // sublime = 1, vs code = 2, eclipse = 3, intellij = 4, visualstudio = 6, atom = 7
         public int pluginId { get; set; }
         public String version { get; set; }
-        public String os { get; set; };
+        public String os { get; set; }
 
         // a unique list of file infos (each info represents a file and its metadata)
         public List<PluginDataFileInfo> source;
@@ -79,6 +80,11 @@ namespace SoftwareCo
             return sourceData;
         }
 
+        public string GetPluginDataAsJsonString()
+        {
+            return null;
+        }
+
         public PluginDataFileInfo GetFileInfo(string file)
         {
             for (int i = 0; i < source.Count; i++)
@@ -98,6 +104,53 @@ namespace SoftwareCo
             {
                 source.Add(new PluginDataFileInfo(file));
             }
+        }
+
+        public void UpdatePluginDataFileInfo(PluginDataFileInfo fileInfo)
+        {
+            //
+        }
+
+        public void EndPluginDataTime()
+        {
+            NowTime nowTime = SoftwareCoUtil.GetNowTime();
+            this.end = nowTime.now;
+            this.local_end = nowTime.local_now;
+        }
+
+        public List<FileInfoSummary> GetSourceFileInfoList()
+        {
+            List<FileInfoSummary> fileInfoList = new List<FileInfoSummary>();
+
+            foreach (PluginDataFileInfo pdFileInfo in source)
+            {
+                // go through the properties of this and check if any have data
+                // close, open, paste, delete, keys
+                FileInfoSummary fileInfo = new FileInfoSummary();
+                fileInfo.close = pdFileInfo.close;
+                fileInfo.open = pdFileInfo.open;
+                fileInfo.paste = pdFileInfo.paste;
+                fileInfo.linesAdded = pdFileInfo.linesAdded;
+                fileInfo.linesRemoved = pdFileInfo.linesRemoved;
+                fileInfo.delete = pdFileInfo.delete;
+                fileInfo.add = pdFileInfo.add;
+                fileInfo.keystrokes = fileInfo.add + fileInfo.delete + fileInfo.paste + fileInfo.linesAdded + fileInfo.linesRemoved;
+                fileInfo.syntax = pdFileInfo.syntax;
+                fileInfo.local_start = pdFileInfo.local_start;
+                fileInfo.local_end = pdFileInfo.local_end;
+                fileInfo.start = pdFileInfo.start;
+                fileInfo.end = pdFileInfo.end;
+
+                // wrapper for a file path
+                FileInfo fi = new FileInfo(pdFileInfo.file);
+                fileInfo.name = fi.Name;
+                fileInfo.fsPath = fi.FullName;
+                fileInfo.duration_seconds = fileInfo.end - fileInfo.start;
+
+                fileInfoList.Add(fileInfo);
+            }
+
+            return fileInfoList;
         }
     }
 }
