@@ -273,6 +273,11 @@ namespace SoftwareCo
             return getSoftwareDataDir(true) + "\\CodeTime.txt";
         }
 
+        public static String getVSReadmeFile()
+        {
+            return getSoftwareDataDir(true) + "\\VS_README.txt";
+        }
+
         public static String getSoftwareDataDir(bool autoCreate)
         {
             String userHomeDir = Environment.ExpandEnvironmentVariables("%HOMEPATH%");

@@ -138,6 +138,7 @@
     <Resource Include="Resources\insertion.png" />
     <Resource Include="Resources\like.png" />
     <Resource Include="Resources\message.png" />
+    <EmbeddedResource Include="README.txt" />
     <Content Include="Resources\Microsoft.VisualStudio.Services.Icons.Default.png" />
     <Resource Include="Resources\next.png" />
     <Resource Include="Resources\pause.png" />

@@ -16,6 +16,7 @@ using System.Net.Http;
 using System.Reflection;
 using Microsoft.VisualStudio;
 using System.Windows.Forms;
+using static SoftwareCo.SoftwareCoPackage;
 
 namespace SoftwareCo
 {
@@ -144,6 +145,48 @@ namespace SoftwareCo
 
             }
 
+        }
+
+        public async void LaunchReadmeFileAsync()
+        {
+            try
+            {
+                string vsReadmeFile = SoftwareCoUtil.getVSReadmeFile();
+                if (File.Exists(vsReadmeFile))
+                {
+                    SoftwareCoPackage.ObjDte.ItemOperations.OpenFile(vsReadmeFile);
+                }
+                else
+                {
+                    Assembly _assembly = Assembly.GetExecutingAssembly();
+                    string[] resourceNames = _assembly.GetManifestResourceNames();
+                    string fileName = "README.txt";
+                    string readmeFile = resourceNames.Single(n => n.EndsWith(fileName, StringComparison.InvariantCultureIgnoreCase));
+                    if (readmeFile == null && resourceNames != null && resourceNames.Length > 0)
+                    {
+                        foreach (string name in resourceNames)
+                        {
+                            if (name.IndexOf("README") != -1)
+                            {
+                                readmeFile = fileName;
+                                break;
+                            }
+                        }
+                    }
+                    if (readmeFile != null)
+                    {
+                        // SoftwareCoPackage.ObjDte.ItemOperations.OpenFile(readmeFile);
+                        StreamReader _textStreamReader = new StreamReader(_assembly.GetManifestResourceStream(readmeFile));
+                        string readmeContents = _textStreamReader.ReadToEnd();
+                        File.WriteAllText(vsReadmeFile, readmeContents, System.Text.Encoding.UTF8);
+                        SoftwareCoPackage.ObjDte.ItemOperations.OpenFile(vsReadmeFile);
+                    }
+                }
+            }
+            catch
+            {
+                //
+            }
         }
     }
 }

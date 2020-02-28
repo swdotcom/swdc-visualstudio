@@ -308,7 +308,7 @@ namespace SoftwareCo
 
         private void LearnMoreClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
-            //
+            DashboardManager.Instance.LaunchReadmeFileAsync();
         }
 
         private void FeedbackClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)

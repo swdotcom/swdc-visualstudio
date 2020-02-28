@@ -551,6 +551,7 @@ namespace SoftwareCo
         public static class CodeTimeAssembly
         {
             static readonly Assembly Reference = typeof(CodeTimeAssembly).Assembly;
+           
             public static readonly Version Version = Reference.GetName().Version;
         }
 
