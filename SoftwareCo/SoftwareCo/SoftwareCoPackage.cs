@@ -287,10 +287,10 @@ namespace SoftwareCo
             {
                 string msg = "Finish creating your account and see rich data visualizations.";
                 const string caption = "Code Time";
-                DialogResult result = System.Windows.Forms.MessageBox.Show(msg, caption, MessageBoxButtons.OKCancel);
+                DialogResult result = System.Windows.Forms.MessageBox.Show(msg, caption, MessageBoxButtons.OK);
 
                 // If the no button was pressed ...
-                if (result == DialogResult.Yes)
+                if (result == DialogResult.OK)
                 {
                     // launch the browser
                     SoftwareCoUtil.launchLogin();
