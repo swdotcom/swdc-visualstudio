@@ -142,6 +142,9 @@ namespace SoftwareCo
                 string PluginVersion = GetVersion();
                 Logger.Info(string.Format("Initializing Code Time v{0}", PluginVersion));
                 Logger.FileLog("Initializing Code Time", MethodName);
+
+                await this.InitializeUserInfoAsync();
+
                 // VisualStudio Object
                 Events2 events = (Events2)ObjDte.Events;
                 _textDocKeyEvent = events.TextDocumentKeyPressEvents;
@@ -211,14 +214,6 @@ namespace SoftwareCo
                     autoEvent,
                     delay,
                     ONE_HOUR);
-
-                userStatusTimer = new System.Threading.Timer(
-                    UpdateUserStatus,
-                    autoEvent,
-                    ONE_MINUTE,
-                    1000 * 120);
-
-                this.InitializeUserInfo();
 
                 // update the session summary global and averages for the new day
                 // rebuild the code metrics data in the tree
@@ -352,7 +347,7 @@ namespace SoftwareCo
             return null;
         }
 
-        private async void InitializeUserInfo()
+        private async Task InitializeUserInfoAsync()
         {
             try
             {
@@ -360,24 +355,22 @@ namespace SoftwareCo
                 Logger.FileLog("Initializing User", MethodName);
                 bool online = await SoftwareUserSession.IsOnlineAsync();
                 bool softwareSessionFileExists = SoftwareCoUtil.softwareSessionFileExists();
-                bool jwtExists = SoftwareCoUtil.jwtExists();
-                bool initializedUser = false;
-                if (!softwareSessionFileExists || !jwtExists)
+                object jwt = SoftwareCoUtil.getItem("jwt");
+                if (!softwareSessionFileExists || jwt == null || jwt.ToString().Equals(""))
                 {
                     string result = await SoftwareUserSession.CreateAnonymousUserAsync(online);
                     if (result != null)
                     {
-                        initializedUser = true;
+                        LaunchLoginPrompt();
                     }
-                }
-
-                SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(true);
-
-                SoftwareLoginCommand.UpdateEnabledState(status);
-
-                if (initializedUser)
+                } else
                 {
-                    LaunchLoginPrompt();
+                    // check if the "name" is set. if not, get the user
+                    object name = SoftwareCoUtil.getItem("name");
+                    if (name == null || name.ToString().Equals(""))
+                    {
+                        await SoftwareUserSession.IsLoggedOn(online);
+                    }
                 }
 
                 if (online)
@@ -399,11 +392,6 @@ namespace SoftwareCo
         private String getDownloadDestinationDirectory()
         {
             return Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-        }
-
-        public async void UpdateUserStatus(Object stateInfo)
-        {
-            SoftwareUserSession.UserStatus status = await SoftwareUserSession.GetUserStatusAsync(false);
         }
 
         public async Task UpdateStatusBarButtonText(String text, String iconName = null)

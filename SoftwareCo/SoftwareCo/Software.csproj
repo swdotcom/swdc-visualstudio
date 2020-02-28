@@ -80,7 +80,6 @@
     <Compile Include="SimpleJson.cs" />
     <Compile Include="SoftwareCoPackage.cs" />
     <Compile Include="SoftwareCoUtil.cs" />
-    <Compile Include="SoftwareData.cs" />
     <Compile Include="SoftwareLaunchCommand.cs" />
     <Compile Include="SoftwareRepoManager.cs" />
     <Compile Include="SoftwareTopFortyCommand.cs" />

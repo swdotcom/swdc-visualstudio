@@ -41,16 +41,6 @@ namespace SoftwareCo
             return isOnline;
         }
 
-        public static string GetJwt()
-        {
-            if (lastJwt == null)
-            {
-                object jwt = SoftwareCoUtil.getItem("jwt");
-                lastJwt = (jwt != null && !((string)jwt).Equals("")) ? (string)jwt : null;
-            }
-            return lastJwt;
-        }
-
         public static async Task<string> CreateAnonymousUserAsync(bool online)
         {
             // get the app jwt
@@ -137,7 +127,7 @@ namespace SoftwareCo
 
         private static async Task<User> GetUserAsync(bool online)
         {
-            string jwt = GetJwt();
+            string jwt = SoftwareCoUtil.getItemAsString("jwt");
             try
             {
                 if (jwt != null && online)
@@ -181,11 +171,11 @@ namespace SoftwareCo
             return null;
         }
 
-        private static async Task<bool> IsLoggedOn(bool online)
+        public static async Task<bool> IsLoggedOn(bool online)
         {
             try
             {
-                string jwt = GetJwt();
+                string jwt = SoftwareCoUtil.getItemAsString("jwt");
                 if (online && jwt != null)
                 {
                     User user = await GetUserAsync(online);
@@ -240,53 +230,15 @@ namespace SoftwareCo
             return false;
         }
 
-        public static async Task<UserStatus> GetUserStatusAsync(bool isInitialCall)
-        {
-            UserStatus currentUserStatus = new UserStatus();
-            try
-            {
-                bool online = await IsOnlineAsync();
-                bool softwareSessionFileExists = SoftwareCoUtil.softwareSessionFileExists();
-                bool jwtExists = SoftwareCoUtil.jwtExists();
-                if (!isInitialCall && isOnline && !jwtExists)
-                {
-                    await SoftwareUserSession.CreateAnonymousUserAsync(online);
-                }
-
-                bool loggedIn                   = await IsLoggedOn(online);
-                currentUserStatus.loggedIn      = loggedIn;
-
-                if (online && loggedInCacheState != loggedIn)
-                {
-                    // change in logged in state, send heatbeat and fetch kpm
-                    SendHeartbeat("STATE_CHANGE:LOGGED_IN:" + loggedIn);
-                }
-
-                loggedInCacheState = loggedIn;
-
-                SoftwareLaunchCommand.UpdateEnabledState(currentUserStatus);
-                SoftwareLoginCommand.UpdateEnabledState(currentUserStatus);
-
-            }
-            catch (Exception ex)
-            {
-
-                Logger.Error("GetUserStatusAsync , error : " + ex.Message, ex);
-            }
-            
-
-            return currentUserStatus;
-        }
-
         public static async void RefetchUserStatusLazily(int tryCountUntilFoundUser)
         {
             try
             {
                 checkingLoginState      = true;
                 UserStatus userStatus   = null;
-                userStatus              = await GetUserStatusAsync(true);
+                bool loggedIn = await IsLoggedOn(true);
 
-                if ( userStatus!=null && !userStatus.loggedIn && tryCountUntilFoundUser > 0)
+                if ( !loggedIn && tryCountUntilFoundUser > 0)
                 {
                     tryCountUntilFoundUser -= 1;
 
@@ -315,8 +267,8 @@ namespace SoftwareCo
 
         public static async void SendHeartbeat(string reason)
         {
-           
-            string jwt  = GetJwt();
+
+            string jwt = SoftwareCoUtil.getItemAsString("jwt");
             bool online = await IsOnlineAsync();
             if (online && jwt != null)
             {

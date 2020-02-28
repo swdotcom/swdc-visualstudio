@@ -41,6 +41,11 @@ namespace SoftwareCo
             sessionSummaryMgr = SessionSummaryManager.Instance;
         }
 
+        private bool IsTrueEventFile(string fileName)
+        {
+            return (fileName == null || fileName.IndexOf("CodeTime.txt") != -1) ? false : true;
+        }
+
         private void InitPluginDataIfNotExists()
         {
             if (_pluginData == null)
@@ -55,6 +60,7 @@ namespace SoftwareCo
                     // set it to unnamed
                     _pluginData = new PluginData("Untitled", "Unnamed");
                 }
+                SoftwareCoUtil.SetTimeout(ONE_MINUTE, PostData, false);
             }
         }
 
@@ -65,6 +71,10 @@ namespace SoftwareCo
                 return;
             }
             String fileName = document.FullName;
+            if (!IsTrueEventFile(fileName))
+            {
+                return;
+            }
             InitPluginDataIfNotExists();
             _pluginData.InitFileInfoIfNotExists(fileName);
 
@@ -79,6 +89,10 @@ namespace SoftwareCo
             // wrapper for a file path
             FileInfo fi = new FileInfo(docPath);
             String fileName = fi.FullName;
+            if (!IsTrueEventFile(fileName))
+            {
+                return;
+            }
             InitPluginDataIfNotExists();
             _pluginData.InitFileInfoIfNotExists(fileName);
         }
@@ -87,6 +101,10 @@ namespace SoftwareCo
             string Keypress, TextSelection Selection, bool InStatementCompletion)
         {
             String fileName = ObjDte.ActiveWindow.Document.FullName;
+            if (!IsTrueEventFile(fileName))
+            {
+                return;
+            }
             InitPluginDataIfNotExists();
             _pluginData.InitFileInfoIfNotExists(fileName);
 
@@ -131,6 +149,10 @@ namespace SoftwareCo
                 return;
             }
             String fileName = document.FullName;
+            if (!IsTrueEventFile(fileName))
+            {
+                return;
+            }
             InitPluginDataIfNotExists();
             _pluginData.InitFileInfoIfNotExists(fileName);
 
@@ -152,6 +174,10 @@ namespace SoftwareCo
                 return;
             }
             String fileName = document.FullName;
+            if (!IsTrueEventFile(fileName))
+            {
+                return;
+            }
             InitPluginDataIfNotExists();
             _pluginData.InitFileInfoIfNotExists(fileName);
 
@@ -169,9 +195,6 @@ namespace SoftwareCo
         
         public void PostData()
         {
-            double offset = 0;
-            long end = 0;
-            long local_end = 0;
 
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             DateTime now = DateTime.UtcNow;
@@ -181,30 +204,11 @@ namespace SoftwareCo
                 // update the latestPayloadTimestampEndUtc
                 SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
 
-                offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
-                _pluginData.offset = Math.Abs((int)offset);
-                if (TimeZone.CurrentTimeZone.DaylightName != null
-                    && TimeZone.CurrentTimeZone.DaylightName != TimeZone.CurrentTimeZone.StandardName)
-                {
-                    _pluginData.timezone = TimeZone.CurrentTimeZone.DaylightName;
-                }
-                else
-                {
-                    _pluginData.timezone = TimeZone.CurrentTimeZone.StandardName;
-                }
-
-                // make sure all of the end times are set
-                foreach (PluginDataFileInfo pdFileInfo in _pluginData.source)
-                {
-                    pdFileInfo.EndFileInfoTime();
-                }
-
-                _pluginData.EndPluginDataTime();
+                string softwareDataContent = _pluginData.CompletePayloadAndReturnJsonString();
 
                 UpdateAggregates();
 
-                string softwareDataContent = _pluginData.GetPluginDataAsJsonString();
-                Logger.Info("Code Time: storing: " + softwareDataContent);
+                Logger.Info("Code Time: storing plugin data: " + softwareDataContent);
 
                 string datastoreFile = SoftwareCoUtil.getSoftwareDataStoreFile();
                 // append to the file

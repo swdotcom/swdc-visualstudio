@@ -83,9 +83,8 @@ namespace SoftwareCo
             return dict;
         }
 
-        public void EndFileInfoTime()
+        public void EndFileInfoTime(NowTime nowTime)
         {
-            NowTime nowTime = SoftwareCoUtil.GetNowTime();
             this.end = nowTime.now;
             this.local_end = nowTime.local_now;
         }

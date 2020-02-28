@@ -55,12 +55,7 @@ namespace SoftwareCo
             HttpResponseMessage response = null;
             if (jwt == null)
             {
-                object jwtObj = null;
-                  jwtObj  = SoftwareUserSession.GetJwt();
-                if (jwtObj != null)
-                {
-                    jwt = (string)jwtObj;
-                }
+                jwt = SoftwareCoUtil.getItemAsString("jwt");
             }
             if (jwt != null)
             {

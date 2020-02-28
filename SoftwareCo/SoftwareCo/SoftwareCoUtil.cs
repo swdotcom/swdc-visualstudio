@@ -140,6 +140,22 @@ namespace SoftwareCo
             return 0l;
         }
 
+        public static string getItemAsString(string key)
+        {
+            object val = getItem(key);
+            if (val != null)
+            {
+                try
+                {
+                    return val.ToString();
+                } catch(Exception e)
+                {
+                    return null;
+                }
+            }
+            return null;
+        }
+
         public static object getItem(string key)
         {
             sessionMap.TryGetValue(key, out string valObject);
@@ -284,11 +300,6 @@ namespace SoftwareCo
             return File.Exists(file);
         }
 
-        public static bool jwtExists()
-        {
-            string jwt = SoftwareUserSession.GetJwt();
-            return (jwt != null && !jwt.Equals(""));
-        }
         public static bool SessionSummaryFileExists()
         {
             string file = getSoftwareDataDir(false) + "\\sessionSummary.json";
@@ -383,13 +394,7 @@ namespace SoftwareCo
             try
             {
                 bool isOnline = await SoftwareUserSession.IsOnlineAsync();
-                string jwt = SoftwareUserSession.GetJwt();
-                if (jwt == null && isOnline)
-                {
-                    // initialize the anon flow
-                    await SoftwareUserSession.CreateAnonymousUserAsync(isOnline);
-                }
-                jwt = SoftwareUserSession.GetJwt();
+                string jwt = SoftwareCoUtil.getItemAsString("jwt");
                 string url = Constants.url_endpoint + "/onboarding?token=" + jwt;
                 if (!isOnline)
                 {
@@ -606,7 +611,7 @@ namespace SoftwareCo
         }
 
     }
-    class NowTime
+    public class NowTime
     {
         public long now { get; set; }
         public long local_now { get; set; }

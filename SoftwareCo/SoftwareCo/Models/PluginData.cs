@@ -49,6 +49,24 @@ namespace SoftwareCo
             end = nowTime.now;
             local_end = nowTime.local_now;
 
+            // make sure all of the end times are set
+            foreach (PluginDataFileInfo pdFileInfo in this.source)
+            {
+                pdFileInfo.EndFileInfoTime(nowTime);
+            }
+
+            double offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
+            this.offset = Math.Abs((int)offset);
+            if (TimeZone.CurrentTimeZone.DaylightName != null
+                && TimeZone.CurrentTimeZone.DaylightName != TimeZone.CurrentTimeZone.StandardName)
+            {
+                this.timezone = TimeZone.CurrentTimeZone.DaylightName;
+            }
+            else
+            {
+                this.timezone = TimeZone.CurrentTimeZone.StandardName;
+            }
+
             // create the json payload
             JsonObject jsonObj = new JsonObject();
             jsonObj.Add("start", this.start);
@@ -80,11 +98,6 @@ namespace SoftwareCo
             return sourceData;
         }
 
-        public string GetPluginDataAsJsonString()
-        {
-            return null;
-        }
-
         public PluginDataFileInfo GetFileInfo(string file)
         {
             for (int i = 0; i < source.Count; i++)
@@ -109,13 +122,6 @@ namespace SoftwareCo
         public void UpdatePluginDataFileInfo(PluginDataFileInfo fileInfo)
         {
             //
-        }
-
-        public void EndPluginDataTime()
-        {
-            NowTime nowTime = SoftwareCoUtil.GetNowTime();
-            this.end = nowTime.now;
-            this.local_end = nowTime.local_now;
         }
 
         public List<FileInfoSummary> GetSourceFileInfoList()
