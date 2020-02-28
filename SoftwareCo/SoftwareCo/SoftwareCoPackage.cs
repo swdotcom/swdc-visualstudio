@@ -190,11 +190,6 @@ namespace SoftwareCo
                     _softwareRepoUtil = new SoftwareRepoManager();
                 }
 
-                // fetch the session summary
-                await wallclockMgr.UpdateSessionSummaryFromServerAsync();
-
-                sessionSummaryMgr.UpdateStatusBarWithSummaryData();
-
                 // Create an AutoResetEvent to signal the timeout threshold in the
                 // timer callback has been reached.
                 var autoEvent = new AutoResetEvent(false);
@@ -224,6 +219,9 @@ namespace SoftwareCo
 
                 // initialize the status bar before we fetch the summary data
                 InitializeStatusBar();
+
+                // fetch the session summary
+                wallclockMgr.UpdateSessionSummaryFromServerAsync();
             }
             catch (Exception ex)
             {
@@ -416,7 +414,7 @@ namespace SoftwareCo
                 iconName = "cpaw.png";
             }
 
-            await _statusBarButton.UpdateDisplayAsync(text, iconName);
+            _statusBarButton.UpdateDisplayAsync(text, iconName);
         }
 
         public async Task InitializeStatusBar()

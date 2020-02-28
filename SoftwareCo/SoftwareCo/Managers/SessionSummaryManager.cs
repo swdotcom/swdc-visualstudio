@@ -58,14 +58,6 @@ namespace SoftwareCo
             _sessionSummary.currentDayLinesRemoved += aggregate.linesRemoved;
 
             SaveSessionSummaryToDisk(_sessionSummary);
-            // update the status bar text
-            UpdateStatusBarWithSummaryData();
-
-            // rebuild the code metrics data in the tree
-            package.RebuildCodeMetricsAsync();
-
-            // update the git metrics
-            package.RebuildGitMetricsAsync();
         }
 
         private long GetMinutesSinceLastPayload()

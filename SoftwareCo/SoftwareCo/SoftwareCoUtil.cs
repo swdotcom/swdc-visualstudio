@@ -230,6 +230,73 @@ namespace SoftwareCo
             File.WriteAllText(sessionFile, content,System.Text.Encoding.UTF8);
         }
 
+        public static long ConvertObjectToLong(IDictionary<string, object> dict, string key)
+        {
+            if (!dict.ContainsKey(key))
+            {
+                return 0;
+            }
+            try
+            {
+                return Convert.ToInt64(dict[key]);
+            } catch (Exception e)
+            {
+                //
+            }
+            return 0;
+        }
+
+        public static bool ConvertObjectToBool(IDictionary<string, object> dict, string key)
+        {
+            if (!dict.ContainsKey(key))
+            {
+                return false;
+            }
+            try
+            {
+                return Convert.ToBoolean(dict[key]);
+            }
+            catch (Exception e)
+            {
+                //
+            }
+            return false;
+        }
+
+        public static double ConvertObjectToDouble(IDictionary<string, object> dict, string key)
+        {
+            if (!dict.ContainsKey(key))
+            {
+                return 0.0;
+            }
+            try
+            {
+                return Convert.ToDouble(dict[key]);
+            }
+            catch (Exception e)
+            {
+                //
+            }
+            return 0.0;
+        }
+
+        public static int ConvertObjectToInt(IDictionary<string, object> dict, string key)
+        {
+            if (!dict.ContainsKey(key))
+            {
+                return 0;
+            }
+            try
+            {
+                return Convert.ToInt32(dict[key]);
+            }
+            catch (Exception e)
+            {
+                //
+            }
+            return 0;
+        }
+
         public static T DictionaryToObject<T>(IDictionary<string, object> dict) where T : new()
         {
             var t = new T();

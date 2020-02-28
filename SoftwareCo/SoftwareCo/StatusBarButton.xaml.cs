@@ -19,9 +19,18 @@ namespace SoftwareCo
         public async Task UpdateDisplayAsync(string label, string iconName)
         {
             await Dispatcher.BeginInvoke(new Action(() => {
+                string tooltip = "Click to see more from Code Time.";
+                string email = SoftwareCoUtil.getItemAsString("name");
+                if (email != null)
+                {
+                    tooltip += " Logged in as " + email;
+                }
                 TimeLabel.Content = label;
+                TimeLabel.ToolTip = "Code time today";
+
                 Image img = SoftwareCoUtil.CreateImage(iconName);
                 TimeIcon.Source = img.Source;
+                TimeIcon.ToolTip = tooltip;
             }));
         }
 

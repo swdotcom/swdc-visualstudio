@@ -15,7 +15,7 @@ namespace SoftwareCo
         public long currentDayKpm { get; set; }
         public long currentDayLinesAdded { get; set; }
         public long currentDayLinesRemoved { get; set; }
-        public float currentSessionGoalPercent { get; set; }
+        public double currentSessionGoalPercent { get; set; }
 
         public long averageDailyMinutes { get; set; }
         public long averageDailyKeystrokes { get; set; }
@@ -30,9 +30,9 @@ namespace SoftwareCo
         public long globalAverageLinesRemoved { get; set; }
 
         public bool inflow { get; set; }
-        public float timePercent { get; set; }
-        public float volumePercent { get; set; }
-        public float velocityPercent { get; set; }
+        public double timePercent { get; set; }
+        public double volumePercent { get; set; }
+        public double velocityPercent { get; set; }
 
         public int liveshareMinutes { get; set; }
         public long latestPayloadTimestamp { get; set; }
@@ -76,6 +76,40 @@ namespace SoftwareCo
 
             jsonObj.Add("dailyMinutesGoal", this.dailyMinutesGoal);
             return jsonObj.ToString();
+        }
+
+        public SessionSummary GetSessionSummaryFromDictionary(IDictionary<string, object> dict)
+        {
+            SessionSummary sessionSummary = new SessionSummary();
+
+            sessionSummary.currentDayMinutes = SoftwareCoUtil.ConvertObjectToLong(dict, "currentDayMinutes");
+            sessionSummary.currentDayKeystrokes = SoftwareCoUtil.ConvertObjectToLong(dict, "currentDayKeystrokes");
+            sessionSummary.currentDayKpm = SoftwareCoUtil.ConvertObjectToLong(dict, "currentDayKpm");
+            sessionSummary.currentDayLinesAdded = SoftwareCoUtil.ConvertObjectToLong(dict, "currentDayLinesAdded");
+            sessionSummary.currentDayLinesRemoved = SoftwareCoUtil.ConvertObjectToLong(dict, "currentDayLinesRemoved");
+            sessionSummary.averageDailyKeystrokes = SoftwareCoUtil.ConvertObjectToLong(dict, "averageDailyKeystrokes");
+            sessionSummary.averageDailyKpm = SoftwareCoUtil.ConvertObjectToLong(dict, "averageDailyKpm");
+            sessionSummary.averageDailyLinesAdded = SoftwareCoUtil.ConvertObjectToLong(dict, "averageDailyLinesAdded");
+            sessionSummary.averageDailyLinesRemoved = SoftwareCoUtil.ConvertObjectToLong(dict, "averageDailyLinesRemoved");
+            sessionSummary.averageDailyMinutes = SoftwareCoUtil.ConvertObjectToLong(dict, "averageDailyMinutes");
+            sessionSummary.globalAverageDailyKeystrokes = SoftwareCoUtil.ConvertObjectToLong(dict, "globalAverageDailyKeystrokes");
+            sessionSummary.globalAverageDailyMinutes = SoftwareCoUtil.ConvertObjectToLong(dict, "globalAverageDailyMinutes");
+            sessionSummary.globalAverageLinesAdded = SoftwareCoUtil.ConvertObjectToLong(dict, "globalAverageLinesAdded");
+            sessionSummary.globalAverageLinesRemoved = SoftwareCoUtil.ConvertObjectToLong(dict, "globalAverageLinesRemoved");
+            sessionSummary.globalAverageSeconds = SoftwareCoUtil.ConvertObjectToLong(dict, "globalAverageSeconds");
+
+            sessionSummary.latestPayloadTimestamp = SoftwareCoUtil.ConvertObjectToLong(dict, "latestPayloadTimestamp");
+            sessionSummary.latestPayloadTimestampEndUtc = SoftwareCoUtil.ConvertObjectToLong(dict, "latestPayloadTimestampEndUtc");
+            sessionSummary.timePercent = SoftwareCoUtil.ConvertObjectToDouble(dict, "timePercent");
+            sessionSummary.velocityPercent = SoftwareCoUtil.ConvertObjectToDouble(dict, "velocityPercent");
+            sessionSummary.volumePercent = SoftwareCoUtil.ConvertObjectToDouble(dict, "volumePercent");
+            sessionSummary.dailyMinutesGoal = SoftwareCoUtil.ConvertObjectToInt(dict, "dailyMinutesGoal");
+            sessionSummary.liveshareMinutes = SoftwareCoUtil.ConvertObjectToInt(dict, "liveshareMinutes");
+
+            sessionSummary.inflow = SoftwareCoUtil.ConvertObjectToBool(dict, "inflow");
+            sessionSummary.lastUpdatedToday = SoftwareCoUtil.ConvertObjectToBool(dict, "lastUpdatedToday");
+
+            return sessionSummary;
         }
 
         public void CloneSessionSummary(SessionSummary summary)
