@@ -25,6 +25,7 @@ namespace SoftwareCo
         private readonly AsyncPackage package;
 
         private static MenuCommand menuItem;
+        private static bool loggedIn = false;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SoftwareTopFortyCommand"/> class.
@@ -35,13 +36,20 @@ namespace SoftwareCo
         private SoftwareLoginCommand(AsyncPackage package, OleMenuCommandService commandService)
         {
             this.package = package ?? throw new ArgumentNullException("package");
+            UpdateMenuItemVisibility();
         }
 
-        public static async void UpdateEnabledState(SoftwareUserSession.UserStatus userStatus)
+        public static async void UpdateEnabledState(bool loggedInVal)
         {
-            if (menuItem != null && userStatus != null)
+            loggedIn = loggedInVal;
+            UpdateMenuItemVisibility();
+        }
+
+        private static void UpdateMenuItemVisibility()
+        {
+            if (menuItem != null)
             {
-                if (userStatus.loggedIn)
+                if (loggedIn)
                 {
                     menuItem.Enabled = false;
                     menuItem.Visible = false;
@@ -89,6 +97,7 @@ namespace SoftwareCo
             }
 
             Instance = new SoftwareLoginCommand(package, commandService);
+            UpdateMenuItemVisibility();
         }
 
         /// <summary>

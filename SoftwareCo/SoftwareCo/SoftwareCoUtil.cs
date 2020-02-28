@@ -404,14 +404,9 @@ namespace SoftwareCo
 
                 Process.Start(url);
 
-                if (!isOnline)
-                {
-                    return;
-                }
-
                 if (!SoftwareUserSession.checkingLoginState)
                 {
-                    SoftwareUserSession.RefetchUserStatusLazily(12);
+                    SoftwareUserSession.RefetchUserStatusLazily(20);
                 }
             }
             catch (Exception ex)

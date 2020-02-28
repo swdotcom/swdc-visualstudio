@@ -24,6 +24,8 @@ namespace SoftwareCo
         /// </summary>
         private readonly AsyncPackage package;
 
+        private static MenuCommand menuItem;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SoftwareToggleStatusInfoCommand"/> class.
         /// Adds our command handlers for menu (commands must exist in the command table file)
@@ -36,7 +38,7 @@ namespace SoftwareCo
             if (commandService != null)
             {
                 var menuCommandID = new CommandID(CommandSet, CommandId);
-                var menuItem = new MenuCommand(this.Execute, menuCommandID);
+                menuItem = new MenuCommand(this.Execute, menuCommandID);
                 commandService.AddCommand(menuItem);
             }
         }

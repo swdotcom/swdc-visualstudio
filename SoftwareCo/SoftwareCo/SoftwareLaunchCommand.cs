@@ -25,6 +25,7 @@ namespace SoftwareCo
         private readonly AsyncPackage package;
 
         private static MenuCommand menuItem;
+        private static bool loggedIn = false;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SoftwareLaunchCommand"/> class.
@@ -35,19 +36,28 @@ namespace SoftwareCo
         private SoftwareLaunchCommand(AsyncPackage package, OleMenuCommandService commandService)
         {
             this.package = package ?? throw new ArgumentNullException("package");
+            UpdateMenuItemVisibility();
         }
 
-        public static async void UpdateEnabledState(SoftwareUserSession.UserStatus userStatus)
+        public static async void UpdateEnabledState(bool loggedInVal)
         {
-            if (menuItem != null && userStatus != null)
+            loggedIn = loggedInVal;
+            UpdateMenuItemVisibility();
+        }
+
+        private static void UpdateMenuItemVisibility()
+        {
+            if (menuItem != null)
             {
-                if (userStatus.loggedIn)
+                if (loggedIn)
                 {
-                    menuItem.Enabled = true;
+                    menuItem.Enabled = false;
+                    menuItem.Visible = false;
                 }
                 else
                 {
-                    menuItem.Enabled = false;
+                    menuItem.Enabled = true;
+                    menuItem.Visible = true;
                 }
             }
         }
@@ -88,6 +98,7 @@ namespace SoftwareCo
                 commandService.AddCommand(menuItem);
             }
             Instance = new SoftwareLaunchCommand(package, commandService);
+            UpdateMenuItemVisibility();
         }
 
         /// <summary>

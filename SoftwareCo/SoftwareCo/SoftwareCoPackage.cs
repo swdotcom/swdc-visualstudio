@@ -366,10 +366,17 @@ namespace SoftwareCo
                 } else
                 {
                     // check if the "name" is set. if not, get the user
-                    object name = SoftwareCoUtil.getItem("name");
-                    if (name == null || name.ToString().Equals(""))
+                    string name = SoftwareCoUtil.getItemAsString("name");
+                    if (name == null || name.Equals(""))
                     {
                         await SoftwareUserSession.IsLoggedOn(online);
+                    }
+
+                    name = SoftwareCoUtil.getItemAsString("name");
+                    if (name != null && !name.Equals(""))
+                    {
+                        SoftwareLoginCommand.UpdateEnabledState(true);
+                        SoftwareLaunchCommand.UpdateEnabledState(true);
                     }
                 }
 

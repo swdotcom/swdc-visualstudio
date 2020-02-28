@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Windows.Forms;
 
 namespace SoftwareCo
 {
@@ -234,8 +235,6 @@ namespace SoftwareCo
         {
             try
             {
-                checkingLoginState      = true;
-                UserStatus userStatus   = null;
                 bool loggedIn = await IsLoggedOn(true);
 
                 if ( !loggedIn && tryCountUntilFoundUser > 0)
@@ -255,6 +254,16 @@ namespace SoftwareCo
                 else
                 {
                     checkingLoginState = false;
+                    if (loggedIn)
+                    {
+                        SoftwareLoginCommand.UpdateEnabledState(true);
+                        SoftwareLaunchCommand.UpdateEnabledState(true);
+                        // show they've logged on
+                        string msg = "Successfully logged on to Code Time.";
+                        const string caption = "Code Time";
+                        System.Windows.Forms.MessageBox.Show(msg, caption, MessageBoxButtons.OK);
+                        SoftwareUserSession.SendHeartbeat("STATE_CHANGE: LOGGED_IN:true");
+                    }
                 }
             }
             catch (Exception ex)
