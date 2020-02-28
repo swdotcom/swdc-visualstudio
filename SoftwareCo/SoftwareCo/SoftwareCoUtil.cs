@@ -394,6 +394,12 @@ namespace SoftwareCo
             Process.Start(url);
         }
 
+        public static void launchMailToCody()
+        {
+            string url = Constants.cody_email_url;
+            Process.Start(url);
+        }
+
         public static async void launchLogin()
         {
             try

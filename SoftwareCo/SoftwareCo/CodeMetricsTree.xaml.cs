@@ -313,7 +313,7 @@ namespace SoftwareCo
 
         private void FeedbackClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
-            //
+            SoftwareCoUtil.launchMailToCody();
         }
 
         private TreeViewItem BuildMetricNode(string id, string label, string iconName = null)
