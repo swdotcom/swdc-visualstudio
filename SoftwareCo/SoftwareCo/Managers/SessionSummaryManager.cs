@@ -49,7 +49,9 @@ namespace SoftwareCo
             long incrementMinutes = GetMinutesSinceLastPayload();
             _sessionSummary.currentDayMinutes += incrementMinutes;
 
-            wcMgr.UpdateBasedOnSessionSeconds(_sessionSummary.currentDayMinutes * 60);
+            long sessionSeconds = _sessionSummary.currentDayMinutes * 60;
+
+            wcMgr.UpdateBasedOnSessionSeconds(sessionSeconds);
 
             long editorSeconds = wcMgr.GetWcTimeInMinutes() * 60;
 
@@ -58,6 +60,11 @@ namespace SoftwareCo
             _sessionSummary.currentDayLinesRemoved += aggregate.linesRemoved;
 
             SaveSessionSummaryToDisk(_sessionSummary);
+
+            TimeData td = TimeDataManager.Instance.GetTimeDataSummary();
+            long fileSeconds = td.file_seconds += 60;
+
+            TimeDataManager.Instance.UpdateTimeSummaryData(editorSeconds, sessionSeconds, fileSeconds);
         }
 
         private long GetMinutesSinceLastPayload()
@@ -95,7 +102,8 @@ namespace SoftwareCo
             string sessionSummary = SoftwareCoUtil.getSessionSummaryFileData();
 
             IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(sessionSummary);
-            _sessionSummary = SoftwareCoUtil.DictionaryToObject<SessionSummary>(jsonObj);
+            _sessionSummary = new SessionSummary();
+            _sessionSummary = _sessionSummary.GetSessionSummaryFromDictionary(jsonObj);
             return _sessionSummary;
         }
 

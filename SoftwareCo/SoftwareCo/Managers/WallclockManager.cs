@@ -35,7 +35,7 @@ namespace SoftwareCo
             timer = new System.Threading.Timer(
                       WallclcockTimerHandlerAsync,
                       null,
-                      THIRTY_SECONDS_IN_MILLIS,
+                      1000,
                       THIRTY_SECONDS_IN_MILLIS);
             sessionSummaryMgr = SessionSummaryManager.Instance;
         }
@@ -47,6 +47,9 @@ namespace SoftwareCo
                 this._wctime = SoftwareCoUtil.getItemAsLong("wctime");
                 this._wctime += SECONDS_TO_INCREMENT;
                 SoftwareCoUtil.setNumericItem("wctime", this._wctime);
+
+                // update the file info file
+                this.UpdateTimeData();
             }
             DispatchUpdateAsync();
         }
@@ -81,6 +84,13 @@ namespace SoftwareCo
             return isRunning;
         }
 
+        private async Task UpdateTimeData()
+        {
+            TimeData td = TimeDataManager.Instance.GetTimeDataSummary();
+            td.editor_seconds = this._wctime;
+            TimeDataManager.Instance.UpdateTimeSummaryData(td.editor_seconds, td.session_seconds, td.file_seconds);
+        }
+
         public void InjectAsyncPackage(SoftwareCoPackage package, DTE2 ObjDte)
         {
             this.package = package;
@@ -89,6 +99,7 @@ namespace SoftwareCo
 
         public long GetWcTimeInMinutes()
         {
+            this._wctime = SoftwareCoUtil.getItemAsLong("wctime");
             return this._wctime / 60;
         }
 
@@ -130,15 +141,14 @@ namespace SoftwareCo
                 SoftwareCoPackage.SendOfflineData(null);
 
                 // send the offline TimeData payloads
-                // await payloadMgr.sendOfflineTimeData();
+                // this will clear the time data summary as well
+                TimeDataManager.Instance.SendTimeDataAsync();
 
                 // day does't match. clear the wall clock time,
                 // the session summary, time data summary,
                 // and the file change info summary data
                 ClearWcTime();
-                TimeDataManager.Instance.ClearTimeDataSummary();
                 SessionSummaryManager.Instance.ÇlearSessionSummaryData();
-                // clearFileChangeInfoSummaryData();
 
                 // set the current day
                 _currentDay = nowTime.local_day;

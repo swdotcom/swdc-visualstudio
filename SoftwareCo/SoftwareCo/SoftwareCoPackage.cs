@@ -113,7 +113,8 @@ namespace SoftwareCo
                 ObjDte = await GetServiceAsync(typeof(DTE)) as DTE2;
                 _dteEvents = ObjDte.Events.DTEEvents;
 
-                InitializeListenersAsync();
+                Task.Delay(1000 * 10).ContinueWith((task) => { InitializeListenersAsync(); });
+                
             }
             catch (Exception ex)
             {

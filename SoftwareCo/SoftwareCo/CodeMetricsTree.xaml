@@ -35,7 +35,8 @@
             </StackPanel>
 
             <StackPanel>
-                <TreeView x:Name="Editortime" Background="Transparent" BorderBrush="Transparent" Width="auto" Height="auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
+                <TreeView x:Name="Editortime" Background="Transparent" BorderBrush="Transparent"
+                          Width="auto" Height="auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
                     <TreeView.Resources>
                         <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
                       Color="Transparent" />
@@ -50,7 +51,8 @@
             </StackPanel>
 
             <StackPanel>
-                <TreeView x:Name="Codetime" Background="Transparent" BorderBrush="Transparent" Width="auto" Height="auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
+                <TreeView x:Name="Codetime" Background="Transparent" BorderBrush="Transparent"
+                          Width="auto" Height="auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
                     <TreeView.Resources>
                         <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
                       Color="Transparent" />

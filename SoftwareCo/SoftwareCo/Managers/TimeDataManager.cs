@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -70,8 +71,27 @@ namespace SoftwareCo
             string timeDataSummary = SoftwareCoUtil.getTimeDataFileData();
 
             IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(timeDataSummary);
-            _timeDataSummary = SoftwareCoUtil.DictionaryToObject<TimeData>(jsonObj);
+            _timeDataSummary = new TimeData();
+            _timeDataSummary = _timeDataSummary.GeTimeSummaryFromDictionary(jsonObj);
             return _timeDataSummary;
+        }
+
+        public async Task SendTimeDataAsync()
+        {
+            string timeDataSummary = SoftwareCoUtil.getTimeDataFileData();
+            if (timeDataSummary != null)
+            {
+                if (!timeDataSummary.StartsWith("["))
+                {
+                    // join array around the json string
+                    timeDataSummary = "[" + string.Join(",", timeDataSummary) + "]";
+                } 
+                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/time", timeDataSummary);
+                if (SoftwareHttpManager.IsOk(response))
+                {
+                    ClearTimeDataSummary();
+                }
+            }
         }
     }
 }

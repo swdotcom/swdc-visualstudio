@@ -15,6 +15,20 @@ namespace SoftwareCo
         public long file_seconds { get; set; }
         public string day { get; set; }
 
+        public TimeData GeTimeSummaryFromDictionary(IDictionary<string, object> dict)
+        {
+            TimeData summary = new TimeData();
+
+            summary.timestamp = SoftwareCoUtil.ConvertObjectToLong(dict, "timestamp");
+            summary.timestamp_local = SoftwareCoUtil.ConvertObjectToLong(dict, "timestamp_local");
+            summary.editor_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "editor_seconds");
+            summary.session_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "session_seconds");
+            summary.file_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "file_seconds");
+            summary.day = SoftwareCoUtil.ConvertObjectToString(dict, "day");
+
+            return summary;
+        }
+
         public string GetAsJson()
         {
             JsonObject jsonObj = new JsonObject();

@@ -230,6 +230,23 @@ namespace SoftwareCo
             File.WriteAllText(sessionFile, content,System.Text.Encoding.UTF8);
         }
 
+        public static string ConvertObjectToString(IDictionary<string, object> dict, string key)
+        {
+            if (!dict.ContainsKey(key))
+            {
+                return "";
+            }
+            try
+            {
+                return Convert.ToString(dict[key]);
+            }
+            catch (Exception e)
+            {
+                //
+            }
+            return "";
+        }
+
         public static long ConvertObjectToLong(IDictionary<string, object> dict, string key)
         {
             if (!dict.ContainsKey(key))
