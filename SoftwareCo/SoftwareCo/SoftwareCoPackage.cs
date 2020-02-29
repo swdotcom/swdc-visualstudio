@@ -223,6 +223,14 @@ namespace SoftwareCo
 
                 // fetch the session summary
                 wallclockMgr.UpdateSessionSummaryFromServerAsync();
+
+                // check if we've shown the readme or not
+                bool initializedVisualStudioPlugin = SoftwareCoUtil.getItemAsBool("visualstudio_CtInit");
+                if (!initializedVisualStudioPlugin)
+                {
+                    DashboardManager.Instance.LaunchReadmeFileAsync();
+                    SoftwareCoUtil.setBoolItem("visualstudio_CtInit", true);
+                }
             }
             catch (Exception ex)
             {

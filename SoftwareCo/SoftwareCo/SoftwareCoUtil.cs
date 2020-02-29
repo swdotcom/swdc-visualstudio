@@ -135,7 +135,7 @@ namespace SoftwareCo
             object val = getItem(key);
             if (val != null)
             {
-                return long.Parse(val.ToString());
+                return Convert.ToInt64(val);
             }
             return 0l;
         }
@@ -154,6 +154,23 @@ namespace SoftwareCo
                 }
             }
             return null;
+        }
+
+        public static bool getItemAsBool(string key)
+        {
+            object val = getItem(key);
+            if (val != null)
+            {
+                try
+                {
+                    return Convert.ToBoolean(val);
+                }
+                catch (Exception e)
+                {
+                    return false;
+                }
+            }
+            return false;
         }
 
         public static object getItem(string key)
@@ -180,6 +197,24 @@ namespace SoftwareCo
                 }
             }
             return null;
+        }
+
+        public static void setBoolItem(string key, bool val)
+        {
+            string sessionFile = getSoftwareSessionFile();
+            IDictionary<string, object> dict = new Dictionary<string, object>();
+            string content = "";
+            if (File.Exists(sessionFile))
+            {
+                content = File.ReadAllText(sessionFile, System.Text.Encoding.UTF8);
+                // conver to dictionary
+                dict = (IDictionary<string, object>)SimpleJson.DeserializeObject(content);
+                dict.Remove(key);
+            }
+            dict.Add(key, val);
+            content = SimpleJson.SerializeObject(dict);
+            // write it back to the file
+            File.WriteAllText(sessionFile, content, System.Text.Encoding.UTF8);
         }
 
         public static void setNumericItem(string key, long val)
