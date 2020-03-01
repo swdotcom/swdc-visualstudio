@@ -458,6 +458,20 @@ namespace SoftwareCo
         {
             return getSoftwareDataDir(true) + "\\timeDataSummary.json";
         }
+        public static bool FileChangeInfoSummaryFileExists()
+        {
+            string file = getSoftwareDataDir(false) + "\\fileChangeSummary.json";
+            return File.Exists(file);
+        }
+        public static String getFileChangeInfoSummaryData()
+        {
+            return File.ReadAllText(getSoftwareDataDir(true) + "\\fileChangeSummary.json", System.Text.Encoding.UTF8);
+        }
+
+        public static String getFileChangeInfoSummaryFile()
+        {
+            return getSoftwareDataDir(true) + "\\fileChangeSummary.json";
+        }
 
         public static String getSessionSummaryInfoFile()
         {

@@ -232,6 +232,15 @@ namespace SoftwareCo
             foreach (FileInfoSummary fileInfo in fileInfoList)
             {
                 aggregates.Aggregate(fileInfo);
+
+                FileChangeInfo fileChangeInfo = FileChangeInfoDataManager.Instance.GetFileChangeInfo(fileInfo.fsPath);
+                if (fileChangeInfo == null)
+                {
+                    // create a new entry
+                    fileChangeInfo = new FileChangeInfo();
+                }
+                fileChangeInfo.UpdateFromFileInfo(fileInfo);
+                FileChangeInfoDataManager.Instance.SaveFileChangeInfoDataSummaryToDisk(fileChangeInfo);
             }
 
             sessionSummaryMgr.IncrementSessionSummaryData(aggregates);
