@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -92,6 +93,11 @@ namespace SoftwareCo
             this.duration_seconds += fileInfo.end - fileInfo.start;
             this.fsPath = fileInfo.fsPath;
             this.update_count += 1;
+            FileInfo fi = new FileInfo(fileInfo.fsPath);
+            if (fi != null && fi.Exists)
+            {
+                this.name = fi.Name;
+            }
         }
 
         public JsonObject GetAsJson()

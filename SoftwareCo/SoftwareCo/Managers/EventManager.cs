@@ -105,7 +105,7 @@ namespace SoftwareCo
 
             string eventsData = SoftwareCoUtil.getCodeTimeEventsData();
 
-            // it'll be a map of file to FileChangeInfo objects
+            // it'll be a map of file to events objects
             JsonArray jsonArrayObj = (JsonArray)SimpleJson.DeserializeObject(eventsData);
             foreach (JsonObject jsonObj in jsonArrayObj)
             {

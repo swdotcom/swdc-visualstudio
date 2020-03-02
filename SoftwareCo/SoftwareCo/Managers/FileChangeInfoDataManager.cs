@@ -109,6 +109,30 @@ namespace SoftwareCo
             return null;
         }
 
+        public List<FileChangeInfo> GetTopKeystrokeFiles()
+        {
+            List<FileChangeInfo> changeInfos = GetFileChangeInfoSummaryList();
+            if (changeInfos == null || changeInfos.Count == 0)
+            {
+                return new List<FileChangeInfo>();
+            }
+            Int32 limit = Math.Min(changeInfos.Count, 3);
+            List<FileChangeInfo> orderedInfos = changeInfos.OrderBy(o => o.keystrokes).Reverse().ToList<FileChangeInfo>().GetRange(0, limit);
+            return orderedInfos;
+        }
+
+        public List<FileChangeInfo> GetTopCodeTimeFiles()
+        {
+            List<FileChangeInfo> changeInfos = GetFileChangeInfoSummaryList();
+            if (changeInfos == null || changeInfos.Count == 0)
+            {
+                return new List<FileChangeInfo>();
+            }
+            Int32 limit = Math.Min(changeInfos.Count, 3);
+            List<FileChangeInfo> orderedInfos = changeInfos.OrderBy(o => o.duration_seconds).Reverse().ToList<FileChangeInfo>().GetRange(0, limit);
+            return orderedInfos;
+        }
+
         public List<FileChangeInfo> GetFileChangeInfoSummaryList()
         {
             _fileChangeInfos = new List<FileChangeInfo>();
