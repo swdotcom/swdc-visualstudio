@@ -70,9 +70,15 @@ namespace SoftwareCo
 
             string timeDataSummary = SoftwareCoUtil.getTimeDataFileData();
 
-            IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(timeDataSummary);
-            _timeDataSummary = new TimeData();
-            _timeDataSummary = _timeDataSummary.GeTimeSummaryFromDictionary(jsonObj);
+            try
+            {
+                IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(timeDataSummary);
+                _timeDataSummary = new TimeData();
+                _timeDataSummary = _timeDataSummary.GeTimeSummaryFromDictionary(jsonObj);
+            } catch (Exception e)
+            {
+                _timeDataSummary = new TimeData();
+            }
             return _timeDataSummary;
         }
 

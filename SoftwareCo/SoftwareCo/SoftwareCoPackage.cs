@@ -61,7 +61,6 @@ namespace SoftwareCo
 
         private System.Threading.Timer timer;
         private System.Threading.Timer repoCommitsTimer;
-        private System.Threading.Timer userStatusTimer;
         private System.Threading.Timer offlineDataTimer;
 
         // Used by Constants for version info
@@ -231,6 +230,8 @@ namespace SoftwareCo
                     DashboardManager.Instance.LaunchReadmeFileAsync();
                     SoftwareCoUtil.setBoolItem("visualstudio_CtInit", true);
                 }
+
+                EventManager.Instance.CreateCodeTimeEvent("resource", "load", "EditorActivate");
             }
             catch (Exception ex)
             {
@@ -240,6 +241,7 @@ namespace SoftwareCo
 
         public void Dispose()
         {
+            EventManager.Instance.CreateCodeTimeEvent("resource", "unload", "EditorDeactivate");
             if (timer != null)
             {
                 _textDocKeyEvent.AfterKeyPress -= docEventMgr.AfterKeyPressedAsync;

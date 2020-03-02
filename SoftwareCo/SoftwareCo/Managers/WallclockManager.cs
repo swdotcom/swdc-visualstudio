@@ -140,6 +140,9 @@ namespace SoftwareCo
                 // send the offline data
                 SoftwareCoPackage.SendOfflineData(null);
 
+                // send the offline events
+                EventManager.Instance.SendOfflineEvents();
+
                 // send the offline TimeData payloads
                 // this will clear the time data summary as well
                 TimeDataManager.Instance.SendTimeDataAsync();

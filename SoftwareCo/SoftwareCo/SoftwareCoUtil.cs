@@ -436,7 +436,13 @@ namespace SoftwareCo
 
         public static String getSessionSummaryFileData()
         {
-            return File.ReadAllText(getSoftwareDataDir(true)+"\\sessionSummary.json", System.Text.Encoding.UTF8);
+            try
+            {
+                return File.ReadAllText(getSoftwareDataDir(true) + "\\sessionSummary.json", System.Text.Encoding.UTF8);
+            } catch (Exception e)
+            {
+                return new JsonObject().ToString();
+            }
         }
 
         public static String getSoftwareSessionFile()
@@ -456,7 +462,13 @@ namespace SoftwareCo
 
         public static String getTimeDataFile()
         {
-            return getSoftwareDataDir(true) + "\\timeDataSummary.json";
+            try
+            {
+                return getSoftwareDataDir(true) + "\\timeDataSummary.json";
+            } catch (Exception e)
+            {
+                return new JsonObject().ToString();
+            }
         }
         public static bool FileChangeInfoSummaryFileExists()
         {
@@ -465,7 +477,13 @@ namespace SoftwareCo
         }
         public static String getFileChangeInfoSummaryData()
         {
-            return File.ReadAllText(getSoftwareDataDir(true) + "\\fileChangeSummary.json", System.Text.Encoding.UTF8);
+            try
+            {
+                return File.ReadAllText(getSoftwareDataDir(true) + "\\fileChangeSummary.json", System.Text.Encoding.UTF8);
+            } catch (Exception e)
+            {
+                return new JsonObject().ToString();
+            }
         }
 
         public static String getFileChangeInfoSummaryFile()
@@ -479,14 +497,36 @@ namespace SoftwareCo
         }
         public static String getSessionSummaryInfoFileData()
         {
-            return  File.ReadAllText(getSoftwareDataDir(false) + "\\SummaryInfo.txt",System.Text.Encoding.UTF8);
+            return File.ReadAllText(getSoftwareDataDir(false) + "\\SummaryInfo.txt",System.Text.Encoding.UTF8);
         }
         public static bool SessionSummaryInfoFileExists()
         {
             string file = getSoftwareDataDir(false) + "\\SummaryInfo.txt";
             return File.Exists(file);
         }
-      
+
+        public static String getCodeTimeEventsFile()
+        {
+            return getSoftwareDataDir(true) + "\\events.json";
+        }
+
+        public static bool CodeTimeEventsFileExists()
+        {
+            string file = getSoftwareDataDir(false) + "\\events.json";
+            return File.Exists(file);
+        }
+
+        public static String getCodeTimeEventsData()
+        {
+            try
+            {
+                return File.ReadAllText(getSoftwareDataDir(true) + "\\events.json", System.Text.Encoding.UTF8);
+            } catch (Exception e)
+            {
+                return new JsonArray().ToString();
+            }
+        }
+
         public static String getSoftwareDataStoreFile()
         {
             return getSoftwareDataDir(true) + "\\data.json";
