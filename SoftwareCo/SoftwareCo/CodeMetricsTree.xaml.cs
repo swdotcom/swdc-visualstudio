@@ -304,7 +304,7 @@ namespace SoftwareCo
         public async Task RebuildGitMetricsAsync()
         {
             GitUtilManager gitUtilMgr = GitUtilManager.Instance;
-            string dir = SoftwareCoPackage.GetSolutionDirectory();
+            string dir = DocEventManager.Instance._solutionDirectory;
 
             if (dir == null || dir.Equals(""))
             {

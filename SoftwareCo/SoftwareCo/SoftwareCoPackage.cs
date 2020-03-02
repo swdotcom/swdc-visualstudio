@@ -272,7 +272,7 @@ namespace SoftwareCo
             {
                 SoftwareUserSession.SendHeartbeat("HOURLY");
 
-                string dir = GetSolutionDirectory();
+                string dir = DocEventManager.Instance._solutionDirectory;
 
                 if (dir != null)
                 {
@@ -348,17 +348,6 @@ namespace SoftwareCo
                     }
                 }
             }
-        }
-
-
-        public static string GetSolutionDirectory()
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
-            {
-                return Path.GetDirectoryName(ObjDte.Solution.FileName);
-            }
-            return null;
         }
 
         private async Task InitializeUserInfoAsync()

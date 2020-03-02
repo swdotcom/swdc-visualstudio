@@ -16,6 +16,7 @@ using System.Net.Http;
 using System.Reflection;
 using Microsoft.VisualStudio;
 using System.Windows.Forms;
+using Microsoft.VisualStudio.Threading;
 
 namespace SoftwareCo
 {
@@ -27,6 +28,7 @@ namespace SoftwareCo
         private PluginData _pluginData;
         // Used by Constants for version info
         public static DTE2 ObjDte { set; get; }
+        public string _solutionDirectory { get; set; }
 
         private static int THIRTY_SECONDS = 1000 * 30;
         private static int ONE_MINUTE = THIRTY_SECONDS * 2;
@@ -46,15 +48,25 @@ namespace SoftwareCo
             return (fileName == null || fileName.IndexOf("CodeTime.txt") != -1) ? false : true;
         }
 
-        private void InitPluginDataIfNotExists()
+        public async Task<string> GetSolutionDirectory()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
+            {
+                return Path.GetDirectoryName(ObjDte.Solution.FileName);
+            }
+            return null;
+        }
+
+        private async void InitPluginDataIfNotExists()
         {
             if (_pluginData == null)
             {
-                string solutionDirectory = SoftwareCoPackage.GetSolutionDirectory();
-                if (solutionDirectory != null && !solutionDirectory.Equals(""))
+                _solutionDirectory = await GetSolutionDirectory();
+                if (_solutionDirectory != null && !_solutionDirectory.Equals(""))
                 {
-                    FileInfo fi = new FileInfo(solutionDirectory);
-                    _pluginData = new PluginData(fi.Name, solutionDirectory);
+                    FileInfo fi = new FileInfo(_solutionDirectory);
+                    _pluginData = new PluginData(fi.Name, _solutionDirectory);
                 } else
                 {
                     // set it to unnamed
