@@ -21,6 +21,9 @@ namespace SoftwareCo
     /// </summary>
     public partial class CodeMetricsTree : UserControl
     {
+        private TreeViewItem topKeystrokesParent;
+        private TreeViewItem topCodetimeParent;
+
         public CodeMetricsTree()
         {
             InitializeComponent();
@@ -222,6 +225,7 @@ namespace SoftwareCo
 
                 if (TopKeystrokeFiles.HasItems)
                 {
+                    /**
                     TreeViewItem parentItem = await GetParent(TopKeystrokeFiles, "topcodetimefiles");
                     foreach (FileChangeInfo changeInfo in topKeystrokeFiles)
                     {
@@ -229,17 +233,26 @@ namespace SoftwareCo
                         string label = changeInfo.name + " | " + keystrokeNumStr;
                         UpdateNodeValue(parentItem, "topkeystrokes-" + changeInfo.name, label, "files.png");
                     }
+                    **/
+                }
+                List<TreeViewItem> topKeystrokeChildren = new List<TreeViewItem>();
+                foreach (FileChangeInfo changeInfo in topKeystrokeFiles)
+                {
+                    string keystrokeNumStr = SoftwareCoUtil.FormatNumber(changeInfo.keystrokes);
+                    string label = changeInfo.name + " | " + keystrokeNumStr;
+                    topKeystrokeChildren.Add(BuildMetricNode("topkeystrokes-" + changeInfo.name, label, "files.png"));
+                }
+                if (topKeystrokesParent == null)
+                {
+                    topKeystrokesParent = BuildMetricNodes("topkeystrokesfiles", "Top files by keystrokes", topKeystrokeChildren);
+                    TopKeystrokeFiles.Items.Add(topKeystrokesParent);
                 } else
                 {
-                    List<TreeViewItem> topKeystrokeChildren = new List<TreeViewItem>();
-                    foreach (FileChangeInfo changeInfo in topKeystrokeFiles)
+                    topKeystrokesParent.Items.Clear();
+                    foreach (TreeViewItem item in topKeystrokeChildren)
                     {
-                        string keystrokeNumStr = SoftwareCoUtil.FormatNumber(changeInfo.keystrokes);
-                        string label = changeInfo.name + " | " + keystrokeNumStr;
-                        topKeystrokeChildren.Add(BuildMetricNode("topkeystrokes-" + changeInfo.name, label, "files.png"));
+                        topKeystrokesParent.Items.Add(item);
                     }
-                    TreeViewItem topKeystrokesParent = BuildMetricNodes("topkeystrokesfiles", "Top files by keystrokes", topKeystrokeChildren);
-                    TopKeystrokeFiles.Items.Add(topKeystrokesParent);
                 }
                 
             }
@@ -254,6 +267,7 @@ namespace SoftwareCo
 
                 if (TopCodeTimeFiles.HasItems)
                 {
+                    /**
                     TreeViewItem parentItem = await GetParent(TopCodeTimeFiles, "topcodetimefiles");
                     foreach (FileChangeInfo changeInfo in topCodetimeFiles)
                     {
@@ -261,18 +275,29 @@ namespace SoftwareCo
                         string label = changeInfo.name + " | " + codetimeMinStr;
                         UpdateNodeValue(parentItem, "topcodetime-" + changeInfo.name, label, "files.png");
                     }
-                } else
+                    **/
+                }
+                List<TreeViewItem> topCodetimeFilesChildren = new List<TreeViewItem>();
+                foreach (FileChangeInfo changeInfo in topCodetimeFiles)
                 {
-                    List<TreeViewItem> topCodetimeFilesChildren = new List<TreeViewItem>();
-                    foreach (FileChangeInfo changeInfo in topCodetimeFiles)
-                    {
-                        string codetimeMinStr = SoftwareCoUtil.HumanizeMinutes(changeInfo.duration_seconds / 60);
-                        string label = changeInfo.name + " | " + codetimeMinStr;
-                        topCodetimeFilesChildren.Add(BuildMetricNode("topcodetime-" + changeInfo.name, label, "files.png"));
-                    }
-                    TreeViewItem topCodetimeParent = BuildMetricNodes("topcodetimefiles", "Top files by code time", topCodetimeFilesChildren);
+                    string codetimeMinStr = SoftwareCoUtil.HumanizeMinutes(changeInfo.duration_seconds / 60);
+                    string label = changeInfo.name + " | " + codetimeMinStr;
+                    topCodetimeFilesChildren.Add(BuildMetricNode("topcodetime-" + changeInfo.name, label, "files.png"));
+                }
+                if (topCodetimeParent == null)
+                {
+                    topCodetimeParent = BuildMetricNodes("topcodetimefiles", "Top files by code time", topCodetimeFilesChildren);
                     TopCodeTimeFiles.Items.Add(topCodetimeParent);
                 }
+                else
+                {
+                    topCodetimeParent.Items.Clear();
+                    foreach (TreeViewItem item in topCodetimeFilesChildren)
+                    {
+                        topCodetimeParent.Items.Add(item);
+                    }
+                }
+
             }
         }
 

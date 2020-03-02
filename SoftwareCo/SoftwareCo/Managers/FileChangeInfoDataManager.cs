@@ -118,8 +118,20 @@ namespace SoftwareCo
                 return new List<FileChangeInfo>();
             }
             Int32 limit = Math.Min(changeInfos.Count, 3);
-            List<FileChangeInfo> orderedInfos = changeInfos.OrderBy(o => o.keystrokes).Reverse().ToList<FileChangeInfo>().GetRange(0, limit);
-            return orderedInfos;
+            List<FileChangeInfo> orderedInfos = changeInfos.OrderBy(o => o.keystrokes).Reverse().ToList<FileChangeInfo>();
+            List<FileChangeInfo> finalList = new List<FileChangeInfo>();
+            for (int i = 0; i < orderedInfos.Count; i++) {
+                FileChangeInfo info = orderedInfos[i];
+                if (info.keystrokes > 0)
+                {
+                    finalList.Add(info);
+                }
+                if (finalList.Count >= 3)
+                {
+                    break;
+                }
+            }
+            return finalList;
         }
 
         public List<FileChangeInfo> GetTopCodeTimeFiles()
