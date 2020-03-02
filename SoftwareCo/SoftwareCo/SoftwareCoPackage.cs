@@ -303,6 +303,11 @@ namespace SoftwareCo
                 {
                     // launch the browser
                     SoftwareCoUtil.launchLogin();
+
+                    EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "OnboardPrompt");
+                } else
+                {
+                    EventManager.Instance.CreateCodeTimeEvent("window", "close", "OnboardPrompt");
                 }
             }
         }

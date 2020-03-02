@@ -289,16 +289,19 @@ namespace SoftwareCo
             {
                 // logged in
                 SoftwareCoUtil.launchWebDashboard();
+                EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchWebDashboard");
             }
             else
             {
                 SoftwareCoUtil.launchLogin();
+                EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchLoginOnboard");
             }
         }
 
         private void DashboardClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
             DashboardManager.Instance.LaunchCodeTimeDashboardAsync();
+            EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchDashboard");
         }
 
         private void ToggleClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
@@ -309,6 +312,7 @@ namespace SoftwareCo
         private void LearnMoreClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
             DashboardManager.Instance.LaunchReadmeFileAsync();
+            EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchReadme");
         }
 
         private void FeedbackClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)

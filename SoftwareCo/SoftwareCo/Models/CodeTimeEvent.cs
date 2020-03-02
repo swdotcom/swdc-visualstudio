@@ -61,6 +61,7 @@ namespace SoftwareCo
             this.os = SoftwareCoUtil.ConvertObjectToString(dict, "os");
             this.version = SoftwareCoUtil.ConvertObjectToString(dict, "version");
             this.timezone = SoftwareCoUtil.ConvertObjectToString(dict, "timezone");
+            this.hostname = SoftwareCoUtil.ConvertObjectToString(dict, "hostname");
             this.pluginId = SoftwareCoUtil.ConvertObjectToInt(dict, "pluginId");
         }
 
