@@ -33,6 +33,8 @@ namespace SoftwareCo
 
         public void CloneFromDictionary(IDictionary<string, object> dict)
         {
+            this.fsPath = SoftwareCoUtil.ConvertObjectToString(dict, "fsPath");
+            this.name = SoftwareCoUtil.ConvertObjectToString(dict, "name");
             this.add = SoftwareCoUtil.ConvertObjectToLong(dict, "add");
             this.close = SoftwareCoUtil.ConvertObjectToLong(dict, "close");
             this.delete = SoftwareCoUtil.ConvertObjectToLong(dict, "delete");
@@ -51,6 +53,7 @@ namespace SoftwareCo
             this.update_count = SoftwareCoUtil.ConvertObjectToLong(dict, "update_count");
             this.fileAgeDays = SoftwareCoUtil.ConvertObjectToInt(dict, "fileAgeDays");
             this.repoFileContributorCount = SoftwareCoUtil.ConvertObjectToInt(dict, "repoFileContributorCount");
+            this.UpdateName();
         }
 
         public void Clone(FileChangeInfo info)
@@ -76,6 +79,7 @@ namespace SoftwareCo
             this.update_count = info.update_count;
             this.fileAgeDays = info.fileAgeDays;
             this.repoFileContributorCount = info.repoFileContributorCount;
+            this.UpdateName();
         }
 
         public void UpdateFromFileInfo(FileInfoSummary fileInfo)
@@ -93,15 +97,12 @@ namespace SoftwareCo
             this.duration_seconds += fileInfo.end - fileInfo.start;
             this.fsPath = fileInfo.fsPath;
             this.update_count += 1;
-            FileInfo fi = new FileInfo(fileInfo.fsPath);
-            if (fi != null && fi.Exists)
-            {
-                this.name = fi.Name;
-            }
+            this.UpdateName();
         }
 
         public JsonObject GetAsJson()
         {
+            this.UpdateName();
             JsonObject jsonObj = new JsonObject();
             jsonObj.Add("add", this.add);
             jsonObj.Add("close", this.close);
@@ -125,6 +126,18 @@ namespace SoftwareCo
             jsonObj.Add("fileAgeDays", this.fileAgeDays);
             jsonObj.Add("repoFileContributorCount", this.repoFileContributorCount);
             return jsonObj;
+        }
+
+        private void UpdateName()
+        {
+            if (this.name == null || this.name.Equals(""))
+            {
+                if (this.fsPath != null && !this.fsPath.Equals(""))
+                {
+                    FileInfo fi = new FileInfo(this.fsPath);
+                    this.name = fi.Name;
+                }
+            }
         }
     }
 }

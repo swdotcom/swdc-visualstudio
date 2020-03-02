@@ -99,9 +99,10 @@ namespace SoftwareCo
                 GetFileChangeInfoSummaryList();
             }
 
+
             foreach (FileChangeInfo info in _fileChangeInfos)
             {
-                if (info.fsPath.Equals(fsPath))
+                if (info.fsPath != null && info.fsPath.Equals(fsPath))
                 {
                     return info;
                 }

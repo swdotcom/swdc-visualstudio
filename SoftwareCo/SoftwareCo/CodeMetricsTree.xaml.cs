@@ -219,20 +219,28 @@ namespace SoftwareCo
             {
                 TopKeystrokeFiles.Visibility = Visibility.Visible;
                 // add or update
-                List<TreeViewItem> topKeystrokeChildren = new List<TreeViewItem>();
-                foreach (FileChangeInfo changeInfo in topKeystrokeFiles)
-                {
-                    string label = changeInfo.name + " | " + changeInfo.keystrokes;
-                    topKeystrokeChildren.Add(BuildMetricNode("topkeystrokes-" + changeInfo.keystrokes, label, "files.png"));
-                }
 
                 if (TopKeystrokeFiles.HasItems)
                 {
-                    TopKeystrokeFiles.Items.Clear();
+                    TreeViewItem parentItem = await GetParent(TopKeystrokeFiles, "topcodetimefiles");
+                    foreach (FileChangeInfo changeInfo in topKeystrokeFiles)
+                    {
+                        string keystrokeNumStr = SoftwareCoUtil.FormatNumber(changeInfo.keystrokes);
+                        string label = changeInfo.name + " | " + keystrokeNumStr;
+                        UpdateNodeValue(parentItem, "topkeystrokes-" + changeInfo.name, label, "files.png");
+                    }
+                } else
+                {
+                    List<TreeViewItem> topKeystrokeChildren = new List<TreeViewItem>();
+                    foreach (FileChangeInfo changeInfo in topKeystrokeFiles)
+                    {
+                        string keystrokeNumStr = SoftwareCoUtil.FormatNumber(changeInfo.keystrokes);
+                        string label = changeInfo.name + " | " + keystrokeNumStr;
+                        topKeystrokeChildren.Add(BuildMetricNode("topkeystrokes-" + changeInfo.name, label, "files.png"));
+                    }
+                    TreeViewItem topKeystrokesParent = BuildMetricNodes("topkeystrokesfiles", "Top files by keystrokes", topKeystrokeChildren);
+                    TopKeystrokeFiles.Items.Add(topKeystrokesParent);
                 }
-                
-                TreeViewItem topKeystrokesParent = BuildMetricNodes("topkeystrokesfiles", "Top files by keystrokes", topKeystrokeChildren);
-                TopKeystrokeFiles.Items.Add(topKeystrokesParent);
                 
             }
             List<FileChangeInfo> topCodetimeFiles = FileChangeInfoDataManager.Instance.GetTopCodeTimeFiles();
@@ -243,20 +251,28 @@ namespace SoftwareCo
             {
                 TopCodeTimeFiles.Visibility = Visibility.Visible;
                 // add or update
-                List<TreeViewItem> topCodetimeFilesChildren = new List<TreeViewItem>();
-                foreach (FileChangeInfo changeInfo in topCodetimeFiles)
-                {
-                    string label = changeInfo.name + " | " + changeInfo.duration_seconds;
-                    topCodetimeFilesChildren.Add(BuildMetricNode("topcodetime-" + changeInfo.duration_seconds, label, "files.png"));
-                }
 
                 if (TopCodeTimeFiles.HasItems)
                 {
-                    TopCodeTimeFiles.Items.Clear();
+                    TreeViewItem parentItem = await GetParent(TopCodeTimeFiles, "topcodetimefiles");
+                    foreach (FileChangeInfo changeInfo in topCodetimeFiles)
+                    {
+                        string codetimeMinStr = SoftwareCoUtil.HumanizeMinutes(changeInfo.duration_seconds / 60);
+                        string label = changeInfo.name + " | " + codetimeMinStr;
+                        UpdateNodeValue(parentItem, "topcodetime-" + changeInfo.name, label, "files.png");
+                    }
+                } else
+                {
+                    List<TreeViewItem> topCodetimeFilesChildren = new List<TreeViewItem>();
+                    foreach (FileChangeInfo changeInfo in topCodetimeFiles)
+                    {
+                        string codetimeMinStr = SoftwareCoUtil.HumanizeMinutes(changeInfo.duration_seconds / 60);
+                        string label = changeInfo.name + " | " + codetimeMinStr;
+                        topCodetimeFilesChildren.Add(BuildMetricNode("topcodetime-" + changeInfo.name, label, "files.png"));
+                    }
+                    TreeViewItem topCodetimeParent = BuildMetricNodes("topcodetimefiles", "Top files by code time", topCodetimeFilesChildren);
+                    TopCodeTimeFiles.Items.Add(topCodetimeParent);
                 }
-
-                TreeViewItem topCodetimeParent = BuildMetricNodes("topcodetimefiles", "Top files by code time", topCodetimeFilesChildren);
-                TopCodeTimeFiles.Items.Add(topCodetimeParent);
             }
         }
 
