@@ -66,10 +66,7 @@ namespace SoftwareCo
         // Used by Constants for version info
         public static DTE2 ObjDte;
 
-        // this is the solution full name
-        private string _solutionName = string.Empty;
-
-        private StatusBarButton _statusBarButton = new StatusBarButton();
+        private StatusBarButton _statusBarButton;
         private bool _addedStatusBarButton = false;
 
         private CodeMetricsToolPane _codeMetricsWindow;
@@ -106,13 +103,13 @@ namespace SoftwareCo
         {
             try
             {
-                await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+                await JoinableTaskFactory.SwitchToMainThreadAsync();
                 base.Initialize();
 
                 ObjDte = await GetServiceAsync(typeof(DTE)) as DTE2;
                 _dteEvents = ObjDte.Events.DTEEvents;
 
-                Task.Delay(1000 * 10).ContinueWith((task) => { InitializeListenersAsync(); });
+                Task.Delay(1000 * 5).ContinueWith((task) => { InitializeListenersAsync(); });
                 
             }
             catch (Exception ex)
@@ -138,10 +135,12 @@ namespace SoftwareCo
             string MethodName = "InitializeListenersAsync";
             try
             {
-                await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
+                await JoinableTaskFactory.SwitchToMainThreadAsync();
                 string PluginVersion = GetVersion();
                 Logger.Info(string.Format("Initializing Code Time v{0}", PluginVersion));
                 Logger.FileLog("Initializing Code Time", MethodName);
+
+                _statusBarButton = new StatusBarButton();
 
                 await this.InitializeUserInfoAsync();
 
@@ -289,14 +288,14 @@ namespace SoftwareCo
 
         private async void LaunchLoginPrompt()
         {
-            await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
+            await JoinableTaskFactory.SwitchToMainThreadAsync();
             bool online = await SoftwareUserSession.IsOnlineAsync();
 
             if (online)
             {
                 string msg = "Finish creating your account and see rich data visualizations.";
                 const string caption = "Code Time";
-                DialogResult result = System.Windows.Forms.MessageBox.Show(msg, caption, MessageBoxButtons.OK);
+                DialogResult result = System.Windows.Forms.MessageBox.Show(msg, caption, MessageBoxButtons.OKCancel);
 
                 // If the no button was pressed ...
                 if (result == DialogResult.OK)
@@ -399,13 +398,9 @@ namespace SoftwareCo
             
         }
 
-        private String getDownloadDestinationDirectory()
-        {
-            return Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-        }
-
         public async Task UpdateStatusBarButtonText(String text, String iconName = null)
         {
+            await JoinableTaskFactory.SwitchToMainThreadAsync();
             await InitializeStatusBar();
 
             if (!EventManager.Instance.IsShowingStatusText())
@@ -428,7 +423,7 @@ namespace SoftwareCo
             {
                 return;
             }
-            await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
+            await JoinableTaskFactory.SwitchToMainThreadAsync();
             DockPanel statusBarObj = FindChildControl<DockPanel>(System.Windows.Application.Current.MainWindow, "StatusBarPanel");
             if (statusBarObj != null)
             {
@@ -485,7 +480,7 @@ namespace SoftwareCo
                 _codeMetricsWindow.RebuildMenuButtons();
             }
 
-            await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
+            await JoinableTaskFactory.SwitchToMainThreadAsync();
             _codeMetricsWindow = (CodeMetricsToolPane)this.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
             if ((null == _codeMetricsWindow) || (null == _codeMetricsWindow.Frame))
             {
@@ -501,7 +496,7 @@ namespace SoftwareCo
                 _codeMetricsWindow.RebuildCodeMetrics();
             }
 
-            await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
+            await JoinableTaskFactory.SwitchToMainThreadAsync();
             _codeMetricsWindow = (CodeMetricsToolPane)this.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
             if ((null == _codeMetricsWindow) || (null == _codeMetricsWindow.Frame))
             {
@@ -517,7 +512,7 @@ namespace SoftwareCo
                 _codeMetricsWindow.RebuildGitMetricsAsync();
             }
 
-            await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
+            await JoinableTaskFactory.SwitchToMainThreadAsync();
             _codeMetricsWindow = (CodeMetricsToolPane)this.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
             if ((null == _codeMetricsWindow) || (null == _codeMetricsWindow.Frame))
             {
@@ -528,7 +523,7 @@ namespace SoftwareCo
 
         public async Task OpenCodeMetricsPaneAsync()
         {
-            await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
+            await JoinableTaskFactory.SwitchToMainThreadAsync();
             ToolWindowPane window = this.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
             if ((null == window) || (null == window.Frame))
             {

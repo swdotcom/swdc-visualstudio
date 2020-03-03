@@ -39,7 +39,7 @@ namespace SoftwareCo
             package.RebuildMenuButtonsAsync();
 
             // update the status bar info
-            SessionSummaryManager.Instance.UpdateStatusBarWithSummaryData();
+            SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
         }
 
         public async Task CreateCodeTimeEvent(string typeVal, string nameVal, string descriptionVal)

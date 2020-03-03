@@ -241,15 +241,7 @@ namespace SoftwareCo
                 {
                     tryCountUntilFoundUser -= 1;
 
-                    try
-                    {
-                        Thread.Sleep(1000 * 10);
-                        RefetchUserStatusLazily(tryCountUntilFoundUser);
-                    }
-                    catch (ThreadInterruptedException e)
-                    {
-                        //
-                    }
+                    Task.Delay(1000 * 10).ContinueWith((task) => { RefetchUserStatusLazily(tryCountUntilFoundUser); });
                 }
                 else
                 {
@@ -263,6 +255,9 @@ namespace SoftwareCo
                         const string caption = "Code Time";
                         System.Windows.Forms.MessageBox.Show(msg, caption, MessageBoxButtons.OK);
                         SoftwareUserSession.SendHeartbeat("STATE_CHANGE: LOGGED_IN:true");
+
+                        // fetch the session summary to get the user's averages
+                        WallclockManager.Instance.UpdateSessionSummaryFromServerAsync();
                     }
                 }
             }

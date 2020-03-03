@@ -112,7 +112,7 @@ namespace SoftwareCo
 
         private async Task DispatchUpdateAsync()
         {
-            SessionSummaryManager.Instance.UpdateStatusBarWithSummaryData();
+            SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
             package.RebuildCodeMetricsAsync();
             package.RebuildGitMetricsAsync();
         }
@@ -196,7 +196,9 @@ namespace SoftwareCo
                     }
                 }
             }
-            sessionSummaryMgr.UpdateStatusBarWithSummaryData();
+
+            // update the status bar and tree metrics
+            DispatchUpdateAsync();
         }
     }
 }

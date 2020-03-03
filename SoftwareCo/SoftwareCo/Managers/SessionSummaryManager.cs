@@ -18,6 +18,7 @@ using Microsoft.VisualStudio;
 using System.Windows.Forms;
 using System.Windows.Threading;
 using System.Windows.Controls;
+using Microsoft.VisualStudio.Threading;
 
 namespace SoftwareCo
 {
@@ -138,9 +139,9 @@ namespace SoftwareCo
 
         }
 
-        public void UpdateStatusBarWithSummaryData()
+        public async Task UpdateStatusBarWithSummaryDataAsync()
         {
-            string MethodName = "updateStatusBarWithSummaryData";
+            string MethodName = "UpdateStatusBarWithSummaryDataAsync";
 
             string iconName = "";
             string currentDayMinutesTime = "";
