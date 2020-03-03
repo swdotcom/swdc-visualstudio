@@ -109,7 +109,7 @@ namespace SoftwareCo
                 ObjDte = await GetServiceAsync(typeof(DTE)) as DTE2;
                 _dteEvents = ObjDte.Events.DTEEvents;
 
-                Task.Delay(1000 * 5).ContinueWith((task) => { InitializeListenersAsync(); });
+                Task.Delay(1000).ContinueWith((task) => { InitializeListenersAsync(); });
                 
             }
             catch (Exception ex)
@@ -365,21 +365,15 @@ namespace SoftwareCo
                     {
                         LaunchLoginPrompt();
                     }
-                } else
-                {
-                    // check if the "name" is set. if not, get the user
-                    string name = SoftwareCoUtil.getItemAsString("name");
-                    if (name == null || name.Equals(""))
-                    {
-                        await SoftwareUserSession.IsLoggedOn(online);
-                    }
+                }
 
-                    name = SoftwareCoUtil.getItemAsString("name");
-                    if (name != null && !name.Equals(""))
-                    {
-                        SoftwareLoginCommand.UpdateEnabledState(true);
-                        SoftwareLaunchCommand.UpdateEnabledState(true);
-                    }
+                // check if the "name" is set. if not, get the user
+                string name = SoftwareCoUtil.getItemAsString("name");
+                if (name == null || name.Equals(""))
+                {
+                    await SoftwareUserSession.IsLoggedOn(online);
+                    SoftwareLoginCommand.UpdateEnabledState(true);
+                    SoftwareLaunchCommand.UpdateEnabledState(true);
                 }
 
                 if (online)

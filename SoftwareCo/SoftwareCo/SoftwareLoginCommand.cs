@@ -51,13 +51,13 @@ namespace SoftwareCo
             {
                 if (loggedIn)
                 {
-                    menuItem.Enabled = true;
-                    menuItem.Visible = true;
+                    menuItem.Enabled = false;
+                    menuItem.Visible = false;
                 }
                 else
                 {
-                    menuItem.Enabled = false;
-                    menuItem.Visible = false;
+                    menuItem.Enabled = true;
+                    menuItem.Visible = true;
                 }
             }
         }
