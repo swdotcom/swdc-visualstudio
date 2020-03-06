@@ -29,7 +29,7 @@ namespace SoftwareCo
             return summary;
         }
 
-        public string GetAsJson()
+        public JsonObject GetAsJson()
         {
             JsonObject jsonObj = new JsonObject();
             jsonObj.Add("timestamp", this.timestamp);
@@ -38,7 +38,7 @@ namespace SoftwareCo
             jsonObj.Add("session_seconds", this.session_seconds);
             jsonObj.Add("file_seconds", this.file_seconds);
             jsonObj.Add("day", this.day);
-            return jsonObj.ToString();
+            return jsonObj;
         }
     }
 }

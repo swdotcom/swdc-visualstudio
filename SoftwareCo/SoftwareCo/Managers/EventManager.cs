@@ -64,8 +64,9 @@ namespace SoftwareCo
 
             try
             {
-                
-                File.WriteAllText(file, jsonArray.ToString(), System.Text.Encoding.UTF8);
+                string content = jsonArray.ToString();
+                content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
+                File.WriteAllText(file, content, System.Text.Encoding.UTF8);
             }
             catch (Exception e)
             {
@@ -136,7 +137,9 @@ namespace SoftwareCo
 
             try
             {
-                File.WriteAllText(file, new JsonArray().ToString(), System.Text.Encoding.UTF8);
+                string content = new JsonArray().ToString();
+                content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
+                File.WriteAllText(file, content, System.Text.Encoding.UTF8);
             }
             catch (Exception e)
             {

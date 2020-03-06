@@ -64,7 +64,6 @@ namespace SoftwareCo
             {
 
                 File.WriteAllText(summaryInfoFile, summaryContent, System.Text.Encoding.UTF8);
-                // File.SetAttributes(summaryInfoFile, FileAttributes.ReadOnly);
             }
             catch (Exception e)
             {
@@ -116,10 +115,7 @@ namespace SoftwareCo
             }
             try
             {
-                //SoftwareCoUtil.WriteToFileThreadSafe(dashboardContent, dashboardFile);
                 File.WriteAllText(dashboardFile, dashboardContent, System.Text.Encoding.UTF8);
-                // File.SetAttributes(dashboardFile, FileAttributes.ReadOnly);
-
             }
             catch (Exception e)
             {

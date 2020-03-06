@@ -305,6 +305,11 @@ namespace SoftwareCo
         {
             GitUtilManager gitUtilMgr = GitUtilManager.Instance;
             string dir = DocEventManager.Instance._solutionDirectory;
+            if ((dir == null || dir.Equals("")) && SoftwareCoPackage.PLUGIN_READY)
+            {
+                await DocEventManager.Instance.GetSolutionDirectory();
+                dir = DocEventManager.Instance._solutionDirectory;
+            }
 
             if (dir == null || dir.Equals(""))
             {

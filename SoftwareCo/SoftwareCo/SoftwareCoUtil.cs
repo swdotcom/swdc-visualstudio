@@ -137,7 +137,7 @@ namespace SoftwareCo
             {
                 return Convert.ToInt64(val);
             }
-            return 0l;
+            return 0L;
         }
 
         public static string getItemAsString(string key)
@@ -214,6 +214,7 @@ namespace SoftwareCo
             dict.Add(key, val);
             content = SimpleJson.SerializeObject(dict);
             // write it back to the file
+            content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
             File.WriteAllText(sessionFile, content, System.Text.Encoding.UTF8);
         }
 
@@ -232,6 +233,7 @@ namespace SoftwareCo
             dict.Add(key, val);
             content = SimpleJson.SerializeObject(dict);
             // write it back to the file
+            content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
             File.WriteAllText(sessionFile, content, System.Text.Encoding.UTF8);
         }
 
@@ -248,7 +250,6 @@ namespace SoftwareCo
                 sessionMap.Add(key, val);
             }
 
-
             string sessionFile = getSoftwareSessionFile();
             IDictionary<string, object> dict = new Dictionary<string, object>();
             string content = "";
@@ -261,8 +262,8 @@ namespace SoftwareCo
             }
             dict.Add(key, val);
             content = SimpleJson.SerializeObject(dict);
-            // write it back to the file
-            File.WriteAllText(sessionFile, content,System.Text.Encoding.UTF8);
+            content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
+            File.WriteAllText(sessionFile, content, System.Text.Encoding.UTF8);
         }
 
         public static string ConvertObjectToString(IDictionary<string, object> dict, string key)

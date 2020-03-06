@@ -130,7 +130,9 @@ namespace SoftwareCo
 
             try
             {
-                File.WriteAllText(sessionSummaryFile, sessionSummary.GetSessionSummaryAsJson(), System.Text.Encoding.UTF8);
+                string content = SimpleJson.SerializeObject(sessionSummary.GetSessionSummaryDict());
+                content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
+                File.WriteAllText(sessionSummaryFile, content, System.Text.Encoding.UTF8);
             }
             catch (Exception e)
             {

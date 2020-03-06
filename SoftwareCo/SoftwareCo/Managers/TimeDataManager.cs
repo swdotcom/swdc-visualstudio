@@ -51,7 +51,9 @@ namespace SoftwareCo
 
             try
             {
-                File.WriteAllText(file, timeData.GetAsJson(), System.Text.Encoding.UTF8);
+                string content = timeData.GetAsJson().ToString();
+                content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
+                File.WriteAllText(file, content, System.Text.Encoding.UTF8);
             }
             catch (Exception e)
             {

@@ -42,7 +42,7 @@ namespace SoftwareCo
         public int dailyMinutesGoal { get; set; }
 
 
-        public string GetSessionSummaryAsJson()
+        public JsonObject GetSessionSummaryJson()
         {
             JsonObject jsonObj = new JsonObject();
             jsonObj.Add("currentDayMinutes", this.currentDayMinutes);
@@ -75,7 +75,48 @@ namespace SoftwareCo
             jsonObj.Add("lastUpdatedToday", this.lastUpdatedToday);
 
             jsonObj.Add("dailyMinutesGoal", this.dailyMinutesGoal);
-            return jsonObj.ToString();
+            return jsonObj;
+        }
+
+        public string GetSessionSummaryJsonString()
+        {
+            return GetSessionSummaryJson().ToString();
+        }
+
+        public IDictionary<string, object> GetSessionSummaryDict()
+        {
+            IDictionary<string, object> dict = new Dictionary<string, object>();
+            dict.Add("currentDayMinutes", this.currentDayMinutes);
+            dict.Add("currentDayKeystrokes", this.currentDayKeystrokes);
+            dict.Add("currentDayKpm", this.currentDayKpm);
+            dict.Add("currentDayLinesAdded", this.currentDayLinesAdded);
+            dict.Add("currentDayLinesRemoved", this.currentDayLinesRemoved);
+            dict.Add("currentSessionGoalPercent", this.currentSessionGoalPercent);
+
+            dict.Add("averageDailyMinutes", this.averageDailyMinutes);
+            dict.Add("averageDailyKeystrokes", this.averageDailyKeystrokes);
+            dict.Add("averageDailyKpm", this.averageDailyKpm);
+            dict.Add("averageDailyLinesAdded", this.averageDailyLinesAdded);
+            dict.Add("averageDailyLinesRemoved", this.averageDailyLinesRemoved);
+
+            dict.Add("globalAverageSeconds", this.globalAverageSeconds);
+            dict.Add("globalAverageDailyMinutes", this.globalAverageDailyMinutes);
+            dict.Add("globalAverageDailyKeystrokes", this.globalAverageDailyKeystrokes);
+            dict.Add("globalAverageLinesAdded", this.globalAverageLinesAdded);
+            dict.Add("globalAverageLinesRemoved", this.globalAverageLinesRemoved);
+
+            dict.Add("inflow", this.inflow);
+            dict.Add("timePercent", this.timePercent);
+            dict.Add("volumePercent", this.volumePercent);
+            dict.Add("velocityPercent", this.velocityPercent);
+
+            dict.Add("liveshareMinutes", this.liveshareMinutes);
+            dict.Add("latestPayloadTimestamp", this.latestPayloadTimestamp);
+            dict.Add("latestPayloadTimestampEndUtc", this.latestPayloadTimestampEndUtc);
+            dict.Add("lastUpdatedToday", this.lastUpdatedToday);
+
+            dict.Add("dailyMinutesGoal", this.dailyMinutesGoal);
+            return dict;
         }
 
         public SessionSummary GetSessionSummaryFromDictionary(IDictionary<string, object> dict)

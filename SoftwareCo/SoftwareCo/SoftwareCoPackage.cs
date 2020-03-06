@@ -79,6 +79,7 @@ namespace SoftwareCo
         private static int ONE_MINUTE = THIRTY_SECONDS * 2;
         private static int ONE_HOUR = ONE_MINUTE * 60;
         private static int THIRTY_MINUTES = ONE_MINUTE * 30;
+        public static bool PLUGIN_READY = false;
 
         #endregion
 
@@ -231,6 +232,8 @@ namespace SoftwareCo
                 }
 
                 EventManager.Instance.CreateCodeTimeEvent("resource", "load", "EditorActivate");
+
+                PLUGIN_READY = true;
             }
             catch (Exception ex)
             {
@@ -374,6 +377,13 @@ namespace SoftwareCo
                     await SoftwareUserSession.IsLoggedOn(online);
                     SoftwareLoginCommand.UpdateEnabledState(true);
                     SoftwareLaunchCommand.UpdateEnabledState(true);
+                }
+
+                long sessionTresholdSeconds = SoftwareCoUtil.getItemAsLong("sessionThresholdInSec");
+                if (sessionTresholdSeconds == 0)
+                {
+                    // update the session threshold in seconds config
+                    SoftwareCoUtil.setNumericItem("sessionThresholdInSec", Constants.DEFAULT_SESSION_THRESHOLD_SECONDS);
                 }
 
                 if (online)

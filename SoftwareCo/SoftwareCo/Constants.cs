@@ -8,6 +8,7 @@
         //
         internal static int PluginId = 6;
         internal const string EditorName = "visualstudio";
+        internal const long DEFAULT_SESSION_THRESHOLD_SECONDS = 60 * 15;
 
         internal const string api_endpoint = "https://api.software.com";
         internal const string url_endpoint = "https://app.software.com";
