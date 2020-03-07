@@ -84,6 +84,7 @@
     <Compile Include="SoftwareCoPackage.cs" />
     <Compile Include="SoftwareCoUtil.cs" />
     <Compile Include="SoftwareLaunchCommand.cs" />
+    <Compile Include="SoftwareOpenCodeMetricsTreeCommand.cs" />
     <Compile Include="SoftwareRepoManager.cs" />
     <Compile Include="SoftwareTopFortyCommand.cs" />
     <Compile Include="SoftwareUserSession.cs" />

@@ -184,6 +184,7 @@ namespace SoftwareCo
                 await SoftwareTopFortyCommand.InitializeAsync(this);
                 await SoftwareLoginCommand.InitializeAsync(this);
                 await SoftwareToggleStatusInfoCommand.InitializeAsync(this);
+                await SoftwareOpenCodeMetricsTreeCommand.InitializeAsync(this);
 
                 if (_softwareRepoUtil == null)
                 {
@@ -229,9 +230,14 @@ namespace SoftwareCo
                 {
                     DashboardManager.Instance.LaunchReadmeFileAsync();
                     SoftwareCoUtil.setBoolItem("visualstudio_CtInit", true);
+
+                    // launch the tree view
+                    CodeMetricsTreeManager.Instance.OpenCodeMetricsPaneAsync();
                 }
 
-                EventManager.Instance.CreateCodeTimeEvent("resource", "load", "EditorActivate");
+                Task.Delay(3000).ContinueWith((task) => {
+                    EventManager.Instance.CreateCodeTimeEvent("resource", "load", "EditorActivate");
+                });
 
                 PLUGIN_READY = true;
             }
