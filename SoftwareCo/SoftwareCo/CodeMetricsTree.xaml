@@ -8,19 +8,9 @@
              Height="auto" Width="auto">
     <ScrollViewer Background="Transparent" BorderBrush="Transparent" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel>
+            <StackPanel x:Name="SignupPanel">
+            </StackPanel>
             <StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="5,0,0,0" x:Name="GoogleConnectPanel">
-                    <Image x:Name="GoogleConnectImage" Width="15" Height="15"></Image>
-                    <Label x:Name="GoogleConnectLabel" Foreground="DarkCyan" MouseDown="GoogleConnectClickHandler" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" ></Label>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="5,0,0,0" x:Name="GitHubConnectPanel">
-                    <Image x:Name="GitHubConnectImage" Width="15" Height="15"></Image>
-                    <Label x:Name="GitHubConnectLabel" Foreground="DarkCyan" MouseDown="GitHubConnectClickHandler" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" ></Label>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="5,0,0,0" x:Name="EmailConnectPanel">
-                    <Image x:Name="EmailConnectImage" Width="15" Height="15"></Image>
-                    <Label x:Name="EmailConnectLabel" Foreground="DarkCyan" MouseDown="EmailConnectClickHandler" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" ></Label>
-                </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="5,0,0,0" x:Name="WebDashboardPanel">
                     <Image x:Name="WebDashboardImage" Width="15" Height="15"></Image>
                     <Label x:Name="WebDashboardLabel" Foreground="DarkCyan" MouseDown="LaunchWebDashboard" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" ></Label>

@@ -42,37 +42,18 @@ namespace SoftwareCo
 
         public async Task RebuildMenuButtonsAsync()
         {
-            string email = SoftwareCoUtil.getItemAsString("name");
-            if (email == null || email.Equals(""))
+            SignupPanel.Children.Clear();
+            List < StackPanel > signupPanels = BuildSignupPanels();
+            if (signupPanels.Count > 0)
             {
-                // connect label
-                GoogleConnectLabel.Content = "Sign up with Google";
-                GoogleConnectImage.Source = SoftwareCoUtil.CreateImage("google.png").Source;
-
-                // connect label
-                GitHubConnectLabel.Content = "Sign up with GitHub";
-                GitHubConnectImage.Source = SoftwareCoUtil.CreateImage("github.png").Source;
-                // connect label
-                EmailConnectLabel.Content = "Sign up with email";
-                EmailConnectImage.Source = SoftwareCoUtil.CreateImage("envelope.png").Source;
-
-                WebDashboardPanel.Visibility = Visibility.Hidden;
-                WebDashboardPanel.Height = 0;
-            } else
-            {
-                GoogleConnectPanel.Visibility = Visibility.Hidden;
-                GoogleConnectPanel.Height = 0;
-
-                GitHubConnectPanel.Visibility = Visibility.Hidden;
-                GitHubConnectPanel.Height = 0;
-
-                EmailConnectPanel.Visibility = Visibility.Hidden;
-                EmailConnectPanel.Height = 0;
-
-                // connect label
-                WebDashboardLabel.Content = "See advanced metrics";
-                WebDashboardImage.Source = SoftwareCoUtil.CreateImage("cpaw.png").Source;
+                foreach (StackPanel panel in signupPanels)
+                {
+                    SignupPanel.Children.Add(panel);
+                }
             }
+
+            WebDashboardLabel.Content = "See advanced metrics";
+            WebDashboardImage.Source = SoftwareCoUtil.CreateImage("cpaw.png").Source;
 
             // dashboard label
             DashboardLabel.Content = "Generate dashboard";
@@ -95,6 +76,41 @@ namespace SoftwareCo
             // Feedback label
             FeedbackLabel.Content = "Submit feedback";
             FeedbackImage.Source = SoftwareCoUtil.CreateImage("message.png").Source;
+        }
+
+        private List<StackPanel> BuildSignupPanels()
+        {
+            List<StackPanel> panels = new List<StackPanel>();
+            string email = SoftwareCoUtil.getItemAsString("name");
+            if (email == null || email.Equals("")) {
+                panels.Add(BuildSignupPanel("GoogleSignupPanel", "google.png", "Sign up with Google", GoogleConnectClickHandler));
+                panels.Add(BuildSignupPanel("GitHubSignupPanel", "github.png", "Sign up with GitHub", GitHubConnectClickHandler));
+                panels.Add(BuildSignupPanel("EmailSignupPanel", "envelope.png", "Sign up using email", EmailConnectClickHandler));
+            }
+            return panels;
+        }
+
+        private StackPanel BuildSignupPanel(string name, string iconName, string content, MouseButtonEventHandler handler)
+        {
+            StackPanel panel = new StackPanel();
+            panel.Name = name;
+            panel.Orientation = Orientation.Horizontal;
+            panel.Margin = new Thickness(5, 0, 0, 0);
+            
+            Image img = new Image();
+            img.Width = 15;
+            img.Height = 15;
+            img.Source = SoftwareCoUtil.CreateImage(iconName).Source;
+            panel.Children.Add(img);
+
+            Label label = new Label();
+            label.Content = content;
+            label.MouseDown += handler;
+            label.Foreground = Brushes.DarkCyan;
+            label.Background = Brushes.Transparent;
+            label.BorderThickness = new Thickness(0d);
+            panel.Children.Add(label);
+            return panel;
         }
 
         private async Task<TreeViewItem> GetParent(TreeView treeView, string parentId)
