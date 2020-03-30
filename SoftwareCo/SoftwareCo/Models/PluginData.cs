@@ -59,7 +59,7 @@ namespace SoftwareCo
                 {
                     name = fi.Name;
                 }
-                RepoResourceInfo resourceInfo = SoftwareCoUtil.GetResourceInfo(projectDir);
+                RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(projectDir);
                 project = new PluginDataProject(name, projectDir);
                 if (resourceInfo != null && resourceInfo.identifier != null && !resourceInfo.identifier.Equals(""))
                 {

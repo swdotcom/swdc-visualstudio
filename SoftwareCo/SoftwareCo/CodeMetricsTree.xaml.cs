@@ -347,8 +347,8 @@ namespace SoftwareCo
 
         public async Task RebuildGitMetricsAsync()
         {
-            GitUtilManager gitUtilMgr = GitUtilManager.Instance;
-            string dir = DocEventManager.Instance._solutionDirectory;
+
+            string dir = DocEventManager._solutionDirectory;
             if ((dir == null || dir.Equals("")) && SoftwareCoPackage.PLUGIN_READY)
             {
                 dir = await DocEventManager.GetSolutionDirectory();
@@ -375,7 +375,7 @@ namespace SoftwareCo
                 //
             }
 
-            CommitChangeStats uncommited = gitUtilMgr.GetUncommitedChanges(dir);
+            CommitChangeStats uncommited = GitUtilManager.GetUncommitedChanges(dir);
             string uncommittedInsertions = "Insertion(s): " + uncommited.insertions;
             string uncommittedDeletions = "Deletion(s): " + uncommited.deletions;
             if (Uncommitted.HasItems)
@@ -394,7 +394,9 @@ namespace SoftwareCo
                 Uncommitted.Items.Add(uncommittedParent);
             }
 
-            CommitChangeStats todaysStats = gitUtilMgr.GetTodaysCommits(dir);
+            RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(dir);
+            string email = resourceInfo != null && resourceInfo.email != null ? resourceInfo.email : null;
+            CommitChangeStats todaysStats = GitUtilManager.GetTodaysCommits(dir, email);
             string committedInsertions = "Insertion(s): " + todaysStats.insertions;
             string committedDeletions = "Deletion(s): " + todaysStats.deletions;
             string committedCount = "Commit(s): " + todaysStats.commitCount;

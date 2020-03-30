@@ -280,7 +280,7 @@ namespace SoftwareCo
             {
                 SoftwareUserSession.SendHeartbeat("HOURLY");
 
-                string dir = DocEventManager.Instance._solutionDirectory;
+                string dir = DocEventManager._solutionDirectory;
 
                 if (dir != null)
                 {

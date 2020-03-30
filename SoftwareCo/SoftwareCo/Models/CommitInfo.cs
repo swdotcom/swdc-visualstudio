@@ -1,0 +1,19 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace SoftwareCo
+{
+    public class CommitInfo
+    {
+        public string email { get; set; }
+        public string commitId { get; set; }
+        public string comment { get; set; }
+        public Int32 insertions { get; set; }
+        public Int32 deletions { get; set; }
+        public Int32 fileCount { get; set; }
+        public Int32 commitCount { get; set; }
+    }
+}

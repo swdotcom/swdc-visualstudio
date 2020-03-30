@@ -24,31 +24,52 @@ namespace SoftwareCo
             this.package = package;
         }
 
-        public CommitChangeStats GetUncommitedChanges(string projectDir)
+        public static CommitChangeStats GetUncommitedChanges(string projectDir)
         {
             string cmd = "git diff --stat";
 
             return GetChangeStats(cmd, projectDir); ;
         }
 
-        public CommitChangeStats GetTodaysCommits(string projectDir)
+        public static CommitChangeStats GetTodaysCommits(string projectDir, string email)
         {
+            return GetCommitsForRange("today", projectDir, email);
+        }
+
+        public static CommitChangeStats GetYesterdayCommits(string projectDir, string email)
+        {
+            return GetCommitsForRange("yesterday", projectDir, email);
+        }
+
+        public static CommitChangeStats GetThisWeeksCommits(string projectDir, string email)
+        {
+            return GetCommitsForRange("thisWeek", projectDir, email);
+        }
+
+        public static CommitChangeStats GetCommitsForRange(string rangeType, string projectDir, string email) {
             if (projectDir == null || projectDir.Equals(""))
             {
                 return new CommitChangeStats();
             }
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
-            RepoResourceInfo info = SoftwareCoUtil.GetResourceInfo(projectDir);
-            
-            string cmd = "git log --stat --pretty=\"COMMIT:% H,% ct,% cI,% s\" --since=" + nowTime.local_start_of_day;
-            if (info != null && info.email != null && !info.email.Equals(""))
+            long sinceTime = nowTime.local_start_of_day;
+            if (rangeType == "yesterday")
             {
-                cmd += " --author=" + info.email;
+                sinceTime = nowTime.local_start_of_yesterday;
+            } else if (rangeType == "thisWeek")
+            {
+                sinceTime = nowTime.local_start_of_week;
+            }
+
+            string cmd = "git log --stat --pretty=\"COMMIT:% H,% ct,% cI,% s\" --since=" + sinceTime + " --until=" + nowTime.local_now;
+            if (email != null && !email.Equals(""))
+            {
+                cmd += " --author=" + email;
             }
             return GetChangeStats(cmd, projectDir);
         }
 
-        private CommitChangeStats GetChangeStats(string cmd, string projectDir)
+        private static CommitChangeStats GetChangeStats(string cmd, string projectDir)
         {
             if (projectDir == null || projectDir.Equals(""))
             {
@@ -77,7 +98,7 @@ namespace SoftwareCo
             return AccumulateChangeStats(results);
         }
 
-        public CommitChangeStats AccumulateChangeStats(List<string> results)
+        public static CommitChangeStats AccumulateChangeStats(List<string> results)
         {
             CommitChangeStats stats = new CommitChangeStats();
 
@@ -88,7 +109,8 @@ namespace SoftwareCo
                     string lineData = line.Trim();
                     lineData = Regex.Replace(lineData, @"\s+", " ");
                     // look for lines with insertion and deletion
-                    if (lineData.IndexOf("insertion") != -1 || lineData.IndexOf("deletion") != -1)
+                    if (lineData.IndexOf("changed") != -1 &&
+                        (lineData.IndexOf("insertion") != -1 || lineData.IndexOf("deletion") != -1))
                     {
                         string[] parts = lineData.Split(' ');
                         // the 1st element is the number of files changed
@@ -113,6 +135,120 @@ namespace SoftwareCo
             }
 
             return stats;
+        }
+
+        public static RepoResourceInfo GetResourceInfo(string projectDir)
+        {
+            RepoResourceInfo info = new RepoResourceInfo();
+            try
+            {
+                string identifier = SoftwareCoUtil.RunCommand("git config remote.origin.url", projectDir);
+                if (identifier != null && !identifier.Equals(""))
+                {
+                    info.identifier = identifier;
+
+                    // only get these since identifier is available
+                    string email = SoftwareCoUtil.RunCommand("git config user.email", projectDir);
+                    if (email != null && !email.Equals(""))
+                    {
+                        info.email = email;
+
+                    }
+                    string branch = SoftwareCoUtil.RunCommand("git symbolic-ref --short HEAD", projectDir);
+                    if (branch != null && !branch.Equals(""))
+                    {
+                        info.branch = branch;
+                    }
+                    string tag = SoftwareCoUtil.RunCommand("git describe --all", projectDir);
+
+                    if (tag != null && !tag.Equals(""))
+                    {
+                        info.tag = tag;
+                    }
+
+                    List<RepoMember> repoMembers = new List<RepoMember>();
+                    string gitLogData = SoftwareCoUtil.RunCommand("git log --pretty=%an,%ae | sort", projectDir);
+
+                    IDictionary<string, string> memberMap = new Dictionary<string, string>();
+
+
+                    if (gitLogData != null && !gitLogData.Equals(""))
+                    {
+                        string[] lines = gitLogData.Split(
+                            new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                        if (lines != null && lines.Length > 0)
+                        {
+                            for (int i = 0; i < lines.Length; i++)
+                            {
+                                string line = lines[i];
+                                string[] memberInfos = line.Split(',');
+                                if (memberInfos != null && memberInfos.Length > 1)
+                                {
+                                    string name = memberInfos[0].Trim();
+                                    string memberEmail = memberInfos[1].Trim();
+                                    if (!memberMap.ContainsKey(email))
+                                    {
+                                        memberMap.Add(email, name);
+                                        repoMembers.Add(new RepoMember(name, email));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    info.Members = repoMembers;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("GetResourceInfo , error :" + ex.Message, ex);
+
+            }
+            return info;
+        }
+
+        public static string GetUsersEmail(string projectDir)
+        {
+            string email = SoftwareCoUtil.RunCommand("git config user.email", projectDir);
+            return email;
+        }
+
+        public static string GetRepoUrlLink(string projectDir)
+        {
+            string repoUrl = SoftwareCoUtil.RunCommand("git config --get remote.origin.url", projectDir);
+            if (repoUrl != null)
+            {
+                repoUrl = repoUrl.Substring(0, repoUrl.LastIndexOf(".git"));
+            }
+            return repoUrl;
+        }
+
+        public static CommitInfo GetLastCommitInfo(string projectDir, string email)
+        {
+            if (projectDir == null)
+            {
+                return null;
+            }
+
+            CommitInfo commitInfo = new CommitInfo();
+
+            string authorArg = (email != null) ? " --author=" + email + " " : " ";
+            string cmd = "git log --pretty=%H,%s" + authorArg + "--max-count=1";
+
+            List<string> results = SoftwareCoUtil.GetCommandResultList(cmd, projectDir);
+
+            if (results != null && results.Count > 0)
+            {
+                string[] parts = results[0].Split(',');
+                if (parts != null && parts.Length == 2)
+                {
+                    commitInfo.commitId = parts[0];
+                    commitInfo.comment = parts[1];
+                    commitInfo.email = email;
+                }
+            }
+
+            return commitInfo;
         }
     }
 }

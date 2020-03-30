@@ -24,7 +24,7 @@ namespace SoftwareCo
         private static IDictionary<string, string> sessionMap = new Dictionary<string, string>();
         public static int DASHBOARD_LABEL_WIDTH = 25;
         public static int DASHBOARD_VALUE_WIDTH = 25;
-
+        public static long DAY_IN_SEC = 60 * 60 * 24;
 
         public static string RunCommand(String cmd, String dir)
         {
@@ -71,78 +71,6 @@ namespace SoftwareCo
                 resultList = new List<string>(lines);
             }
             return resultList;
-        }
-
-        public static RepoResourceInfo GetResourceInfo(string projectDir)
-        {
-            RepoResourceInfo info = new RepoResourceInfo();
-            try
-            {
-                string identifier = SoftwareCoUtil.RunCommand("git config remote.origin.url", projectDir);
-                if (identifier != null && !identifier.Equals(""))
-                {
-                    info.identifier = identifier;
-
-                    // only get these since identifier is available
-                    string email = SoftwareCoUtil.RunCommand("git config user.email", projectDir);
-                    if (email != null && !email.Equals(""))
-                    {
-                        info.email = email;
-
-                    }
-                    string branch = SoftwareCoUtil.RunCommand("git symbolic-ref --short HEAD", projectDir);
-                    if (branch != null && !branch.Equals(""))
-                    {
-                        info.branch = branch;
-                    }
-                    string tag = SoftwareCoUtil.RunCommand("git describe --all", projectDir);
-
-                    if (tag != null && !tag.Equals(""))
-                    {
-                        info.tag = tag;
-                    }
-
-                    List<RepoMember> repoMembers = new List<RepoMember>();
-                    string gitLogData = SoftwareCoUtil.RunCommand("git log --pretty=%an,%ae | sort", projectDir);
-
-                    IDictionary<string, string> memberMap = new Dictionary<string, string>();
-
-
-                    if (gitLogData != null && !gitLogData.Equals(""))
-                    {
-                        string[] lines = gitLogData.Split(
-                            new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-                        if (lines != null && lines.Length > 0)
-                        {
-                            for (int i = 0; i < lines.Length; i++)
-                            {
-                                string line = lines[i];
-                                string[] memberInfos = line.Split(',');
-                                if (memberInfos != null && memberInfos.Length > 1)
-                                {
-                                    string name = memberInfos[0].Trim();
-                                    string memberEmail = memberInfos[1].Trim();
-                                    if (!memberMap.ContainsKey(email))
-                                    {
-                                        memberMap.Add(email, name);
-                                        repoMembers.Add(new RepoMember(name, email));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    info.Members = repoMembers;
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("GetResourceInfo , error :" + ex.Message, ex);
-
-            }
-
-
-            return info;
         }
 
         public static void UpdateTelemetry(bool isOn)
@@ -424,6 +352,11 @@ namespace SoftwareCo
             return getSoftwareDataDir(true) + "\\CodeTime.txt";
         }
 
+        public static String GetContributorDashboardFile()
+        {
+            return getSoftwareDataDir(true) + "\\ProjectContributorCodeSummary.txt";
+        }
+
         public static String getVSReadmeFile()
         {
             return getSoftwareDataDir(true) + "\\VS_README.txt";
@@ -642,6 +575,12 @@ namespace SoftwareCo
             timeParam.local_end_of_day = Convert.ToInt64(EndOfDay() + timeParam.offset_seconds);
             timeParam.utc_end_of_day = EndOfDay();
 
+            // yesterday start
+            timeParam.local_start_of_yesterday = Convert.ToInt64(StartOfYesterday() + timeParam.offset_seconds);
+
+            // week start
+            timeParam.local_start_of_week = Convert.ToInt64(StartOfWeek() + timeParam.offset_seconds);
+
             return timeParam;
         }
 
@@ -663,6 +602,32 @@ namespace SoftwareCo
             DateTime now = DateTime.Now;
             DateTime begOfToday = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0);
             return ((DateTimeOffset)begOfToday).ToUnixTimeSeconds();
+        }
+
+        public static long StartOfYesterday()
+        {
+            long todayStart = StartOfDay();
+            return todayStart - DAY_IN_SEC;
+        }
+
+        public static long StartOfWeek()
+        {
+            DateTime now = DateTime.Now;
+            DayOfWeek dow = DateTime.Now.DayOfWeek;
+            if (dow == DayOfWeek.Sunday)
+            {
+                // subtract 7
+                now = now.AddDays(-7);
+            } else
+            {
+                // subtract until it equals sunday
+                while (now.DayOfWeek != DayOfWeek.Sunday)
+                {
+                    now = now.AddDays(-1);
+                }
+            }
+            DateTime begOfWeek = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0);
+            return ((DateTimeOffset)begOfWeek).ToUnixTimeSeconds();
         }
 
         public static string FormatNumber(double number)
@@ -822,6 +787,8 @@ namespace SoftwareCo
         public long local_start_of_day { get; set; }
         public long local_end_of_day { get; set; }
         public long utc_end_of_day { get; set; }
+        public long local_start_of_yesterday { get; set; }
+        public long local_start_of_week { get; set; }
 
     }
     
