@@ -72,8 +72,14 @@ namespace SoftwareCo
                     // set it to unnamed
                     _pluginData = new PluginData("Unnamed", "Untitled");
                 }
-                Task.Delay(ONE_MINUTE).ContinueWith((task) => { PostData(); });
+                SoftwareCoUtil.SetTimeout(ONE_MINUTE, SavePluginDataPayload, false);
+                // Task.Delay(ONE_MINUTE).ContinueWith((task) => { PostData(); });
             }
+        }
+
+        private void SavePluginDataPayload()
+        {
+            PostData();
         }
 
         public void DocEventsOnDocumentSaved(Document document)

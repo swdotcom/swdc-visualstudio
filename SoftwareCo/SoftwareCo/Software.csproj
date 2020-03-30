@@ -150,6 +150,7 @@
     <Resource Include="Resources\github.png" />
     <Resource Include="Resources\envelope.png" />
     <Resource Include="Resources\google.png" />
+    <Resource Include="Resources\icons8-envelope-16.png" />
     <Content Include="Resources\Microsoft.VisualStudio.Services.Icons.Default.png" />
     <Resource Include="Resources\next.png" />
     <Resource Include="Resources\pause.png" />

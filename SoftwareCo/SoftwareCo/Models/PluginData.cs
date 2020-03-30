@@ -55,10 +55,7 @@ namespace SoftwareCo
             if (projectDir != null && !projectDir.Equals(""))
             {
                 FileInfo fi = new FileInfo(projectDir);
-                if (fi.Exists)
-                {
-                    name = fi.Name;
-                }
+                name = fi.Name;
                 RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(projectDir, false);
                 project = new PluginDataProject(name, projectDir);
                 if (resourceInfo != null && resourceInfo.identifier != null && !resourceInfo.identifier.Equals(""))

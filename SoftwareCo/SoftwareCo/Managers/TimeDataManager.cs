@@ -22,26 +22,41 @@ namespace SoftwareCo
             //
         }
 
-        public static String getTimeDataFileData()
+        public static String GetTimeDataFileData()
         {
+            // make sure it's created
+            GetTimeDataFile();
             return File.ReadAllText(SoftwareCoUtil.getSoftwareDataDir(true) + "\\projectTimeData.json", System.Text.Encoding.UTF8);
         }
 
-        public static String getTimeDataFile()
+        public static String GetTimeDataFile()
         {
             try
             {
-                return SoftwareCoUtil.getSoftwareDataDir(true) + "\\projectTimeData.json";
+                string file = SoftwareCoUtil.getSoftwareDataDir(true) + "\\projectTimeData.json";
+                if (!File.Exists(file))
+                {
+                    try
+                    {
+                        string content = "[]";
+                        File.WriteAllText(file, content, System.Text.Encoding.UTF8);
+                    }
+                    catch (Exception e)
+                    {
+                        //
+                    }
+                }
+                return file;
             }
             catch (Exception e)
             {
-                return new JsonObject().ToString();
+                return null;
             }
         }
 
         public void ClearTimeDataSummary()
         {
-            string file = getTimeDataFile();
+            string file = GetTimeDataFile();
             List<TimeData> list = new List<TimeData>();
             JsonObject jsonToSave = BuildJsonObjectFromList(list);
 
@@ -94,13 +109,10 @@ namespace SoftwareCo
         public void SaveTimeDataSummaryToDisk(TimeData timeData)
         {
             string MethodName = "saveTimeDataSummaryToDisk";
-            string file = getTimeDataFile();
+            string file = GetTimeDataFile();
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
 
-            if (SoftwareCoUtil.TimeDataSummaryFileExists())
-            {
-                File.SetAttributes(file, FileAttributes.Normal);
-            }
+            File.SetAttributes(file, FileAttributes.Normal);
 
             List<TimeData> list = GetTimeDataList();
             string projDir = timeData.project != null ? timeData.project.directory : "";
@@ -171,7 +183,9 @@ namespace SoftwareCo
         public List<TimeData> GetTimeDataList()
         {
             List<TimeData> existingList = new List<TimeData>();
-            string timeDataJson = getTimeDataFile();
+            
+            string timeDataJson = GetTimeDataFileData();
+
             IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(timeDataJson);
             foreach (string key in jsonObj.Keys)
             {
@@ -199,7 +213,7 @@ namespace SoftwareCo
 
         public async Task SendTimeDataAsync()
         {
-            string timeDataSummary = getTimeDataFileData();
+            string timeDataSummary = GetTimeDataFileData();
             if (timeDataSummary != null)
             {
                 if (!timeDataSummary.StartsWith("["))

@@ -87,7 +87,7 @@ namespace SoftwareCo
             if (email == null || email.Equals("")) {
                 panels.Add(BuildClickLabel("GoogleSignupPanel", "google.png", "Sign up with Google", GoogleConnectClickHandler));
                 panels.Add(BuildClickLabel("GitHubSignupPanel", "github.png", "Sign up with GitHub", GitHubConnectClickHandler));
-                panels.Add(BuildClickLabel("EmailSignupPanel", "envelope.png", "Sign up using email", EmailConnectClickHandler));
+                panels.Add(BuildClickLabel("EmailSignupPanel", "icons8-envelope-16.png", "Sign up using email", EmailConnectClickHandler));
             }
             return panels;
         }

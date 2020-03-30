@@ -414,12 +414,6 @@ namespace SoftwareCo
         {
             return getSoftwareDataDir(true) + "\\session.json";
         }
-
-        public static bool TimeDataSummaryFileExists()
-        {
-            string file = getSoftwareDataDir(false) + "\\timeDataSummary.json";
-            return File.Exists(file);
-        }
         
         public static bool FileChangeInfoSummaryFileExists()
         {
