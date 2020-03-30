@@ -23,64 +23,63 @@ namespace SoftwareCo
         {
         }
 
-        public async Task DisplayProjectContributorSummaryDashboard(string identifier)
+        public async Task DisplayProjectContributorSummaryDashboard()
         {
             string file = SoftwareCoUtil.GetContributorDashboardFile();
             StringBuilder sb = new StringBuilder();
 
             // fetch the git stats
             string projectDir = DocEventManager._solutionDirectory;
-            if (projectDir != null)
-            {
-                NowTime nowTime = SoftwareCoUtil.GetNowTime();
-                string email = GitUtilManager.GetUsersEmail(projectDir);
-                CommitChangeStats usersTodaysCommits = GitUtilManager.GetTodaysCommits(projectDir, email);
-                CommitChangeStats contribTodaysCommits = GitUtilManager.GetTodaysCommits(projectDir, null);
 
-                CommitChangeStats usersYesterdaysCommits = GitUtilManager.GetYesterdayCommits(projectDir, email);
-                CommitChangeStats contribYesterdaysCommits = GitUtilManager.GetYesterdayCommits(projectDir, null);
+            RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(projectDir, false);
+            string identifier = resourceInfo != null && resourceInfo.identifier != null ? resourceInfo.identifier : "Untitled";
 
-                CommitChangeStats usersThisWeeksCommits = GitUtilManager.GetThisWeeksCommits(projectDir, email);
-                CommitChangeStats contribThisWeeksCommits = GitUtilManager.GetThisWeeksCommits(projectDir, null);
+            NowTime nowTime = SoftwareCoUtil.GetNowTime();
+            string email = GitUtilManager.GetUsersEmail(projectDir);
+            CommitChangeStats usersTodaysCommits = GitUtilManager.GetTodaysCommits(projectDir, email);
+            CommitChangeStats contribTodaysCommits = GitUtilManager.GetTodaysCommits(projectDir, null);
+
+            CommitChangeStats usersYesterdaysCommits = GitUtilManager.GetYesterdayCommits(projectDir, email);
+            CommitChangeStats contribYesterdaysCommits = GitUtilManager.GetYesterdayCommits(projectDir, null);
+
+            CommitChangeStats usersThisWeeksCommits = GitUtilManager.GetThisWeeksCommits(projectDir, email);
+            CommitChangeStats contribThisWeeksCommits = GitUtilManager.GetThisWeeksCommits(projectDir, null);
 
 
-                string lastUpdatedStr = DateTime.Now.ToString("dddd, MMM d h:mm tt");
-                sb.Append(getTableHeader("PROJECT SUMMARY", " (Last updated on " + lastUpdatedStr + ")", true));
-                sb.Append("\n\n Project: ").Append(identifier).Append("\n\n");
+            string lastUpdatedStr = DateTime.Now.ToString("dddd, MMM d h:mm tt");
+            sb.Append(getTableHeader("PROJECT SUMMARY", " (Last updated on " + lastUpdatedStr + ")", true));
+            sb.Append("\n\n Project: ").Append(identifier).Append("\n\n");
 
-                // TODAY
-                String projectDate = DateTime.Now.ToString("MMM d, yyyy");
-                sb.Append(getRightAlignedTableHeader("Today (" + projectDate + ")"));
-                sb.Append(getColumnHeaders(new List<string>() { "Metric", "You", "All Contributors" }));
-                sb.Append(getRowNumberData("Commits", usersTodaysCommits.commitCount, contribTodaysCommits.commitCount));
-                sb.Append(getRowNumberData("Files changed", usersTodaysCommits.fileCount, contribTodaysCommits.fileCount));
-                sb.Append(getRowNumberData("Insertions", usersTodaysCommits.insertions, contribTodaysCommits.insertions));
-                sb.Append(getRowNumberData("Deletions", usersTodaysCommits.deletions, contribTodaysCommits.deletions));
-                sb.Append("\n");
+            // TODAY
+            String projectDate = DateTime.Now.ToString("MMM d, yyyy");
+            sb.Append(getRightAlignedTableHeader("Today (" + projectDate + ")"));
+            sb.Append(getColumnHeaders(new List<string>() { "Metric", "You", "All Contributors" }));
+            sb.Append(getRowNumberData("Commits", usersTodaysCommits.commitCount, contribTodaysCommits.commitCount));
+            sb.Append(getRowNumberData("Files changed", usersTodaysCommits.fileCount, contribTodaysCommits.fileCount));
+            sb.Append(getRowNumberData("Insertions", usersTodaysCommits.insertions, contribTodaysCommits.insertions));
+            sb.Append(getRowNumberData("Deletions", usersTodaysCommits.deletions, contribTodaysCommits.deletions));
+            sb.Append("\n");
 
-                // YESTERDAY
-                String yesterday = nowTime.start_of_yesterday_dt.ToString("MMM d, yyyy");
-                sb.Append(getRightAlignedTableHeader("Yesterday (" + yesterday + ")"));
-                sb.Append(getColumnHeaders(new List<string>() { "Metric", "You", "All Contributors" }));
-                sb.Append(getRowNumberData("Commits", usersYesterdaysCommits.commitCount, contribYesterdaysCommits.commitCount));
-                sb.Append(getRowNumberData("Files changed", usersYesterdaysCommits.fileCount, contribYesterdaysCommits.fileCount));
-                sb.Append(getRowNumberData("Insertions", usersYesterdaysCommits.insertions, contribYesterdaysCommits.insertions));
-                sb.Append(getRowNumberData("Deletions", usersYesterdaysCommits.deletions, contribYesterdaysCommits.deletions));
-                sb.Append("\n");
+            // YESTERDAY
+            String yesterday = nowTime.start_of_yesterday_dt.ToString("MMM d, yyyy");
+            sb.Append(getRightAlignedTableHeader("Yesterday (" + yesterday + ")"));
+            sb.Append(getColumnHeaders(new List<string>() { "Metric", "You", "All Contributors" }));
+            sb.Append(getRowNumberData("Commits", usersYesterdaysCommits.commitCount, contribYesterdaysCommits.commitCount));
+            sb.Append(getRowNumberData("Files changed", usersYesterdaysCommits.fileCount, contribYesterdaysCommits.fileCount));
+            sb.Append(getRowNumberData("Insertions", usersYesterdaysCommits.insertions, contribYesterdaysCommits.insertions));
+            sb.Append(getRowNumberData("Deletions", usersYesterdaysCommits.deletions, contribYesterdaysCommits.deletions));
+            sb.Append("\n");
 
-                // THIS WEEK
-                String startOfWeek = nowTime.start_of_week_dt.ToString("MMM d, yyyy");
-                sb.Append(getRightAlignedTableHeader("This week (" + startOfWeek + " to " + projectDate + ")"));
-                sb.Append(getColumnHeaders(new List<string>() { "Metric", "You", "All Contributors" }));
-                sb.Append(getRowNumberData("Commits", usersThisWeeksCommits.commitCount, contribThisWeeksCommits.commitCount));
-                sb.Append(getRowNumberData("Files changed", usersThisWeeksCommits.fileCount, contribThisWeeksCommits.fileCount));
-                sb.Append(getRowNumberData("Insertions", usersThisWeeksCommits.insertions, contribThisWeeksCommits.insertions));
-                sb.Append(getRowNumberData("Deletions", usersThisWeeksCommits.deletions, contribThisWeeksCommits.deletions));
-                sb.Append("\n");
-            } else
-            {
-                sb.Append("Project solution directory not available");
-            }
+            // THIS WEEK
+            String startOfWeek = nowTime.start_of_week_dt.ToString("MMM d, yyyy");
+            sb.Append(getRightAlignedTableHeader("This week (" + startOfWeek + " to " + projectDate + ")"));
+            sb.Append(getColumnHeaders(new List<string>() { "Metric", "You", "All Contributors" }));
+            sb.Append(getRowNumberData("Commits", usersThisWeeksCommits.commitCount, contribThisWeeksCommits.commitCount));
+            sb.Append(getRowNumberData("Files changed", usersThisWeeksCommits.fileCount, contribThisWeeksCommits.fileCount));
+            sb.Append(getRowNumberData("Insertions", usersThisWeeksCommits.insertions, contribThisWeeksCommits.insertions));
+            sb.Append(getRowNumberData("Deletions", usersThisWeeksCommits.deletions, contribThisWeeksCommits.deletions));
+            sb.Append("\n");
+
 
             if (File.Exists(file))
             {

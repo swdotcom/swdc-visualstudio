@@ -108,7 +108,7 @@ namespace SoftwareCo
                 return new List<RepoMember>();
             }
 
-            RepoResourceInfo info = GitUtilManager.GetResourceInfo(projectDir);
+            RepoResourceInfo info = GitUtilManager.GetResourceInfo(projectDir, true);
             if (info != null && info.Members != null)
             {
                 return info.Members;
@@ -118,7 +118,7 @@ namespace SoftwareCo
 
         public async Task ProcessRepoMembers(string projectDir)
         {
-            RepoResourceInfo info = GitUtilManager.GetResourceInfo(projectDir);
+            RepoResourceInfo info = GitUtilManager.GetResourceInfo(projectDir, true);
             if (info != null && info.Members.Count > 0)
             {
                 string jsonContent = SimpleJson.SerializeObject(info);
@@ -144,7 +144,7 @@ namespace SoftwareCo
                 {
                     return null;
                 }
-                RepoResourceInfo info = GitUtilManager.GetResourceInfo(projectDir);
+                RepoResourceInfo info = GitUtilManager.GetResourceInfo(projectDir, false);
 
                 if (info != null && info.identifier != null)
                 {
@@ -200,7 +200,7 @@ namespace SoftwareCo
                 {
                     return;
                 }
-                RepoResourceInfo info = GitUtilManager.GetResourceInfo(projectDir);
+                RepoResourceInfo info = GitUtilManager.GetResourceInfo(projectDir, false);
 
                 if (info != null && info.identifier != null)
                 {

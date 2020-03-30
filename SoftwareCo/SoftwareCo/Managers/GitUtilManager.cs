@@ -47,10 +47,6 @@ namespace SoftwareCo
         }
 
         public static CommitChangeStats GetCommitsForRange(string rangeType, string projectDir, string email) {
-            if (projectDir == null || projectDir.Equals(""))
-            {
-                return new CommitChangeStats();
-            }
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             string sinceTime = nowTime.start_of_today.ToString("yyyy-MM-ddTHH:mm:sszzz");
             string untilTime = null;
@@ -77,10 +73,6 @@ namespace SoftwareCo
 
         private static CommitChangeStats GetChangeStats(string cmd, string projectDir)
         {
-            if (projectDir == null || projectDir.Equals(""))
-            {
-                return new CommitChangeStats();
-            }
             CommitChangeStats stats = new CommitChangeStats();
 
             /**
@@ -143,7 +135,7 @@ namespace SoftwareCo
             return stats;
         }
 
-        public static RepoResourceInfo GetResourceInfo(string projectDir)
+        public static RepoResourceInfo GetResourceInfo(string projectDir, bool includeMembers)
         {
             RepoResourceInfo info = new RepoResourceInfo();
             try
@@ -172,36 +164,39 @@ namespace SoftwareCo
                         info.tag = tag;
                     }
 
-                    List<RepoMember> repoMembers = new List<RepoMember>();
-                    string gitLogData = SoftwareCoUtil.RunCommand("git log --pretty=%an,%ae | sort", projectDir);
-
-                    IDictionary<string, string> memberMap = new Dictionary<string, string>();
-
-
-                    if (gitLogData != null && !gitLogData.Equals(""))
+                    if (includeMembers)
                     {
-                        string[] lines = gitLogData.Split(
-                            new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-                        if (lines != null && lines.Length > 0)
+                        List<RepoMember> repoMembers = new List<RepoMember>();
+                        string gitLogData = SoftwareCoUtil.RunCommand("git log --pretty=%an,%ae | sort", projectDir);
+
+                        IDictionary<string, string> memberMap = new Dictionary<string, string>();
+
+
+                        if (gitLogData != null && !gitLogData.Equals(""))
                         {
-                            for (int i = 0; i < lines.Length; i++)
+                            string[] lines = gitLogData.Split(
+                                new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                            if (lines != null && lines.Length > 0)
                             {
-                                string line = lines[i];
-                                string[] memberInfos = line.Split(',');
-                                if (memberInfos != null && memberInfos.Length > 1)
+                                for (int i = 0; i < lines.Length; i++)
                                 {
-                                    string name = memberInfos[0].Trim();
-                                    string memberEmail = memberInfos[1].Trim();
-                                    if (!memberMap.ContainsKey(email))
+                                    string line = lines[i];
+                                    string[] memberInfos = line.Split(',');
+                                    if (memberInfos != null && memberInfos.Length > 1)
                                     {
-                                        memberMap.Add(email, name);
-                                        repoMembers.Add(new RepoMember(name, email));
+                                        string name = memberInfos[0].Trim();
+                                        string memberEmail = memberInfos[1].Trim();
+                                        if (!memberMap.ContainsKey(email))
+                                        {
+                                            memberMap.Add(email, name);
+                                            repoMembers.Add(new RepoMember(name, email));
+                                        }
                                     }
                                 }
                             }
                         }
+                        info.Members = repoMembers;
                     }
-                    info.Members = repoMembers;
                 }
 
             }
@@ -231,10 +226,6 @@ namespace SoftwareCo
 
         public static CommitInfo GetLastCommitInfo(string projectDir, string email)
         {
-            if (projectDir == null)
-            {
-                return null;
-            }
 
             CommitInfo commitInfo = new CommitInfo();
 

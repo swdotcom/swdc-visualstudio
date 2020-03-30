@@ -179,7 +179,7 @@
                 </ItemsControl>
             </StackPanel>
 
-            <StackPanel x:Name="ContributorsMetrics"></StackPanel>
+            <StackPanel x:Name="ContributorsMetricsPanel"></StackPanel>
 
         </StackPanel>
     </ScrollViewer>

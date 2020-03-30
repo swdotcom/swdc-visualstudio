@@ -17,7 +17,7 @@ namespace SoftwareCo
             name = nameVal;
             directory = directoryVal;
             // get the identifier
-            RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(directoryVal);
+            RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(directoryVal, false);
             if (resourceInfo != null && resourceInfo.identifier != null)
             {
                 identifier = resourceInfo.identifier;

@@ -38,6 +38,8 @@ namespace SoftwareCo
             RebuildCodeMetricsAsync();
             // update the git metric nodes
             RebuildGitMetricsAsync();
+            // update the contributor metric nodes
+            RebuildContributorMetricsAsync();
         }
 
         public async Task RebuildMenuButtonsAsync()
@@ -83,17 +85,17 @@ namespace SoftwareCo
             List<StackPanel> panels = new List<StackPanel>();
             string email = SoftwareCoUtil.getItemAsString("name");
             if (email == null || email.Equals("")) {
-                panels.Add(BuildSignupPanel("GoogleSignupPanel", "google.png", "Sign up with Google", GoogleConnectClickHandler));
-                panels.Add(BuildSignupPanel("GitHubSignupPanel", "github.png", "Sign up with GitHub", GitHubConnectClickHandler));
-                panels.Add(BuildSignupPanel("EmailSignupPanel", "envelope.png", "Sign up using email", EmailConnectClickHandler));
+                panels.Add(BuildClickLabel("GoogleSignupPanel", "google.png", "Sign up with Google", GoogleConnectClickHandler));
+                panels.Add(BuildClickLabel("GitHubSignupPanel", "github.png", "Sign up with GitHub", GitHubConnectClickHandler));
+                panels.Add(BuildClickLabel("EmailSignupPanel", "envelope.png", "Sign up using email", EmailConnectClickHandler));
             }
             return panels;
         }
 
-        private StackPanel BuildSignupPanel(string name, string iconName, string content, MouseButtonEventHandler handler)
+        private StackPanel BuildClickLabel(string panelName, string iconName, string content, MouseButtonEventHandler handler)
         {
             StackPanel panel = new StackPanel();
-            panel.Name = name;
+            panel.Name = panelName;
             panel.Orientation = Orientation.Horizontal;
             panel.Margin = new Thickness(5, 0, 0, 0);
             
@@ -352,6 +354,31 @@ namespace SoftwareCo
             {
                 dir = await DocEventManager.GetSolutionDirectory();
             }
+
+            RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(dir, true);
+
+            ContributorsMetricsPanel.Children.Clear();
+
+            if (resourceInfo != null && resourceInfo.identifier != null)
+            {
+                StackPanel identifierPanel = BuildClickLabel("IdentifierPanel", "github.png", resourceInfo.identifier, RepoIdentifierClickHandler);
+                ContributorsMetricsPanel.Children.Add(identifierPanel);
+            }
+
+            // < TreeView x: Name = "TopCodeTimeFiles" Background = "Transparent" BorderBrush = "Transparent" Width = "auto" Height = "auto" ScrollViewer.VerticalScrollBarVisibility = "Auto" ScrollViewer.HorizontalScrollBarVisibility = "Disabled" >
+
+            // < TreeView.Resources >
+
+            // < SolidColorBrush x: Key = "{x:Static SystemColors.HighlightBrushKey}"
+            // Color = "Transparent" />
+            // < SolidColorBrush x: Key = "{x:Static SystemColors.HighlightTextBrushKey}"
+            // Color = "Transparent" />
+            // < SolidColorBrush x: Key = "{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
+            // Color = "Transparent" />
+            // < SolidColorBrush x: Key = "{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
+            // Color = "Transparent" />
+            //  </ TreeView.Resources >
+            // </ TreeView >
         }
 
         public async Task RebuildGitMetricsAsync()
@@ -363,16 +390,16 @@ namespace SoftwareCo
                 dir = await DocEventManager.GetSolutionDirectory();
             }
 
-            if (dir == null || dir.Equals(""))
-            {
-                Uncommitted.Visibility = Visibility.Hidden;
-                CommittedToday.Visibility = Visibility.Hidden;
-                return;
-            } else
-            {
-                Uncommitted.Visibility = Visibility.Visible;
-                CommittedToday.Visibility = Visibility.Visible;
-            }
+            // if (dir == null || dir.Equals(""))
+            // {
+                // Uncommitted.Visibility = Visibility.Hidden;
+                // CommittedToday.Visibility = Visibility.Hidden;
+                // return;
+            // } else
+            // {
+                // Uncommitted.Visibility = Visibility.Visible;
+                // CommittedToday.Visibility = Visibility.Visible;
+            // }
 
             string name = "";
             try
@@ -403,8 +430,7 @@ namespace SoftwareCo
                 Uncommitted.Items.Add(uncommittedParent);
             }
 
-            RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(dir);
-            string email = resourceInfo != null && resourceInfo.email != null ? resourceInfo.email : null;
+            string email = GitUtilManager.GetUsersEmail(dir);
             CommitChangeStats todaysStats = GitUtilManager.GetTodaysCommits(dir, email);
             string committedInsertions = "Insertion(s): " + todaysStats.insertions;
             string committedDeletions = "Deletion(s): " + todaysStats.deletions;
@@ -466,7 +492,7 @@ namespace SoftwareCo
 
         private void RepoIdentifierClickHandler(object sender, MouseButtonEventArgs args)
         {
-            ReportManager.Instance.DisplayProjectContributorSummaryDashboard("");
+            ReportManager.Instance.DisplayProjectContributorSummaryDashboard();
         }
 
         private void ToggleClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
