@@ -19,16 +19,13 @@ namespace SoftwareCo
         private static int DASHBOARD_LRG_COL_WIDTH = 38;
         private static int TABLE_WIDTH = 80;
 
-        private static SimpleDateFormat formatDayTime = new SimpleDateFormat("EEE, MMM d h:mma");
-        private static SimpleDateFormat formatDayYear = new SimpleDateFormat("MMM d, YYYY");
-
         private ReportManager()
         {
-
         }
 
         public async Task DisplayProjectContributorSummaryDashboard(string identifier)
         {
+            string file = SoftwareCoUtil.GetContributorDashboardFile();
             StringBuilder sb = new StringBuilder();
 
             // fetch the git stats
@@ -46,47 +43,64 @@ namespace SoftwareCo
                 CommitChangeStats usersThisWeeksCommits = GitUtilManager.GetThisWeeksCommits(projectDir, email);
                 CommitChangeStats contribThisWeeksCommits = GitUtilManager.GetThisWeeksCommits(projectDir, null);
 
-                String lastUpdatedStr = formatDayTime.format(new Date());
+
+                string lastUpdatedStr = DateTime.Now.ToString("dddd, MMM d h:mm tt");
                 sb.Append(getTableHeader("PROJECT SUMMARY", " (Last updated on " + lastUpdatedStr + ")", true));
-                sb.Append("\n\n Project: ").Append(identifier).append("\n\n");
+                sb.Append("\n\n Project: ").Append(identifier).Append("\n\n");
 
                 // TODAY
-                String projectDate = formatDayYear.format(timesData.local_start_today_date);
+                String projectDate = DateTime.Now.ToString("MMM d, yyyy");
                 sb.Append(getRightAlignedTableHeader("Today (" + projectDate + ")"));
-                sb.Append(getColumnHeaders(Arrays.asList("Metric", "You", "All Contributors")));
-                sb.Append(getRowNumberData("Commits", usersTodaysCommits.getCommitCount(), contribTodaysCommits.getCommitCount()));
-                sb.Append(getRowNumberData("Files changed", usersTodaysCommits.getFileCount(), contribTodaysCommits.getFileCount()));
-                sb.Append(getRowNumberData("Insertions", usersTodaysCommits.getInsertions(), contribTodaysCommits.getInsertions()));
-                sb.Append(getRowNumberData("Deletions", usersTodaysCommits.getDeletions(), contribTodaysCommits.getDeletions()));
+                sb.Append(getColumnHeaders(new List<string>() { "Metric", "You", "All Contributors" }));
+                sb.Append(getRowNumberData("Commits", usersTodaysCommits.commitCount, contribTodaysCommits.commitCount));
+                sb.Append(getRowNumberData("Files changed", usersTodaysCommits.fileCount, contribTodaysCommits.fileCount));
+                sb.Append(getRowNumberData("Insertions", usersTodaysCommits.insertions, contribTodaysCommits.insertions));
+                sb.Append(getRowNumberData("Deletions", usersTodaysCommits.deletions, contribTodaysCommits.deletions));
                 sb.Append("\n");
 
                 // YESTERDAY
-                String yesterday = formatDayYear.format(timesData.local_start_of_yesterday_date);
+                String yesterday = nowTime.start_of_yesterday_dt.ToString("MMM d, yyyy");
                 sb.Append(getRightAlignedTableHeader("Yesterday (" + yesterday + ")"));
-                sb.Append(getColumnHeaders(Arrays.asList("Metric", "You", "All Contributors")));
-                sb.Append(getRowNumberData("Commits", usersYesterdaysCommits.getCommitCount(), contribYesterdaysCommits.getCommitCount()));
-                sb.Append(getRowNumberData("Files changed", usersYesterdaysCommits.getFileCount(), contribYesterdaysCommits.getFileCount()));
-                sb.Append(getRowNumberData("Insertions", usersYesterdaysCommits.getInsertions(), contribYesterdaysCommits.getInsertions()));
-                sb.Append(getRowNumberData("Deletions", usersYesterdaysCommits.getDeletions(), contribYesterdaysCommits.getDeletions()));
+                sb.Append(getColumnHeaders(new List<string>() { "Metric", "You", "All Contributors" }));
+                sb.Append(getRowNumberData("Commits", usersYesterdaysCommits.commitCount, contribYesterdaysCommits.commitCount));
+                sb.Append(getRowNumberData("Files changed", usersYesterdaysCommits.fileCount, contribYesterdaysCommits.fileCount));
+                sb.Append(getRowNumberData("Insertions", usersYesterdaysCommits.insertions, contribYesterdaysCommits.insertions));
+                sb.Append(getRowNumberData("Deletions", usersYesterdaysCommits.deletions, contribYesterdaysCommits.deletions));
                 sb.Append("\n");
 
                 // THIS WEEK
-                String startOfWeek = formatDayYear.format(timesData.local_start_of_week_date);
+                String startOfWeek = nowTime.start_of_week_dt.ToString("MMM d, yyyy");
                 sb.Append(getRightAlignedTableHeader("This week (" + startOfWeek + " to " + projectDate + ")"));
-                sb.Append(getColumnHeaders(Arrays.asList("Metric", "You", "All Contributors")));
-                sb.Append(getRowNumberData("Commits", usersThisWeeksCommits.getCommitCount(), contribThisWeeksCommits.getCommitCount()));
-                sb.Append(getRowNumberData("Files changed", usersThisWeeksCommits.getFileCount(), contribThisWeeksCommits.getFileCount()));
-                sb.Append(getRowNumberData("Insertions", usersThisWeeksCommits.getInsertions(), contribThisWeeksCommits.getInsertions()));
-                sb.Append(getRowNumberData("Deletions", usersThisWeeksCommits.getDeletions(), contribThisWeeksCommits.getDeletions()));
+                sb.Append(getColumnHeaders(new List<string>() { "Metric", "You", "All Contributors" }));
+                sb.Append(getRowNumberData("Commits", usersThisWeeksCommits.commitCount, contribThisWeeksCommits.commitCount));
+                sb.Append(getRowNumberData("Files changed", usersThisWeeksCommits.fileCount, contribThisWeeksCommits.fileCount));
+                sb.Append(getRowNumberData("Insertions", usersThisWeeksCommits.insertions, contribThisWeeksCommits.insertions));
+                sb.Append(getRowNumberData("Deletions", usersThisWeeksCommits.deletions, contribThisWeeksCommits.deletions));
                 sb.Append("\n");
+            } else
+            {
+                sb.Append("Project solution directory not available");
             }
-            
+
+            if (File.Exists(file))
+            {
+                File.SetAttributes(file, FileAttributes.Normal);
+            }
             try
             {
-                string dashboardFile = SoftwareCoUtil.GetContributorDashboardFile();
-                if (File.Exists(dashboardFile))
+                File.WriteAllText(file, sb.ToString(), System.Text.Encoding.UTF8);
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            try
+            {
+                
+                if (File.Exists(file))
                 {
-                    SoftwareCoPackage.ObjDte.ItemOperations.OpenFile(dashboardFile);
+                    SoftwareCoPackage.ObjDte.ItemOperations.OpenFile(file);
                 }
             }
             catch (Exception ex)

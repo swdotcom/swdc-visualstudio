@@ -52,16 +52,22 @@ namespace SoftwareCo
                 return new CommitChangeStats();
             }
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
-            long sinceTime = nowTime.local_start_of_day;
+            string sinceTime = "today";
+            string untilTime = null;
             if (rangeType == "yesterday")
             {
-                sinceTime = nowTime.local_start_of_yesterday;
+                sinceTime = nowTime.start_of_yesterday_dt.ToString("yyyy-MM-ddTHH:mm:sszzz");
+                untilTime = nowTime.start_of_today.ToString("yyyy-MM-ddTHH:mm:sszzz");
             } else if (rangeType == "thisWeek")
             {
-                sinceTime = nowTime.local_start_of_week;
+                sinceTime = nowTime.start_of_week_dt.ToString("yyyy-MM-ddTHH:mm:sszzz");// nowTime.local_start_of_week;
             }
 
-            string cmd = "git log --stat --pretty=\"COMMIT:% H,% ct,% cI,% s\" --since=" + sinceTime + " --until=" + nowTime.local_now;
+            string cmd = "git log --stat --pretty=\"COMMIT:% H,% ct,% cI,% s\" --since=\"" + sinceTime + "\"";
+            if (untilTime != null)
+            {
+                cmd += " --until=\"" + untilTime + "\"";
+            }
             if (email != null && !email.Equals(""))
             {
                 cmd += " --author=" + email;

@@ -455,6 +455,11 @@ namespace SoftwareCo
             EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchDashboard");
         }
 
+        private void RepoIdentifierClickHandler(object sender, MouseButtonEventArgs args)
+        {
+            ReportManager.Instance.DisplayProjectContributorSummaryDashboard("");
+        }
+
         private void ToggleClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
             EventManager.Instance.ToggleStatusInfo();

@@ -62,10 +62,12 @@
     <Compile Include="Managers\EventManager.cs" />
     <Compile Include="Managers\FileChangeInfoDataManager.cs" />
     <Compile Include="Managers\GitUtilManager.cs" />
+    <Compile Include="Managers\ReportManager.cs" />
     <Compile Include="Managers\SessionSummaryManager.cs" />
     <Compile Include="Managers\TimeDataManager.cs" />
     <Compile Include="Models\CodeTimeEvent.cs" />
     <Compile Include="Models\CommitChangeStats.cs" />
+    <Compile Include="Models\CommitInfo.cs" />
     <Compile Include="Models\FileChangeInfo.cs" />
     <Compile Include="Models\FileInfoSummary.cs" />
     <Compile Include="Models\KeystrokeAggregates.cs" />

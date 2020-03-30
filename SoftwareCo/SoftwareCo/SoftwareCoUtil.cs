@@ -563,6 +563,7 @@ namespace SoftwareCo
             DateTimeOffset offset = DateTimeOffset.Now;
             // utc now in seconds
             timeParam.now = offset.ToUnixTimeSeconds();
+            timeParam.now_dt = DateTime.Now;
             // set the offset (will be negative before utc and positive after)
             timeParam.offset_minutes = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
             timeParam.offset_seconds = timeParam.offset_minutes * 60;
@@ -571,15 +572,18 @@ namespace SoftwareCo
             timeParam.local_day = offset.ToLocalTime().ToString(@"yyyy-MM-dd");
 
             // start and end of day
-            timeParam.local_start_of_day = Convert.ToInt64(StartOfDay() + timeParam.offset_seconds);
+            timeParam.start_of_today = StartOfDay();
+            timeParam.local_start_of_day = Convert.ToInt64(((DateTimeOffset)timeParam.start_of_today).ToUnixTimeSeconds() + timeParam.offset_seconds);
             timeParam.local_end_of_day = Convert.ToInt64(EndOfDay() + timeParam.offset_seconds);
             timeParam.utc_end_of_day = EndOfDay();
 
             // yesterday start
-            timeParam.local_start_of_yesterday = Convert.ToInt64(StartOfYesterday() + timeParam.offset_seconds);
+            timeParam.start_of_yesterday_dt = StartOfYesterday();
+            timeParam.local_start_of_yesterday = Convert.ToInt64(((DateTimeOffset)timeParam.start_of_yesterday_dt).ToUnixTimeSeconds() + timeParam.offset_seconds);
 
             // week start
-            timeParam.local_start_of_week = Convert.ToInt64(StartOfWeek() + timeParam.offset_seconds);
+            timeParam.start_of_week_dt = StartOfWeek();
+            timeParam.local_start_of_week = Convert.ToInt64(((DateTimeOffset)timeParam.start_of_week_dt).ToUnixTimeSeconds() + timeParam.offset_seconds);
 
             return timeParam;
         }
@@ -597,20 +601,22 @@ namespace SoftwareCo
             return ((DateTimeOffset)endOfDay).ToUnixTimeSeconds();
         }
 
-        public static long StartOfDay()
+        public static DateTime StartOfDay()
         {
             DateTime now = DateTime.Now;
             DateTime begOfToday = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0);
-            return ((DateTimeOffset)begOfToday).ToUnixTimeSeconds();
+            return begOfToday;
         }
 
-        public static long StartOfYesterday()
+        public static DateTime StartOfYesterday()
         {
-            long todayStart = StartOfDay();
-            return todayStart - DAY_IN_SEC;
+            DateTime now = DateTime.Now;
+            now = now.AddDays(-1);
+            DateTime begOfYesterday = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0);
+            return begOfYesterday;
         }
 
-        public static long StartOfWeek()
+        public static DateTime StartOfWeek()
         {
             DateTime now = DateTime.Now;
             DayOfWeek dow = DateTime.Now.DayOfWeek;
@@ -627,7 +633,8 @@ namespace SoftwareCo
                 }
             }
             DateTime begOfWeek = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0);
-            return ((DateTimeOffset)begOfWeek).ToUnixTimeSeconds();
+            // return ((DateTimeOffset)begOfWeek).ToUnixTimeSeconds();
+            return begOfWeek;
         }
 
         public static string FormatNumber(double number)
@@ -780,6 +787,8 @@ namespace SoftwareCo
     public class NowTime
     {
         public long now { get; set; }
+        public DateTime now_dt { get; set; }
+        public DateTime start_of_today { get; set; }
         public long local_now { get; set; }
         public double offset_minutes { get; set; }
         public double offset_seconds { get; set; }
@@ -787,7 +796,9 @@ namespace SoftwareCo
         public long local_start_of_day { get; set; }
         public long local_end_of_day { get; set; }
         public long utc_end_of_day { get; set; }
+        public DateTime start_of_yesterday_dt { get; set; }
         public long local_start_of_yesterday { get; set; }
+        public DateTime start_of_week_dt { get; set; }
         public long local_start_of_week { get; set; }
 
     }
