@@ -38,7 +38,7 @@ namespace SoftwareCo
                 {
                     try
                     {
-                        string content = "[]";
+                        string content = new JsonArray().ToString();
                         File.WriteAllText(file, content, System.Text.Encoding.UTF8);
                     }
                     catch (Exception e)
@@ -57,12 +57,10 @@ namespace SoftwareCo
         public void ClearTimeDataSummary()
         {
             string file = GetTimeDataFile();
-            List<TimeData> list = new List<TimeData>();
-            JsonObject jsonToSave = BuildJsonObjectFromList(list);
 
             try
             {
-                string content = jsonToSave.ToString();
+                string content = new JsonArray().ToString();
                 content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
                 File.WriteAllText(file, content, System.Text.Encoding.UTF8);
             }
@@ -108,32 +106,34 @@ namespace SoftwareCo
 
         public void SaveTimeDataSummaryToDisk(TimeData timeData)
         {
+            // don't save it to disk if it's null or the project info is null or empty
+            if (timeData == null || timeData.project == null ||
+                timeData.project.directory == null ||
+                timeData.project.directory.Equals(""))
+            {
+                return;
+            }
             string MethodName = "saveTimeDataSummaryToDisk";
-            string file = GetTimeDataFile();
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
 
-            File.SetAttributes(file, FileAttributes.Normal);
-
             List<TimeData> list = GetTimeDataList();
-            string projDir = timeData.project != null ? timeData.project.directory : "";
-            bool foundIt = false;
+            List<TimeData> listToSave = new List<TimeData>();
+            listToSave.Add(timeData);
+            string projDir = timeData.project.directory;
             foreach (TimeData td in list)
             {
                 string tdDir = td.project != null ? td.project.directory : "";
-                if (td.day.Equals(nowTime.local_day) && tdDir.Equals(projDir))
+                if ((!tdDir.Equals(projDir) && !tdDir.Equals("")) ||
+                    (tdDir.Equals(projDir) && !td.day.Equals(nowTime.local_day)))
                 {
-                    td.Clone(timeData);
-                    foundIt = true;
-                    break;
+                    listToSave.Add(td);
                 }
             }
 
-            if (!foundIt)
-            {
-                list.Add(timeData);
-            }
+            JsonArray jsonToSave = BuildJsonObjectFromList(listToSave);
 
-            JsonObject jsonToSave = BuildJsonObjectFromList(list);
+            string file = GetTimeDataFile();
+            File.SetAttributes(file, FileAttributes.Normal);
 
             try
             {
@@ -148,17 +148,16 @@ namespace SoftwareCo
 
         }
 
-        private JsonObject BuildJsonObjectFromList(List<TimeData> tdList)
+        private JsonArray BuildJsonObjectFromList(List<TimeData> tdList)
         {
-            JsonObject jsonObj = new JsonObject();
+            JsonArray jsonArr = new JsonArray();
 
             foreach (TimeData info in tdList)
             {
-                string key = info.day + "_" + info.project.directory;
-                jsonObj.Add(key, info.GetAsJson());
+                jsonArr.Add(info);
             }
 
-            return jsonObj;
+            return jsonArr;
         }
 
         public async Task<TimeData> GetTodayTimeDataSummary(PluginDataProject proj)
@@ -186,19 +185,13 @@ namespace SoftwareCo
             
             string timeDataJson = GetTimeDataFileData();
 
-            IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(timeDataJson);
-            foreach (string key in jsonObj.Keys)
+            JsonArray jsonArrayObj = (JsonArray)SimpleJson.DeserializeObject(timeDataJson);
+            foreach (JsonObject jsonObj in jsonArrayObj)
             {
                 TimeData td = new TimeData();
-
-                jsonObj.TryGetValue(key, out object infoObj);
                 try
                 {
-                    JsonObject infoObjJson = (infoObj == null) ? null : (JsonObject)infoObj;
-                    if (infoObjJson != null)
-                    {
-                        td.CloneFromDictionary(infoObjJson);
-                    }
+                    td.CloneFromDictionary(jsonObj);
                 }
                 catch (Exception e)
                 {
@@ -207,6 +200,7 @@ namespace SoftwareCo
 
                 existingList.Add(td);
             }
+
             return existingList;
         }
 

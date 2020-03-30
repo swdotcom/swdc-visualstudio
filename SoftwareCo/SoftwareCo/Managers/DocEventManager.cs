@@ -72,14 +72,8 @@ namespace SoftwareCo
                     // set it to unnamed
                     _pluginData = new PluginData("Unnamed", "Untitled");
                 }
-                SoftwareCoUtil.SetTimeout(ONE_MINUTE, SavePluginDataPayload, false);
-                // Task.Delay(ONE_MINUTE).ContinueWith((task) => { PostData(); });
+                SoftwareCoUtil.SetTimeout(ONE_MINUTE, PostData, false);
             }
-        }
-
-        private void SavePluginDataPayload()
-        {
-            PostData();
         }
 
         public void DocEventsOnDocumentSaved(Document document)
@@ -211,18 +205,16 @@ namespace SoftwareCo
         }
 
         
-        public async Task PostData()
+        public async void PostData()
         {
-
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             DateTime now = DateTime.UtcNow;
 
             if (_pluginData != null && _pluginData.source.Count > 0)
             {
-
                 string softwareDataContent = await _pluginData.CompletePayloadAndReturnJsonString();
 
-                UpdateAggregates();
+                UpdateAggregates(_pluginData);
 
                 Logger.Info("Code Time: storing plugin data: " + softwareDataContent);
 
@@ -232,21 +224,15 @@ namespace SoftwareCo
 
                 // update the latestPayloadTimestampEndUtc
                 SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
-
-                _pluginData = null;
             }
-
+            _pluginData = null;
         }
 
-        private void UpdateAggregates()
+        private void UpdateAggregates(PluginData pd)
         {
-            if (_pluginData == null)
-            {
-                return;
-            }
-            List<FileInfoSummary> fileInfoList = _pluginData.GetSourceFileInfoList();
+            List<FileInfoSummary> fileInfoList = pd.GetSourceFileInfoList();
             KeystrokeAggregates aggregates = new KeystrokeAggregates();
-            aggregates.directory = _pluginData.project.directory;
+            aggregates.directory = pd.project.directory;
 
             foreach (FileInfoSummary fileInfo in fileInfoList)
             {

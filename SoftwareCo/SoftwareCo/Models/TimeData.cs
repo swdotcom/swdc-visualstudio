@@ -53,7 +53,20 @@ namespace SoftwareCo
             this.session_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "session_seconds");
             this.file_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "file_seconds");
             this.day = SoftwareCoUtil.ConvertObjectToString(dict, "day");
-            this.project = PluginDataProject.GetPluginDataFromDictionary(dict);
+
+            dict.TryGetValue("project", out object projJson);
+            try
+            {
+                JsonObject projJsonObj = (projJson == null) ? null : (JsonObject)projJson;
+                if (projJson != null)
+                {
+                    this.project = PluginDataProject.GetPluginDataFromDictionary(projJsonObj);
+                }
+            }
+            catch (Exception e)
+            {
+                //
+            }
         }
 
         public void Clone(TimeData td)

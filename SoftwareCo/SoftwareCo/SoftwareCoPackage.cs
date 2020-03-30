@@ -59,7 +59,7 @@ namespace SoftwareCo
         private DocumentEvents _docEvents;
         private TextDocumentKeyPressEvents _textDocKeyEvent;
 
-        private System.Threading.Timer timer;
+
         private System.Threading.Timer repoCommitsTimer;
         private System.Threading.Timer offlineDataTimer;
 
@@ -246,7 +246,7 @@ namespace SoftwareCo
         public void Dispose()
         {
             EventManager.Instance.CreateCodeTimeEvent("resource", "unload", "EditorDeactivate");
-            if (timer != null)
+            if (offlineDataTimer != null)
             {
                 _textDocKeyEvent.AfterKeyPress -= docEventMgr.AfterKeyPressedAsync;
                 _docEvents.DocumentOpened -= docEventMgr.DocEventsOnDocumentOpenedAsync;
@@ -254,8 +254,8 @@ namespace SoftwareCo
                 _docEvents.DocumentSaved -= docEventMgr.DocEventsOnDocumentSaved;
                 _docEvents.DocumentOpening -= docEventMgr.DocEventsOnDocumentOpeningAsync;
 
-                timer.Dispose();
-                timer = null;
+                offlineDataTimer.Dispose();
+                offlineDataTimer = null;
             }
         }
         #endregion
