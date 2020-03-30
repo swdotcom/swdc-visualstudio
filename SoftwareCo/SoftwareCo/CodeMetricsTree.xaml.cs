@@ -421,7 +421,7 @@ namespace SoftwareCo
 
         private void ConnectClickHandler(string loginType)
         {
-            SoftwareCoUtil.launchLogin();
+            SoftwareCoUtil.launchLogin(loginType);
             EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchLoginOnboard");
         }
 

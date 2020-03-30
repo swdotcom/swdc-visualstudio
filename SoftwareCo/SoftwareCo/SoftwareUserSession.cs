@@ -253,11 +253,13 @@ namespace SoftwareCo
                         // show they've logged on
                         string msg = "Successfully logged on to Code Time.";
                         const string caption = "Code Time";
-                        System.Windows.Forms.MessageBox.Show(msg, caption, MessageBoxButtons.OK);
+                        MessageBox.Show(msg, caption, MessageBoxButtons.OK);
                         SoftwareUserSession.SendHeartbeat("STATE_CHANGE: LOGGED_IN:true");
 
                         // fetch the session summary to get the user's averages
                         WallclockManager.Instance.UpdateSessionSummaryFromServerAsync(false);
+
+                        SoftwareCoPackage.SendOfflinePluginBatchData(false);
                     }
                 }
             }

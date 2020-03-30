@@ -181,6 +181,8 @@ namespace SoftwareCo
                             Logger.Error("failed to read json: " + e.Message);
                         }
                     }
+
+                    package.RebuildMenuButtonsAsync();
                 }
             }
         }

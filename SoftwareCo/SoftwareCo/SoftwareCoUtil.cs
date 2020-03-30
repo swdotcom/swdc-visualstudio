@@ -591,24 +591,28 @@ namespace SoftwareCo
             Process.Start(url);
         }
 
-        public static async void launchLogin()
+        public static async void launchLogin(string loginType)
         {
             try
             {
-                bool isOnline = await SoftwareUserSession.IsOnlineAsync();
                 string jwt = SoftwareCoUtil.getItemAsString("jwt");
-                string url = Constants.url_endpoint + "/onboarding?token=" + jwt;
-                if (!isOnline)
+                string url = "";
+                if (loginType.Equals("google"))
                 {
-                    // just show the app home, which should end up showing up with a no connection message
-                    url = Constants.url_endpoint;
+                    url = Constants.api_endpoint + "/auth/google?token=" + jwt + "&plugin=codetime&redirect=" + Constants.url_endpoint;
+                } else if (loginType.Equals("github"))
+                {
+                    url = Constants.api_endpoint + "/auth/github?token=" + jwt + "&plugin=codetime&redirect=" + Constants.url_endpoint;
+                } else
+                {
+                    url = Constants.url_endpoint + "/email-signup?token=" + jwt + "&plugin=codetime&ath=software";
                 }
 
                 Process.Start(url);
 
                 if (!SoftwareUserSession.checkingLoginState)
                 {
-                    SoftwareUserSession.RefetchUserStatusLazily(20);
+                    SoftwareUserSession.RefetchUserStatusLazily(40);
                 }
             }
             catch (Exception ex)

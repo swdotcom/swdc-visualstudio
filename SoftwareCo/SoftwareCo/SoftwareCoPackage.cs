@@ -295,31 +295,6 @@ namespace SoftwareCo
             
         }
 
-        private async void LaunchLoginPrompt()
-        {
-            await JoinableTaskFactory.SwitchToMainThreadAsync();
-            bool online = await SoftwareUserSession.IsOnlineAsync();
-
-            if (online)
-            {
-                string msg = "Finish creating your account and see rich data visualizations.";
-                const string caption = "Code Time";
-                DialogResult result = System.Windows.Forms.MessageBox.Show(msg, caption, MessageBoxButtons.OKCancel);
-
-                // If the no button was pressed ...
-                if (result == DialogResult.OK)
-                {
-                    // launch the browser
-                    SoftwareCoUtil.launchLogin();
-
-                    EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "OnboardPrompt");
-                } else
-                {
-                    EventManager.Instance.CreateCodeTimeEvent("window", "close", "OnboardPrompt");
-                }
-            }
-        }
-
         public static async void SendOfflineData(object stateinfo)
         {
             SendOfflinePluginBatchData(false);
@@ -377,10 +352,6 @@ namespace SoftwareCo
                 if (!softwareSessionFileExists || jwt == null || jwt.ToString().Equals(""))
                 {
                     string result = await SoftwareUserSession.CreateAnonymousUserAsync(online);
-                    if (result != null)
-                    {
-                        LaunchLoginPrompt();
-                    }
                 }
 
                 // check if the "name" is set. if not, get the user

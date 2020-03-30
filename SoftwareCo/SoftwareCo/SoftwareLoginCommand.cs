@@ -109,7 +109,7 @@ namespace SoftwareCo
         /// <param name="e">Event args.</param>
         private static void Execute(object sender, EventArgs e)
         {
-            SoftwareCoUtil.launchLogin();
+            SoftwareCoUtil.launchLogin("email");
         }
     }
 }
