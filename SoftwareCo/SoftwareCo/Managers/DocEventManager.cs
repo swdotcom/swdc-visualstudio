@@ -48,7 +48,7 @@ namespace SoftwareCo
             return (fileName == null || fileName.IndexOf("CodeTime.txt") != -1) ? false : true;
         }
 
-        public async Task<string> GetSolutionDirectory()
+        public static async Task<string> GetSolutionDirectory()
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
@@ -70,9 +70,9 @@ namespace SoftwareCo
                 } else
                 {
                     // set it to unnamed
-                    _pluginData = new PluginData("Untitled", "Unnamed");
+                    _pluginData = new PluginData("Unnamed", "Untitled");
                 }
-                SoftwareCoUtil.SetTimeout(ONE_MINUTE, PostData, false);
+                Task.Delay(ONE_MINUTE).ContinueWith((task) => { PostData(); });
             }
         }
 
@@ -205,7 +205,7 @@ namespace SoftwareCo
         }
 
         
-        public void PostData()
+        public async Task PostData()
         {
 
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
@@ -213,10 +213,8 @@ namespace SoftwareCo
 
             if (_pluginData != null && _pluginData.source.Count > 0)
             {
-                // update the latestPayloadTimestampEndUtc
-                SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
 
-                string softwareDataContent = _pluginData.CompletePayloadAndReturnJsonString();
+                string softwareDataContent = await _pluginData.CompletePayloadAndReturnJsonString();
 
                 UpdateAggregates();
 
@@ -225,6 +223,9 @@ namespace SoftwareCo
                 string datastoreFile = SoftwareCoUtil.getSoftwareDataStoreFile();
                 // append to the file
                 File.AppendAllText(datastoreFile, softwareDataContent + Environment.NewLine);
+
+                // update the latestPayloadTimestampEndUtc
+                SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
 
                 _pluginData = null;
             }

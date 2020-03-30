@@ -222,7 +222,7 @@ namespace SoftwareCo
                 InitializeStatusBar();
 
                 // fetch the session summary
-                wallclockMgr.UpdateSessionSummaryFromServerAsync();
+                wallclockMgr.UpdateSessionSummaryFromServerAsync(false);
 
                 // check if we've shown the readme or not
                 bool initializedVisualStudioPlugin = SoftwareCoUtil.getItemAsBool("visualstudio_CtInit");
@@ -322,6 +322,10 @@ namespace SoftwareCo
 
         public static async void SendOfflineData(object stateinfo)
         {
+            SendOfflinePluginBatchData(false);
+        }
+
+        public static async void SendOfflinePluginBatchData(bool isNewDay) {
             string MethodName = "SendOfflineData";
             Logger.Info(DateTime.Now.ToString());
             bool online = await SoftwareUserSession.IsOnlineAsync();
@@ -356,6 +360,9 @@ namespace SoftwareCo
                     }
                 }
             }
+
+            // update the session summary global and averages for the new day
+            Task.Delay(ONE_MINUTE).ContinueWith((task) => { WallclockManager.Instance.UpdateSessionSummaryFromServerAsync(isNewDay); });
         }
 
         private async Task InitializeUserInfoAsync()

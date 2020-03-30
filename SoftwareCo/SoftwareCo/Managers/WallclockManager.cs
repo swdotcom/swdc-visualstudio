@@ -48,8 +48,8 @@ namespace SoftwareCo
                 this._wctime += SECONDS_TO_INCREMENT;
                 SoftwareCoUtil.setNumericItem("wctime", this._wctime);
 
-                // update the file info file
-                this.UpdateTimeData();
+                // update the file info file (async is fine)
+                TimeDataManager.Instance.UpdateEditorSeconds(SECONDS_TO_INCREMENT);
             }
             DispatchUpdateAsync();
         }
@@ -84,13 +84,6 @@ namespace SoftwareCo
             return isRunning;
         }
 
-        private async Task UpdateTimeData()
-        {
-            TimeData td = TimeDataManager.Instance.GetTimeDataSummary();
-            td.editor_seconds = this._wctime;
-            TimeDataManager.Instance.UpdateTimeSummaryData(td.editor_seconds, td.session_seconds, td.file_seconds);
-        }
-
         public void InjectAsyncPackage(SoftwareCoPackage package, DTE2 ObjDte)
         {
             this.package = package;
@@ -107,7 +100,6 @@ namespace SoftwareCo
         {
             this._wctime = 0L;
             SoftwareCoUtil.setNumericItem("wctime", this._wctime);
-            DispatchUpdateAsync();
         }
 
         private async Task DispatchUpdateAsync()
@@ -126,9 +118,6 @@ namespace SoftwareCo
             {
                 this._wctime = session_seconds + 1;
                 SoftwareCoUtil.setNumericItem("wctime", this._wctime);
-
-                // update the code metrics part of the tree since this value has changed
-                DispatchUpdateAsync();
             }
         }
 
@@ -137,8 +126,10 @@ namespace SoftwareCo
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             if (!nowTime.local_day.Equals(_currentDay))
             {
+                SessionSummaryManager.Instance.ÇlearSessionSummaryData();
+
                 // send the offline data
-                SoftwareCoPackage.SendOfflineData(null);
+                SoftwareCoPackage.SendOfflinePluginBatchData(true);
 
                 // send the offline events
                 EventManager.Instance.SendOfflineEvents();
@@ -151,7 +142,6 @@ namespace SoftwareCo
                 // the session summary, time data summary,
                 // and the file change info summary data
                 ClearWcTime();
-                SessionSummaryManager.Instance.ÇlearSessionSummaryData();
 
                 // set the current day
                 _currentDay = nowTime.local_day;
@@ -159,20 +149,17 @@ namespace SoftwareCo
                 // update the current day
                 SoftwareCoUtil.setItem("currentDay", _currentDay);
                 // update the last payload timestamp
-                long latestPayloadTimestampEndUtc = 0;
-                SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", latestPayloadTimestampEndUtc);
-
-                // update the session summary global and averages for the new day
-                Task.Delay(ONE_MINUTE).ContinueWith((task) => { UpdateSessionSummaryFromServerAsync(); });
+                SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", 0);
+                
             }
         }
 
-        public async Task UpdateSessionSummaryFromServerAsync()
+        public async Task UpdateSessionSummaryFromServerAsync(bool isNewDay)
         {
             object jwt = SoftwareCoUtil.getItem("jwt");
             if (jwt != null)
             {
-                string api = "/sessions/summary";
+                string api = "/sessions/summary?refresh=true";
                 HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, jwt.ToString());
                 if (SoftwareHttpManager.IsOk(response))
                 {
@@ -184,7 +171,7 @@ namespace SoftwareCo
                         try
                         {
                             SessionSummary incomingSummary = summary.GetSessionSummaryFromDictionary(jsonObj);
-                            summary.CloneSessionSummary(incomingSummary);
+                            summary.CloneSessionSummary(incomingSummary, isNewDay);
                             SessionSummaryManager.Instance.SaveSessionSummaryToDisk(summary);
 
                             // update the wallclock time if the session seconds is greater. this can happen when using multiple editor types
@@ -196,9 +183,6 @@ namespace SoftwareCo
                     }
                 }
             }
-
-            // update the status bar and tree metrics
-            DispatchUpdateAsync();
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -21,37 +22,110 @@ namespace SoftwareCo
             //
         }
 
-        public void ClearTimeDataSummary()
+        public static String getTimeDataFileData()
         {
-            SaveTimeDataSummaryToDisk(new TimeData());
+            return File.ReadAllText(SoftwareCoUtil.getSoftwareDataDir(true) + "\\projectTimeData.json", System.Text.Encoding.UTF8);
         }
 
-        public void UpdateTimeSummaryData(long editor_seconds, long session_seconds, long file_seconds)
+        public static String getTimeDataFile()
         {
+            try
+            {
+                return SoftwareCoUtil.getSoftwareDataDir(true) + "\\projectTimeData.json";
+            }
+            catch (Exception e)
+            {
+                return new JsonObject().ToString();
+            }
+        }
+
+        public void ClearTimeDataSummary()
+        {
+            string file = getTimeDataFile();
+            List<TimeData> list = new List<TimeData>();
+            JsonObject jsonToSave = BuildJsonObjectFromList(list);
+
+            try
+            {
+                string content = jsonToSave.ToString();
+                content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
+                File.WriteAllText(file, content, System.Text.Encoding.UTF8);
+            }
+            catch (Exception e)
+            {
+                //
+            }
+        }
+
+        public async Task<TimeData> GetNewTimeDataSummary()
+        {
+            PluginDataProject project = await PluginData.GetPluginProject();
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             TimeData td = new TimeData();
             td.day = nowTime.local_day;
-            td.session_seconds = session_seconds;
-            td.editor_seconds = editor_seconds;
-            td.file_seconds = file_seconds;
             td.timestamp = nowTime.utc_end_of_day;
             td.timestamp_local = nowTime.local_end_of_day;
+            td.project = project;
+
+            return td;
+        }
+
+        public async Task UpdateEditorSeconds(long editor_seconds)
+        {
+            PluginDataProject project = await PluginData.GetPluginProject();
+
+            TimeData td = await GetTodayTimeDataSummary(project);
+            td.editor_seconds += editor_seconds;
+            SaveTimeDataSummaryToDisk(td);
+        }
+
+        public async Task UpdateSessionAndFileSeconds(long minutes_since_payload)
+        {
+            PluginDataProject project = await PluginData.GetPluginProject();
+
+            TimeData td = await GetTodayTimeDataSummary(project);
+            long session_seconds = minutes_since_payload * 60;
+            td.file_seconds += 60;
+            td.session_seconds += session_seconds;
+
             SaveTimeDataSummaryToDisk(td);
         }
 
         public void SaveTimeDataSummaryToDisk(TimeData timeData)
         {
             string MethodName = "saveTimeDataSummaryToDisk";
-            string file = SoftwareCoUtil.getTimeDataFile();
+            string file = getTimeDataFile();
+            NowTime nowTime = SoftwareCoUtil.GetNowTime();
 
             if (SoftwareCoUtil.TimeDataSummaryFileExists())
             {
                 File.SetAttributes(file, FileAttributes.Normal);
             }
 
+            List<TimeData> list = GetTimeDataList();
+            string projDir = timeData.project != null ? timeData.project.directory : "";
+            bool foundIt = false;
+            foreach (TimeData td in list)
+            {
+                string tdDir = td.project != null ? td.project.directory : "";
+                if (td.day.Equals(nowTime.local_day) && tdDir.Equals(projDir))
+                {
+                    td.Clone(timeData);
+                    foundIt = true;
+                    break;
+                }
+            }
+
+            if (!foundIt)
+            {
+                list.Add(timeData);
+            }
+
+            JsonObject jsonToSave = BuildJsonObjectFromList(list);
+
             try
             {
-                string content = timeData.GetAsJson().ToString();
+                string content = jsonToSave.ToString();
                 content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
                 File.WriteAllText(file, content, System.Text.Encoding.UTF8);
             }
@@ -62,31 +136,70 @@ namespace SoftwareCo
 
         }
 
-        public TimeData GetTimeDataSummary()
+        private JsonObject BuildJsonObjectFromList(List<TimeData> tdList)
         {
-            if (!SoftwareCoUtil.TimeDataSummaryFileExists())
+            JsonObject jsonObj = new JsonObject();
+
+            foreach (TimeData info in tdList)
             {
-                // create it
-                SaveTimeDataSummaryToDisk(new TimeData());
+                string key = info.day + "_" + info.project.directory;
+                jsonObj.Add(key, info.GetAsJson());
             }
 
-            string timeDataSummary = SoftwareCoUtil.getTimeDataFileData();
-
-            try
-            {
-                IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(timeDataSummary);
-                _timeDataSummary = new TimeData();
-                _timeDataSummary = _timeDataSummary.GeTimeSummaryFromDictionary(jsonObj);
-            } catch (Exception e)
-            {
-                _timeDataSummary = new TimeData();
-            }
-            return _timeDataSummary;
+            return jsonObj;
         }
+
+        public async Task<TimeData> GetTodayTimeDataSummary(PluginDataProject proj)
+        {
+            NowTime nowTime = SoftwareCoUtil.GetNowTime();
+            List<TimeData> list = GetTimeDataList();
+            string projDir = proj != null ? proj.directory : "";
+            if (list != null && list.Count > 0)
+            {
+                foreach (TimeData td in list)
+                {
+                    string tdDir = td.project != null ? td.project.directory : "";
+                    if (td.day.Equals(nowTime.local_day) && tdDir.Equals(projDir))
+                    {
+                        return td;
+                    }
+                }
+            }
+            return await GetNewTimeDataSummary();
+        }
+
+        public List<TimeData> GetTimeDataList()
+        {
+            List<TimeData> existingList = new List<TimeData>();
+            string timeDataJson = getTimeDataFile();
+            IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(timeDataJson);
+            foreach (string key in jsonObj.Keys)
+            {
+                TimeData td = new TimeData();
+
+                jsonObj.TryGetValue(key, out object infoObj);
+                try
+                {
+                    JsonObject infoObjJson = (infoObj == null) ? null : (JsonObject)infoObj;
+                    if (infoObjJson != null)
+                    {
+                        td.CloneFromDictionary(infoObjJson);
+                    }
+                }
+                catch (Exception e)
+                {
+                    //
+                }
+
+                existingList.Add(td);
+            }
+            return existingList;
+        }
+
 
         public async Task SendTimeDataAsync()
         {
-            string timeDataSummary = SoftwareCoUtil.getTimeDataFileData();
+            string timeDataSummary = getTimeDataFileData();
             if (timeDataSummary != null)
             {
                 if (!timeDataSummary.StartsWith("["))
@@ -94,7 +207,8 @@ namespace SoftwareCo
                     // join array around the json string
                     timeDataSummary = "[" + string.Join(",", timeDataSummary) + "]";
                 } 
-                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/time", timeDataSummary);
+                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
+                    HttpMethod.Post, "/data/time", timeDataSummary);
                 if (SoftwareHttpManager.IsOk(response))
                 {
                     ClearTimeDataSummary();

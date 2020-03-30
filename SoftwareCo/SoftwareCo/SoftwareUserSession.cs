@@ -257,7 +257,7 @@ namespace SoftwareCo
                         SoftwareUserSession.SendHeartbeat("STATE_CHANGE: LOGGED_IN:true");
 
                         // fetch the session summary to get the user's averages
-                        WallclockManager.Instance.UpdateSessionSummaryFromServerAsync();
+                        WallclockManager.Instance.UpdateSessionSummaryFromServerAsync(false);
                     }
                 }
             }

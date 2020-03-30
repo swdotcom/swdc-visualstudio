@@ -42,9 +42,37 @@ namespace SoftwareCo
 
         public async Task RebuildMenuButtonsAsync()
         {
-            // connect label
-            ConnectLabel.Content = "See advanced metrics";
-            ConnectImage.Source = SoftwareCoUtil.CreateImage("cpaw.png").Source;
+            string email = SoftwareCoUtil.getItemAsString("name");
+            if (email == null || email.Equals(""))
+            {
+                // connect label
+                GoogleConnectLabel.Content = "Sign up with Google";
+                GoogleConnectImage.Source = SoftwareCoUtil.CreateImage("google.png").Source;
+
+                // connect label
+                GitHubConnectLabel.Content = "Sign up with GitHub";
+                GitHubConnectImage.Source = SoftwareCoUtil.CreateImage("github.png").Source;
+                // connect label
+                EmailConnectLabel.Content = "Sign up with email";
+                EmailConnectImage.Source = SoftwareCoUtil.CreateImage("envelope.png").Source;
+
+                WebDashboardPanel.Visibility = Visibility.Hidden;
+                WebDashboardPanel.Height = 0;
+            } else
+            {
+                GoogleConnectPanel.Visibility = Visibility.Hidden;
+                GoogleConnectPanel.Height = 0;
+
+                GitHubConnectPanel.Visibility = Visibility.Hidden;
+                GitHubConnectPanel.Height = 0;
+
+                EmailConnectPanel.Visibility = Visibility.Hidden;
+                EmailConnectPanel.Height = 0;
+
+                // connect label
+                WebDashboardLabel.Content = "See advanced metrics";
+                WebDashboardImage.Source = SoftwareCoUtil.CreateImage("cpaw.png").Source;
+            }
 
             // dashboard label
             DashboardLabel.Content = "Generate dashboard";
@@ -307,8 +335,7 @@ namespace SoftwareCo
             string dir = DocEventManager.Instance._solutionDirectory;
             if ((dir == null || dir.Equals("")) && SoftwareCoPackage.PLUGIN_READY)
             {
-                await DocEventManager.Instance.GetSolutionDirectory();
-                dir = DocEventManager.Instance._solutionDirectory;
+                dir = await DocEventManager.GetSolutionDirectory();
             }
 
             if (dir == null || dir.Equals(""))
@@ -377,20 +404,31 @@ namespace SoftwareCo
             }
         }
 
-        private void ConnectClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
+        private void GoogleConnectClickHandler(object sender, MouseButtonEventArgs args)
         {
-            object name = SoftwareCoUtil.getItem("name");
-            if (name != null && !name.ToString().Equals(""))
-            {
-                // logged in
-                SoftwareCoUtil.launchWebDashboard();
-                EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchWebDashboard");
-            }
-            else
-            {
-                SoftwareCoUtil.launchLogin();
-                EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchLoginOnboard");
-            }
+            ConnectClickHandler("google");
+        }
+
+        private void GitHubConnectClickHandler(object sender, MouseButtonEventArgs args)
+        {
+            ConnectClickHandler("github");
+        }
+
+        private void EmailConnectClickHandler(object sender, MouseButtonEventArgs args)
+        {
+            ConnectClickHandler("email");
+        }
+
+        private void ConnectClickHandler(string loginType)
+        {
+            SoftwareCoUtil.launchLogin();
+            EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchLoginOnboard");
+        }
+
+        private void LaunchWebDashboard(object sender, MouseButtonEventArgs args)
+        {
+            SoftwareCoUtil.launchWebDashboard();
+            EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchWebDashboard");
         }
 
         private void DashboardClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)

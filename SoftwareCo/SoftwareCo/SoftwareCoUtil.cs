@@ -101,6 +101,37 @@ namespace SoftwareCo
                     {
                         info.tag = tag;
                     }
+
+                    List<RepoMember> repoMembers = new List<RepoMember>();
+                    string gitLogData = SoftwareCoUtil.RunCommand("git log --pretty=%an,%ae | sort", projectDir);
+
+                    IDictionary<string, string> memberMap = new Dictionary<string, string>();
+
+
+                    if (gitLogData != null && !gitLogData.Equals(""))
+                    {
+                        string[] lines = gitLogData.Split(
+                            new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                        if (lines != null && lines.Length > 0)
+                        {
+                            for (int i = 0; i < lines.Length; i++)
+                            {
+                                string line = lines[i];
+                                string[] memberInfos = line.Split(',');
+                                if (memberInfos != null && memberInfos.Length > 1)
+                                {
+                                    string name = memberInfos[0].Trim();
+                                    string memberEmail = memberInfos[1].Trim();
+                                    if (!memberMap.ContainsKey(email))
+                                    {
+                                        memberMap.Add(email, name);
+                                        repoMembers.Add(new RepoMember(name, email));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    info.Members = repoMembers;
                 }
 
             }
@@ -456,21 +487,7 @@ namespace SoftwareCo
             string file = getSoftwareDataDir(false) + "\\timeDataSummary.json";
             return File.Exists(file);
         }
-        public static String getTimeDataFileData()
-        {
-            return File.ReadAllText(getSoftwareDataDir(true) + "\\timeDataSummary.json", System.Text.Encoding.UTF8);
-        }
-
-        public static String getTimeDataFile()
-        {
-            try
-            {
-                return getSoftwareDataDir(true) + "\\timeDataSummary.json";
-            } catch (Exception e)
-            {
-                return new JsonObject().ToString();
-            }
-        }
+        
         public static bool FileChangeInfoSummaryFileExists()
         {
             string file = getSoftwareDataDir(false) + "\\fileChangeSummary.json";

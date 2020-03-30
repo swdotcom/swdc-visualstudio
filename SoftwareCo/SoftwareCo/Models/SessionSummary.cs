@@ -153,17 +153,21 @@ namespace SoftwareCo
             return sessionSummary;
         }
 
-        public void CloneSessionSummary(SessionSummary summary)
+        public void CloneSessionSummary(SessionSummary summary, bool isNewDay)
         {
-            if (this.currentDayMinutes < summary.currentDayMinutes)
+            if (!isNewDay && this.currentDayMinutes < summary.currentDayMinutes)
             {
-                // add the current attributes
                 this.currentDayMinutes = summary.currentDayMinutes;
-                this.currentDayKeystrokes = summary.currentDayKeystrokes;
-                this.currentDayKpm = summary.currentDayKpm;
-                this.currentDayLinesAdded = summary.currentDayLinesAdded;
-                this.currentDayLinesRemoved = summary.currentDayLinesRemoved;
+            } else
+            {
+                this.currentDayMinutes = summary.currentDayMinutes;
             }
+
+            // add the current attributes
+            this.currentDayKeystrokes = summary.currentDayKeystrokes;
+            this.currentDayKpm = summary.currentDayKpm;
+            this.currentDayLinesAdded = summary.currentDayLinesAdded;
+            this.currentDayLinesRemoved = summary.currentDayLinesRemoved;
 
             this.currentSessionGoalPercent = summary.currentSessionGoalPercent;
             this.averageDailyMinutes = summary.averageDailyMinutes;

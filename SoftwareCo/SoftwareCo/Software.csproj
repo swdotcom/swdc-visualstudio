@@ -72,6 +72,7 @@
     <Compile Include="Models\PluginData.cs" />
     <Compile Include="Models\PluginDataFileInfo.cs" />
     <Compile Include="Models\PluginDataProject.cs" />
+    <Compile Include="Models\RepoMember.cs" />
     <Compile Include="Models\RepoResourceInfo.cs" />
     <Compile Include="Models\SessionSummary.cs" />
     <Compile Include="Models\TimeData.cs" />
@@ -144,6 +145,9 @@
     <Resource Include="Resources\like.png" />
     <Resource Include="Resources\message.png" />
     <EmbeddedResource Include="README.txt" />
+    <Resource Include="Resources\github.png" />
+    <Resource Include="Resources\envelope.png" />
+    <Resource Include="Resources\google.png" />
     <Content Include="Resources\Microsoft.VisualStudio.Services.Icons.Default.png" />
     <Resource Include="Resources\next.png" />
     <Resource Include="Resources\pause.png" />

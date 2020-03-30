@@ -40,19 +40,56 @@ namespace SoftwareCo
             version = SoftwareCoPackage.GetVersion();
             os = SoftwareCoPackage.GetOs();
             source = new List<PluginDataFileInfo>();
-            project = new PluginDataProject(projectName, projectDirectory);
+            project = GetPluginProjectUsingDir(projectDirectory);
         }
 
-        public string CompletePayloadAndReturnJsonString()
+        public static async Task<PluginDataProject> GetPluginProject()
+        {
+            string projectDir = await DocEventManager.GetSolutionDirectory();
+            return GetPluginProjectUsingDir(projectDir);
+        }
+
+        public static PluginDataProject GetPluginProjectUsingDir(string projectDir) {
+            string name = "Unnamed";
+            PluginDataProject project;
+            if (projectDir != null && !projectDir.Equals(""))
+            {
+                FileInfo fi = new FileInfo(projectDir);
+                if (fi.Exists)
+                {
+                    name = fi.Name;
+                }
+                RepoResourceInfo resourceInfo = SoftwareCoUtil.GetResourceInfo(projectDir);
+                project = new PluginDataProject(name, projectDir);
+                if (resourceInfo != null && resourceInfo.identifier != null && !resourceInfo.identifier.Equals(""))
+                {
+                    project.identifier = resourceInfo.identifier;
+                }
+            }
+            else
+            {
+                project = new PluginDataProject(name, "Untitled");
+            }
+
+            return project;
+        }
+
+        public async Task<string> CompletePayloadAndReturnJsonString()
         {
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             end = nowTime.now;
             local_end = nowTime.local_now;
 
+            // get the TimeData for this project dir
+            TimeData td = await TimeDataManager.Instance.GetTodayTimeDataSummary(this.project);
+
+            long editorSeconds = td != null ? Math.Max(td.editor_seconds, 60) : 60;
+
             // make sure all of the end times are set
             foreach (PluginDataFileInfo pdFileInfo in this.source)
             {
                 pdFileInfo.EndFileInfoTime(nowTime);
+                pdFileInfo.cumulative_editor_seconds = editorSeconds;
             }
 
             double offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;

@@ -48,13 +48,14 @@ namespace SoftwareCo
             _sessionSummary = GetSessionSummayData();
 
             long incrementMinutes = GetMinutesSinceLastPayload();
-            _sessionSummary.currentDayMinutes += incrementMinutes;
+            if (incrementMinutes > 0)
+            {
+                _sessionSummary.currentDayMinutes += incrementMinutes;
+            }
 
             long sessionSeconds = _sessionSummary.currentDayMinutes * 60;
 
             wcMgr.UpdateBasedOnSessionSeconds(sessionSeconds);
-
-            long editorSeconds = wcMgr.GetWcTimeInMinutes() * 60;
 
             _sessionSummary.currentDayKeystrokes += aggregate.keystrokes;
             _sessionSummary.currentDayLinesAdded += aggregate.linesAdded;
@@ -62,10 +63,7 @@ namespace SoftwareCo
 
             SaveSessionSummaryToDisk(_sessionSummary);
 
-            TimeData td = TimeDataManager.Instance.GetTimeDataSummary();
-            long fileSeconds = td.file_seconds += 60;
-
-            TimeDataManager.Instance.UpdateTimeSummaryData(editorSeconds, sessionSeconds, fileSeconds);
+            TimeDataManager.Instance.UpdateSessionAndFileSeconds(incrementMinutes);
         }
 
         private long GetMinutesSinceLastPayload()

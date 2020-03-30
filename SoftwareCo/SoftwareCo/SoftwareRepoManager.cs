@@ -56,17 +56,6 @@ namespace SoftwareCo
             }
         }
 
-        public class RepoMember
-        {
-            public string name = "";
-            public string email = "";
-            public RepoMember(string name, string email)
-            {
-                this.name = name;
-                this.email = email;
-            }
-        }
-
         public class RepoData
         {
             public string identifier = "";
@@ -112,65 +101,34 @@ namespace SoftwareCo
             }
         }
 
-        public async void GetRepoUsers(string projectDir)
+        public List<RepoMember> GetRepoUsers(string projectDir)
         {
             if (projectDir == null || projectDir.Equals(""))
             {
-                return;
+                return new List<RepoMember>();
             }
 
             RepoResourceInfo info = SoftwareCoUtil.GetResourceInfo(projectDir);
-
-            if (info != null && info.identifier != null)
+            if (info != null && info.Members != null)
             {
-                string identifier = info.identifier;
-                if (identifier != null && !identifier.Equals(""))
+                return info.Members;
+            }
+            return new List<RepoMember>();
+        }
+
+        public async Task ProcessRepoMembers(string projectDir)
+        {
+            RepoResourceInfo info = SoftwareCoUtil.GetResourceInfo(projectDir);
+            if (info != null && info.Members.Count > 0)
+            {
+                string jsonContent = SimpleJson.SerializeObject(info);
+                // send the members
+                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
+                    HttpMethod.Post, "/repo/members", jsonContent);
+
+                if (!SoftwareHttpManager.IsOk(response))
                 {
-                    string tag = info.tag;
-                    string branch = info.branch;
-
-                    string gitLogData = SoftwareCoUtil.RunCommand("git log --pretty=%an,%ae | sort", projectDir);
-
-                    IDictionary<string, string> memberMap = new Dictionary<string, string>();
-
-                    List<RepoMember> repoMembers = new List<RepoMember>();
-                    if (gitLogData != null && !gitLogData.Equals(""))
-                    {
-                        string[] lines = gitLogData.Split(
-                            new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-                        if (lines != null && lines.Length > 0)
-                        {
-                            for (int i = 0; i < lines.Length; i++)
-                            {
-                                string line = lines[i];
-                                string[] memberInfos = line.Split(',');
-                                if (memberInfos != null && memberInfos.Length > 1)
-                                {
-                                    string name = memberInfos[0].Trim();
-                                    string email = memberInfos[1].Trim();
-                                    if (!memberMap.ContainsKey(email))
-                                    {
-                                        memberMap.Add(email, name);
-                                        repoMembers.Add(new RepoMember(name, email));
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (memberMap.Count > 0)
-                    {
-                        RepoData repoData = new RepoData(identifier, tag, branch, repoMembers);
-                        string jsonContent = SimpleJson.SerializeObject(repoData);
-                        // send the members
-                        HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
-                            HttpMethod.Post, "/repo/members", jsonContent);
-
-                        if (!SoftwareHttpManager.IsOk(response))
-                        {
-                            Logger.Error(response.ToString());
-                        }
-                    }
+                    Logger.Error(response.ToString());
                 }
             }
         }

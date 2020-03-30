@@ -12,6 +12,9 @@ namespace SoftwareCo
         public string tag { get; set; }
         public string branch { get; set; }
         public string identifier { get; set; }
+        internal List<RepoMember> Members { get => members; set => members = value; }
+
+        private List<RepoMember> members = new List<RepoMember>();
 
         public IDictionary<string, string> GetAsDictionary()
         {
