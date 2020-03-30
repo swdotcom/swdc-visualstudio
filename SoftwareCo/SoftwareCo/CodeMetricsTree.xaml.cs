@@ -345,6 +345,15 @@ namespace SoftwareCo
             }
         }
 
+        public async Task RebuildContributorMetricsAsync()
+        {
+            string dir = DocEventManager._solutionDirectory;
+            if ((dir == null || dir.Equals("")) && SoftwareCoPackage.PLUGIN_READY)
+            {
+                dir = await DocEventManager.GetSolutionDirectory();
+            }
+        }
+
         public async Task RebuildGitMetricsAsync()
         {
 

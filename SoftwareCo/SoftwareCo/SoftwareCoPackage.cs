@@ -198,18 +198,14 @@ namespace SoftwareCo
                 offlineDataTimer = new System.Threading.Timer(
                       SendOfflineData,
                       null,
-                      THIRTY_MINUTES,
-                      THIRTY_MINUTES);
+                      ONE_MINUTE,
+                      ONE_MINUTE * 15);
 
-
-                int delay = 1000 * 45;
-
-                delay = ONE_MINUTE + (1000 * 10);
                 repoCommitsTimer = new System.Threading.Timer(
-                    ProcessHourlyJobs,
+                    ProcessRepoJobs,
                     autoEvent,
-                    delay,
-                    ONE_HOUR);
+                    ONE_MINUTE * 5,
+                    ONE_MINUTE * 20);
 
                 // update the session summary global and averages for the new day
                 // rebuild the code metrics data in the tree
@@ -274,7 +270,7 @@ namespace SoftwareCo
 
         #region Methods
 
-        private void ProcessHourlyJobs(Object stateInfo)
+        private void ProcessRepoJobs(Object stateInfo)
         {
             try
             {
@@ -285,6 +281,8 @@ namespace SoftwareCo
                 if (dir != null)
                 {
                     _softwareRepoUtil.GetHistoricalCommitsAsync(dir);
+
+                    _softwareRepoUtil.ProcessRepoMembers(dir);
                 }
             }
             catch (Exception ex)

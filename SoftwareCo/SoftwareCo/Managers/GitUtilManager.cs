@@ -52,7 +52,7 @@ namespace SoftwareCo
                 return new CommitChangeStats();
             }
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
-            string sinceTime = "today";
+            string sinceTime = nowTime.start_of_today.ToString("yyyy-MM-ddTHH:mm:sszzz");
             string untilTime = null;
             if (rangeType == "yesterday")
             {
@@ -60,7 +60,7 @@ namespace SoftwareCo
                 untilTime = nowTime.start_of_today.ToString("yyyy-MM-ddTHH:mm:sszzz");
             } else if (rangeType == "thisWeek")
             {
-                sinceTime = nowTime.start_of_week_dt.ToString("yyyy-MM-ddTHH:mm:sszzz");// nowTime.local_start_of_week;
+                sinceTime = nowTime.start_of_week_dt.ToString("yyyy-MM-ddTHH:mm:sszzz");
             }
 
             string cmd = "git log --stat --pretty=\"COMMIT:% H,% ct,% cI,% s\" --since=\"" + sinceTime + "\"";
