@@ -41,7 +41,7 @@ namespace SoftwareCo
         {
             this.package = package;
         }
-
+        
         public void IncrementSessionSummaryData(KeystrokeAggregates aggregate)
         {
             WallclockManager wcMgr = WallclockManager.Instance;

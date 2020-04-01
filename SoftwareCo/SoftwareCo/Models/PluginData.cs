@@ -80,7 +80,11 @@ namespace SoftwareCo
             // get the TimeData for this project dir
             TimeData td = await TimeDataManager.Instance.GetTodayTimeDataSummary(this.project);
 
-            long editorSeconds = td != null ? Math.Max(td.editor_seconds, 60) : 60;
+            long editorSeconds = 60;
+            if (td != null)
+            {
+                editorSeconds = Math.Max(td.editor_seconds, td.session_seconds);
+            }
 
             // make sure all of the end times are set
             foreach (PluginDataFileInfo pdFileInfo in this.source)

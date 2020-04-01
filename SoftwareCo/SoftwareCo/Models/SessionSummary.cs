@@ -155,10 +155,7 @@ namespace SoftwareCo
 
         public void CloneSessionSummary(SessionSummary summary, bool isNewDay)
         {
-            if (!isNewDay && this.currentDayMinutes < summary.currentDayMinutes)
-            {
-                this.currentDayMinutes = summary.currentDayMinutes;
-            } else
+            if (!isNewDay && summary.currentDayMinutes > this.currentDayMinutes)
             {
                 this.currentDayMinutes = summary.currentDayMinutes;
             }

@@ -152,6 +152,10 @@ namespace SoftwareCo
 
         public async Task RebuildCodeMetricsAsync()
         {
+            if (!SoftwareCoPackage.PLUGIN_READY)
+            {
+                return;
+            }
             SessionSummary summary = SessionSummaryManager.Instance.GetSessionSummayData();
             long wcTimeMin = WallclockManager.Instance.GetWcTimeInMinutes();
 
@@ -363,7 +367,12 @@ namespace SoftwareCo
             {
                 StackPanel identifierPanel = BuildClickLabel("IdentifierPanel", "github.png", resourceInfo.identifier, RepoIdentifierClickHandler);
                 ContributorsMetricsPanel.Children.Add(identifierPanel);
+
+                // build the repo contributors
+                //
             }
+
+
 
             // < TreeView x: Name = "TopCodeTimeFiles" Background = "Transparent" BorderBrush = "Transparent" Width = "auto" Height = "auto" ScrollViewer.VerticalScrollBarVisibility = "Auto" ScrollViewer.HorizontalScrollBarVisibility = "Disabled" >
 

@@ -58,6 +58,7 @@ namespace SoftwareCo
         private DTEEvents _dteEvents;
         private DocumentEvents _docEvents;
         private TextDocumentKeyPressEvents _textDocKeyEvent;
+        private SolutionEvents _solutionEvents;
 
 
         private System.Threading.Timer repoCommitsTimer;
@@ -110,7 +111,7 @@ namespace SoftwareCo
                 ObjDte = await GetServiceAsync(typeof(DTE)) as DTE2;
                 _dteEvents = ObjDte.Events.DTEEvents;
 
-                Task.Delay(1000).ContinueWith((task) => { InitializeListenersAsync(); });
+                Task.Delay(2000).ContinueWith((task) => { InitializeListenersAsync(); });
                 
             }
             catch (Exception ex)
@@ -149,7 +150,45 @@ namespace SoftwareCo
                 Events2 events = (Events2)ObjDte.Events;
                 _textDocKeyEvent = events.TextDocumentKeyPressEvents;
                 _docEvents = events.DocumentEvents;
+                _solutionEvents = events.SolutionEvents;
 
+                // _solutionEvents.Opened += this.SolutionEventOpenedAsync;
+                Task.Delay(5000).ContinueWith((task) =>
+                {
+                    SolutionEventOpenedAsync();
+                });
+
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Error Initializing SoftwareCo", ex);
+            }
+        }
+
+        public async Task<string> GetSolutionDirectory()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
+            {
+                return Path.GetDirectoryName(ObjDte.Solution.FileName);
+            }
+            return null;
+        }
+
+        public async void SolutionEventOpenedAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            if (!PLUGIN_READY)
+            {
+                string solutionDir = await GetSolutionDirectory();
+                if (solutionDir == null || solutionDir.Equals(""))
+                {
+                    Task.Delay(5000).ContinueWith((task) =>
+                    {
+                        SolutionEventOpenedAsync();
+                    });
+                    return;
+                }
                 // init the doc event mgr and inject ObjDte
                 docEventMgr = DocEventManager.Instance;
                 DocEventManager.ObjDte = ObjDte;
@@ -157,12 +196,6 @@ namespace SoftwareCo
                 // init the session summary mgr
                 sessionSummaryMgr = SessionSummaryManager.Instance;
                 sessionSummaryMgr.InjectAsyncPackage(this);
-
-                // init the GitUtilManager
-                GitUtilManager.Instance.InjectAsyncPackage(this);
-
-                // init the code metrics tree mgr
-                CodeMetricsTreeManager.Instance.InjectAsyncPackage(this);
 
                 // init the event manager and inject this
                 EventManager.Instance.InjectAsyncPackage(this);
@@ -177,6 +210,9 @@ namespace SoftwareCo
                 _docEvents.DocumentClosing += docEventMgr.DocEventsOnDocumentClosedAsync;
                 _docEvents.DocumentSaved += docEventMgr.DocEventsOnDocumentSaved;
                 _docEvents.DocumentOpening += docEventMgr.DocEventsOnDocumentOpeningAsync;
+
+                // init the code metrics tree mgr
+                CodeMetricsTreeManager.Instance.InjectAsyncPackage(this);
 
                 // initialize the menu commands
                 await SoftwareLaunchCommand.InitializeAsync(this);
@@ -207,13 +243,6 @@ namespace SoftwareCo
                     ONE_MINUTE * 5,
                     ONE_MINUTE * 20);
 
-                // update the session summary global and averages for the new day
-                // rebuild the code metrics data in the tree
-                this.RebuildCodeMetricsAsync();
-
-                // update the git metrics
-                this.RebuildGitMetricsAsync();
-
                 // initialize the status bar before we fetch the summary data
                 InitializeStatusBar();
 
@@ -231,15 +260,15 @@ namespace SoftwareCo
                     CodeMetricsTreeManager.Instance.OpenCodeMetricsPaneAsync();
                 }
 
-                Task.Delay(3000).ContinueWith((task) => {
+                Task.Delay(3000).ContinueWith((task) =>
+                {
                     EventManager.Instance.CreateCodeTimeEvent("resource", "load", "EditorActivate");
                 });
 
+                string PluginVersion = GetVersion();
+                Logger.Info(string.Format("Initialized Code Time v{0}", PluginVersion));
+
                 PLUGIN_READY = true;
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("Error Initializing SoftwareCo", ex);
             }
         }
 

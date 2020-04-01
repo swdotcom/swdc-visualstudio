@@ -25,8 +25,7 @@ namespace SoftwareCo
         public static String GetTimeDataFileData()
         {
             // make sure it's created
-            GetTimeDataFile();
-            return File.ReadAllText(SoftwareCoUtil.getSoftwareDataDir(true) + "\\projectTimeData.json", System.Text.Encoding.UTF8);
+            return File.ReadAllText(GetTimeDataFile(), System.Text.Encoding.UTF8);
         }
 
         public static String GetTimeDataFile()
@@ -39,7 +38,7 @@ namespace SoftwareCo
                     try
                     {
                         string content = new JsonArray().ToString();
-                        File.WriteAllText(file, content, System.Text.Encoding.UTF8);
+                        File.WriteAllText(file, content, Encoding.UTF8);
                     }
                     catch (Exception e)
                     {
@@ -62,7 +61,7 @@ namespace SoftwareCo
             {
                 string content = new JsonArray().ToString();
                 content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
-                File.WriteAllText(file, content, System.Text.Encoding.UTF8);
+                File.WriteAllText(file, content, Encoding.UTF8);
             }
             catch (Exception e)
             {
@@ -70,9 +69,8 @@ namespace SoftwareCo
             }
         }
 
-        public async Task<TimeData> GetNewTimeDataSummary()
+        public async Task<TimeData> GetNewTimeDataSummary(PluginDataProject project)
         {
-            PluginDataProject project = await PluginData.GetPluginProject();
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             TimeData td = new TimeData();
             td.day = nowTime.local_day;
@@ -89,6 +87,7 @@ namespace SoftwareCo
 
             TimeData td = await GetTodayTimeDataSummary(project);
             td.editor_seconds += editor_seconds;
+            td.editor_seconds = Math.Max(td.editor_seconds, td.session_seconds);
             SaveTimeDataSummaryToDisk(td);
         }
 
@@ -100,6 +99,8 @@ namespace SoftwareCo
             long session_seconds = minutes_since_payload * 60;
             td.file_seconds += 60;
             td.session_seconds += session_seconds;
+            td.editor_seconds = Math.Max(td.editor_seconds, td.session_seconds);
+            td.file_seconds = Math.Min(td.file_seconds, td.session_seconds);
 
             SaveTimeDataSummaryToDisk(td);
         }
@@ -176,7 +177,7 @@ namespace SoftwareCo
                     }
                 }
             }
-            return await GetNewTimeDataSummary();
+            return await GetNewTimeDataSummary(proj);
         }
 
         public List<TimeData> GetTimeDataList()

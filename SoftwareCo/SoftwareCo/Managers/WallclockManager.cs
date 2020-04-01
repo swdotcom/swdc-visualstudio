@@ -15,6 +15,7 @@ namespace SoftwareCo
         private static readonly Lazy<WallclockManager> lazy = new Lazy<WallclockManager>(() => new WallclockManager());
 
         private System.Threading.Timer timer;
+        private System.Threading.Timer newDayTimer;
         private static int SECONDS_TO_INCREMENT = 30;
         private static int THIRTY_SECONDS_IN_MILLIS = 1000 * SECONDS_TO_INCREMENT;
         private static int ONE_MINUTE = THIRTY_SECONDS_IN_MILLIS * 2;
@@ -38,6 +39,12 @@ namespace SoftwareCo
                       1000,
                       THIRTY_SECONDS_IN_MILLIS);
             sessionSummaryMgr = SessionSummaryManager.Instance;
+
+            newDayTimer = new System.Threading.Timer(
+                    GetNewDayCheckerAsync,
+                    null,
+                    1000,
+                    ONE_MINUTE * 10);
         }
 
         private void WallclcockTimerHandlerAsync(object stateinfo)
@@ -65,8 +72,7 @@ namespace SoftwareCo
                 {
                     string title = p.MainWindowTitle.ToLower();
                     
-                    if (title.Contains("software") && title.Contains("microsoft")
-                        && title.Contains("visual") && title.Contains("studio") && title.Contains("running"))
+                    if (title.Contains("visual") && title.Contains("studio") && title.Contains("running"))
                     {
                         /**
                          * [CodeTime Info 11:53:55 AM] Code Time: File open incremented
@@ -76,12 +82,11 @@ namespace SoftwareCo
                             [CodeTime Info 11:54:47 AM] process: Software (Running) - Microsoft Visual Studio , 01:09:13.3281250
                         **/
                         // Logger.Info("app: " + p.MainWindowTitle);
-                        isRunning = true;
-                        break;
+                        return true;
                     }
                 }
             }
-            return isRunning;
+            return false;
         }
 
         public void InjectAsyncPackage(SoftwareCoPackage package, DTE2 ObjDte)
@@ -121,7 +126,7 @@ namespace SoftwareCo
             }
         }
 
-        private async Task GetNewDayChecker()
+        private async void GetNewDayCheckerAsync(object stateinfo)
         {
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             if (!nowTime.local_day.Equals(_currentDay))

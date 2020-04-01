@@ -9,20 +9,6 @@ namespace SoftwareCo
 {
     public sealed class GitUtilManager
     {
-        private static readonly Lazy<GitUtilManager> lazy = new Lazy<GitUtilManager>(() => new GitUtilManager());
-
-        private SoftwareCoPackage package;
-
-        public static GitUtilManager Instance { get { return lazy.Value; } }
-
-        private GitUtilManager()
-        {
-        }
-
-        public void InjectAsyncPackage(SoftwareCoPackage package)
-        {
-            this.package = package;
-        }
 
         public static CommitChangeStats GetUncommitedChanges(string projectDir)
         {
