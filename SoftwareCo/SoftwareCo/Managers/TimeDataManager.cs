@@ -205,6 +205,70 @@ namespace SoftwareCo
             return existingList;
         }
 
+        public async Task UpdateSessionFromSummaryApiAsync(long currentDayMinutes)
+        {
+            NowTime nowTime = SoftwareCoUtil.GetNowTime();
+            CodeTimeSummary ctSummary = this.GetCodeTimeSummary();
+            long diff = ctSummary.activeCodeTimeMinutes < currentDayMinutes ?
+                currentDayMinutes - ctSummary.activeCodeTimeMinutes : 0;
+            PluginDataProject project = await PluginData.GetPluginProject();
+            TimeData td = null;
+            if (project != null)
+            {
+                td = await GetTodayTimeDataSummary(project);
+            } else
+            {
+                List<TimeData> list = GetTimeDataList();
+                if (list != null && list.Count > 0)
+                {
+                    foreach (TimeData timeData in list)
+                    {
+                        if (timeData.day.Equals(nowTime.local_day))
+                        {
+                            td = timeData;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (td == null)
+            {
+                project = new PluginDataProject("Unnamed", "Untitled");
+                td = new TimeData();
+                td.day = nowTime.local_day;
+                td.timestamp_local = nowTime.local_now;
+                td.timestamp = nowTime.now;
+                td.project = project;
+            }
+
+            long secondsToAdd = diff * 60;
+            td.session_seconds += secondsToAdd;
+            td.editor_seconds += secondsToAdd;
+
+            SaveTimeDataSummaryToDisk(td);
+        }
+
+        public CodeTimeSummary GetCodeTimeSummary()
+        {
+            CodeTimeSummary ctSummary = new CodeTimeSummary();
+            NowTime nowTime = SoftwareCoUtil.GetNowTime();
+            List<TimeData> list = GetTimeDataList();
+            if (list != null && list.Count > 0)
+            {
+                foreach (TimeData td in list)
+                {
+                    if (td.day.Equals(nowTime.local_day))
+                    {
+                        ctSummary.activeCodeTimeMinutes += (td.session_seconds / 60);
+                        ctSummary.codeTimeMinutes += (td.editor_seconds / 60);
+                        ctSummary.fileTimeMinutes += (td.file_seconds / 60);
+                    }
+                }
+            }
+
+            return ctSummary;
+        }
 
         public async Task SendTimeDataAsync()
         {

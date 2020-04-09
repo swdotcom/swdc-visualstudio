@@ -49,7 +49,8 @@ namespace SoftwareCo
 
         private void WallclcockTimerHandlerAsync(object stateinfo)
         {
-            if (IsVisualStudioAppInForeground())
+            bool hasPluginData = DocEventManager.Instance.hasData();
+            if (IsVisualStudioAppInForeground() || hasPluginData)
             {
                 this._wctime = SoftwareCoUtil.getItemAsLong("wctime");
                 this._wctime += SECONDS_TO_INCREMENT;
@@ -107,23 +108,15 @@ namespace SoftwareCo
             SoftwareCoUtil.setNumericItem("wctime", this._wctime);
         }
 
-        private async Task DispatchUpdateAsync()
+        public async Task DispatchUpdateAsync()
         {
+            Task.Delay(2000).ContinueWith((task) => { DispatchUpdatesProcessorAsync(); });
+        }
+
+        private async Task DispatchUpdatesProcessorAsync() {
             SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
             package.RebuildCodeMetricsAsync();
             package.RebuildGitMetricsAsync();
-        }
-
-        public void UpdateBasedOnSessionSeconds(long session_seconds)
-        {
-
-            // check to see if the session seconds has gained before the editor seconds
-            // if so, then update the editor seconds
-            if (this._wctime < session_seconds)
-            {
-                this._wctime = session_seconds + 1;
-                SoftwareCoUtil.setNumericItem("wctime", this._wctime);
-            }
         }
 
         private async void GetNewDayCheckerAsync(object stateinfo)
@@ -155,7 +148,10 @@ namespace SoftwareCo
                 SoftwareCoUtil.setItem("currentDay", _currentDay);
                 // update the last payload timestamp
                 SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", 0);
-                
+
+                // update the session summary global and averages for the new day
+                Task.Delay(ONE_MINUTE).ContinueWith((task) => { WallclockManager.Instance.UpdateSessionSummaryFromServerAsync(true); });
+
             }
         }
 
@@ -178,9 +174,6 @@ namespace SoftwareCo
                             SessionSummary incomingSummary = summary.GetSessionSummaryFromDictionary(jsonObj);
                             summary.CloneSessionSummary(incomingSummary, isNewDay);
                             SessionSummaryManager.Instance.SaveSessionSummaryToDisk(summary);
-
-                            // update the wallclock time if the session seconds is greater. this can happen when using multiple editor types
-                            WallclockManager.Instance.UpdateBasedOnSessionSeconds(summary.currentDayMinutes * 60);
                         } catch (Exception e)
                         {
                             Logger.Error("failed to read json: " + e.Message);

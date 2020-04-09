@@ -1,5 +1,6 @@
 ﻿
 
+using Microsoft.VisualStudio.OLE.Interop;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -160,55 +161,53 @@ namespace SoftwareCo
 
         public static void setBoolItem(string key, bool val)
         {
-            string sessionFile = getSoftwareSessionFile();
-            IDictionary<string, object> dict = new Dictionary<string, object>();
-            string content = "";
-            if (File.Exists(sessionFile))
+            if (sessionMap.TryGetValue(key, out string outval))
             {
-                content = File.ReadAllText(sessionFile, System.Text.Encoding.UTF8);
-                // conver to dictionary
-                dict = (IDictionary<string, object>)SimpleJson.DeserializeObject(content);
-                dict.Remove(key);
+                // value exists!
+                sessionMap[key] = val.ToString();
             }
-            dict.Add(key, val);
-            content = SimpleJson.SerializeObject(dict);
-            // write it back to the file
-            content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
-            File.WriteAllText(sessionFile, content, System.Text.Encoding.UTF8);
+            else
+            {
+                // lets add the value
+                sessionMap.Add(key, val.ToString());
+            }
+            SaveSessionItem(key, val);
         }
 
         public static void setNumericItem(string key, long val)
         {
-            string sessionFile = getSoftwareSessionFile();
-            IDictionary<string, object> dict = new Dictionary<string, object>();
-            string content = "";
-            if (File.Exists(sessionFile))
+            if (sessionMap.TryGetValue(key, out string outval))
             {
-                content = File.ReadAllText(sessionFile, System.Text.Encoding.UTF8);
-                // conver to dictionary
-                dict = (IDictionary<string, object>)SimpleJson.DeserializeObject(content);
-                dict.Remove(key);
+                // value exists!
+                sessionMap[key] = val.ToString();
             }
-            dict.Add(key, val);
-            content = SimpleJson.SerializeObject(dict);
-            // write it back to the file
-            content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
-            File.WriteAllText(sessionFile, content, System.Text.Encoding.UTF8);
+            else
+            {
+                // lets add the value
+                sessionMap.Add(key, val.ToString());
+            }
+
+            SaveSessionItem(key, val);
         }
 
         public static void setItem(String key, string val)
         {
             if (sessionMap.TryGetValue(key, out string outval))
             {
-                // yay, value exists!
+                // value exists!
                 sessionMap[key] = val;
             }
             else
             {
-                // darn, lets add the value
+                // lets add the value
                 sessionMap.Add(key, val);
             }
 
+            SaveSessionItem(key, val);
+        }
+
+        private static void SaveSessionItem(string key, object val)
+        {
             string sessionFile = getSoftwareSessionFile();
             IDictionary<string, object> dict = new Dictionary<string, object>();
             string content = "";
@@ -221,6 +220,7 @@ namespace SoftwareCo
             }
             dict.Add(key, val);
             content = SimpleJson.SerializeObject(dict);
+            // write it back to the file
             content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
             File.WriteAllText(sessionFile, content, System.Text.Encoding.UTF8);
         }

@@ -19,7 +19,7 @@ namespace SoftwareCo
         public async Task UpdateDisplayAsync(string label, string iconName)
         {
             await Dispatcher.BeginInvoke(new Action(() => {
-                string tooltip = "Click to see more from Code Time.";
+                string tooltip = "Active code time today. Click to see more from Code Time.";
                 string email = SoftwareCoUtil.getItemAsString("name");
                 if (email != null)
                 {

@@ -83,17 +83,23 @@ namespace SoftwareCo
             dashboardContent += SoftwareCoUtil.getSectionHeader(today_date);
 
             SessionSummary _sessionSummary = SessionSummaryManager.Instance.GetSessionSummayData();
+            CodeTimeSummary ctSummary = TimeDataManager.Instance.GetCodeTimeSummary();
+
+            string codeTimeMinutes = SoftwareCoUtil.HumanizeMinutes(ctSummary.codeTimeMinutes);
+            dashboardContent += SoftwareCoUtil.getDashboardRow("Code time today", codeTimeMinutes);
+            string activeCodeTimeMinutes = SoftwareCoUtil.HumanizeMinutes(ctSummary.activeCodeTimeMinutes);
+            dashboardContent += SoftwareCoUtil.getDashboardRow("Active code time today", activeCodeTimeMinutes);
             if (_sessionSummary != null)
             {
 
                 string averageTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.averageDailyMinutes);
-                string hoursCodedToday = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.currentDayMinutes);
+                
                 String liveshareTime = "";
                 //if (_sessionSummary.liveshareMinutes != 0)
                 //{
                 //    liveshareTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.liveshareMinutes);
                 //}
-                dashboardContent += SoftwareCoUtil.getDashboardRow("Hours Coded", hoursCodedToday);
+                
                 dashboardContent += SoftwareCoUtil.getDashboardRow("90-day avg", averageTime);
                 //if (liveshareTime != "0")
                 //{

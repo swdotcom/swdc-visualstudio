@@ -66,6 +66,7 @@
     <Compile Include="Managers\SessionSummaryManager.cs" />
     <Compile Include="Managers\TimeDataManager.cs" />
     <Compile Include="Models\CodeTimeEvent.cs" />
+    <Compile Include="Models\CodeTimeSummary.cs" />
     <Compile Include="Models\CommitChangeStats.cs" />
     <Compile Include="Models\CommitInfo.cs" />
     <Compile Include="Models\FileChangeInfo.cs" />

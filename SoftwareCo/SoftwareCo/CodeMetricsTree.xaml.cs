@@ -58,7 +58,7 @@ namespace SoftwareCo
             WebDashboardImage.Source = SoftwareCoUtil.CreateImage("cpaw.png").Source;
 
             // dashboard label
-            DashboardLabel.Content = "Generate dashboard";
+            DashboardLabel.Content = "View summary";
             DashboardImage.Source = SoftwareCoUtil.CreateImage("dashboard.png").Source;
 
             // Toggle status label
@@ -157,9 +157,9 @@ namespace SoftwareCo
                 return;
             }
             SessionSummary summary = SessionSummaryManager.Instance.GetSessionSummayData();
-            long wcTimeMin = WallclockManager.Instance.GetWcTimeInMinutes();
+            CodeTimeSummary ctSummary = TimeDataManager.Instance.GetCodeTimeSummary();
 
-            string editortimeToday = "Today: " + SoftwareCoUtil.HumanizeMinutes(wcTimeMin);
+            string editortimeToday = "Today: " + SoftwareCoUtil.HumanizeMinutes(ctSummary.codeTimeMinutes);
             if (Editortime.HasItems)
             {
                 // update
@@ -171,12 +171,12 @@ namespace SoftwareCo
             {
                 List<TreeViewItem> editortimeChildren = new List<TreeViewItem>();
                 editortimeChildren.Add(BuildMetricNode("editortimetodayval", editortimeToday, "rocket.png"));
-                TreeViewItem editorParent = BuildMetricNodes("editortime", "Editor time", editortimeChildren);
+                TreeViewItem editorParent = BuildMetricNodes("editortime", "Code time", editortimeChildren);
                 Editortime.Items.Add(editorParent);
             }
 
-            string codetimeBoltIcon = summary.currentDayMinutes > summary.averageDailyMinutes ? "bolt.png" : "bolt-grey.png";
-            string codetimeToday = "Today: " + SoftwareCoUtil.HumanizeMinutes(summary.currentDayMinutes);
+            string codetimeBoltIcon = ctSummary.activeCodeTimeMinutes > summary.averageDailyMinutes ? "bolt.png" : "bolt-grey.png";
+            string codetimeToday = "Today: " + SoftwareCoUtil.HumanizeMinutes(ctSummary.activeCodeTimeMinutes);
             string codetimeAvg = "Your average: " + SoftwareCoUtil.HumanizeMinutes(summary.averageDailyMinutes);
             string codetimeGlobal = "Global average: " + SoftwareCoUtil.HumanizeMinutes(summary.globalAverageDailyMinutes);
             if (Codetime.HasItems)
@@ -193,7 +193,7 @@ namespace SoftwareCo
                 codetimeChildren.Add(BuildMetricNode("codetimetodayval", codetimeToday, "rocket.png"));
                 codetimeChildren.Add(BuildMetricNode("codetimeavgval", codetimeAvg, codetimeBoltIcon));
                 codetimeChildren.Add(BuildMetricNode("codetimeglobalval", codetimeGlobal, "global-grey.png"));
-                TreeViewItem codetimeParent = BuildMetricNodes("codetime", "Code time", codetimeChildren);
+                TreeViewItem codetimeParent = BuildMetricNodes("codetime", "Active code time", codetimeChildren);
                 Codetime.Items.Add(codetimeParent);
             }
 
@@ -361,6 +361,7 @@ namespace SoftwareCo
 
             RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(dir, true);
 
+            // clear the children
             ContributorsMetricsPanel.Children.Clear();
 
             if (resourceInfo != null && resourceInfo.identifier != null)

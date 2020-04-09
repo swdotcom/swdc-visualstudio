@@ -362,9 +362,6 @@ namespace SoftwareCo
                     }
                 }
             }
-
-            // update the session summary global and averages for the new day
-            Task.Delay(ONE_MINUTE).ContinueWith((task) => { WallclockManager.Instance.UpdateSessionSummaryFromServerAsync(isNewDay); });
         }
 
         private async Task InitializeUserInfoAsync()

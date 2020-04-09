@@ -43,6 +43,15 @@ namespace SoftwareCo
             sessionSummaryMgr = SessionSummaryManager.Instance;
         }
 
+        public bool hasData()
+        {
+            if (_pluginData != null && _pluginData.source != null && _pluginData.source.Count > 0)
+            {
+                return true;
+            }
+            return false;
+        }
+
         private bool IsTrueEventFile(string fileName)
         {
             return (fileName == null || fileName.IndexOf("CodeTime.txt") != -1) ? false : true;
@@ -214,17 +223,22 @@ namespace SoftwareCo
             {
                 string softwareDataContent = await _pluginData.CompletePayloadAndReturnJsonString();
 
+                // aggregate and update the time data and time project data
                 UpdateAggregates(_pluginData);
 
                 Logger.Info("Code Time: storing plugin data: " + softwareDataContent);
 
                 string datastoreFile = SoftwareCoUtil.getSoftwareDataStoreFile();
+
                 // append to the file
                 File.AppendAllText(datastoreFile, softwareDataContent + Environment.NewLine);
 
                 // update the latestPayloadTimestampEndUtc
                 SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
             }
+
+            // update the status bar and tree
+            WallclockManager.Instance.DispatchUpdateAsync();
             _pluginData = null;
         }
 

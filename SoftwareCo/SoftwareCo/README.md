@@ -48,9 +48,9 @@ You can also see your top files today by KPM (keystrokes per minute), keystrokes
 
 Your **Project Metrics** provides a breakdown for the current open project. The _Open changes_ section shows how many lines you have added and deleted before you commit them and the _Committed today_ section summarizes your commits today.
 
-**4. Generate your Code Time dashboard**
+**4. View your Code Time summary**
 
-At the end of your first day, open Code Time in your side bar and click _Generate dashboard_ to open your dashboard in a new editor tab. Your dashboard summarizes your coding data—such as your code time by project, lines of code, and keystrokes per minute—today, yesterday, last week, and over the last 90 days.
+At the end of your first day, open Code Time in your side bar and click _View summary_ to open your dashboard in a new editor tab. Your dashboard summarizes your coding data—such as your code time by project, lines of code, and keystrokes per minute—today, yesterday, last week, and over the last 90 days.
 
 ## Web app data visualizations
 

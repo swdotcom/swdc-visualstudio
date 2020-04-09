@@ -52,24 +52,22 @@ namespace SoftwareCo
             {
                 _sessionSummary.currentDayMinutes += incrementMinutes;
             }
+            TimeDataManager.Instance.UpdateSessionAndFileSeconds(incrementMinutes);
+
 
             long sessionSeconds = _sessionSummary.currentDayMinutes * 60;
-
-            wcMgr.UpdateBasedOnSessionSeconds(sessionSeconds);
 
             _sessionSummary.currentDayKeystrokes += aggregate.keystrokes;
             _sessionSummary.currentDayLinesAdded += aggregate.linesAdded;
             _sessionSummary.currentDayLinesRemoved += aggregate.linesRemoved;
 
             SaveSessionSummaryToDisk(_sessionSummary);
-
-            TimeDataManager.Instance.UpdateSessionAndFileSeconds(incrementMinutes);
         }
 
         private long GetMinutesSinceLastPayload()
         {
             long minutesSinceLastPayload = 1;
-            long lastPayloadEnd = SoftwareCoUtil.getItemAsLong("latestPayloadTimestampEntUtc");
+            long lastPayloadEnd = SoftwareCoUtil.getItemAsLong("latestPayloadTimestampEndUtc");
             if (lastPayloadEnd > 0)
             {
                 NowTime nowTime = SoftwareCoUtil.GetNowTime();
@@ -143,17 +141,18 @@ namespace SoftwareCo
         {
             string MethodName = "UpdateStatusBarWithSummaryDataAsync";
 
+            CodeTimeSummary ctSummary = TimeDataManager.Instance.GetCodeTimeSummary();
+
             string iconName = "";
             string currentDayMinutesTime = "";
             _sessionSummary = GetSessionSummayData();
-            long currentDayMinutesVal = _sessionSummary.currentDayMinutes;
             long averageDailyMinutesVal = _sessionSummary.averageDailyMinutes;
 
-            currentDayMinutesTime = SoftwareCoUtil.HumanizeMinutes(currentDayMinutesVal);
+            currentDayMinutesTime = SoftwareCoUtil.HumanizeMinutes(ctSummary.activeCodeTimeMinutes);
             // string averageDailyMinutesTime = SoftwareCoUtil.HumanizeMinutes(averageDailyMinutesVal);
 
             // Code time today:  4 hrs | Avg: 3 hrs 28 min
-            iconName = currentDayMinutesVal > averageDailyMinutesVal ? "rocket.png" : "cpaw.png";
+            iconName = ctSummary.activeCodeTimeMinutes > averageDailyMinutesVal ? "rocket.png" : "cpaw.png";
             // string msg = string.Format("{0}{1}", inFlowIcon, currentDayMinutesTime);
 
             // it's ok not to await on this

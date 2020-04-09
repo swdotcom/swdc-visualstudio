@@ -260,6 +260,7 @@ namespace SoftwareCo
                         WallclockManager.Instance.UpdateSessionSummaryFromServerAsync(false);
 
                         SoftwareCoPackage.SendOfflinePluginBatchData(false);
+                        
                     }
                 }
             }
