@@ -42,18 +42,16 @@ namespace SoftwareCo
             this.package = package;
         }
         
-        public void IncrementSessionSummaryData(KeystrokeAggregates aggregate)
+        public void IncrementSessionSummaryData(KeystrokeAggregates aggregate, TimeGapData eTimeInfo)
         {
             WallclockManager wcMgr = WallclockManager.Instance;
             _sessionSummary = GetSessionSummayData();
 
-            long incrementMinutes = GetMinutesSinceLastPayload();
-            if (incrementMinutes > 0)
+            if (eTimeInfo.session_seconds > 0)
             {
-                _sessionSummary.currentDayMinutes += incrementMinutes;
+                _sessionSummary.currentDayMinutes += (eTimeInfo.session_seconds / 60);
             }
-            TimeDataManager.Instance.UpdateSessionAndFileSeconds(incrementMinutes);
-
+            TimeDataManager.Instance.UpdateSessionAndFileSeconds(eTimeInfo.session_seconds);
 
             long sessionSeconds = _sessionSummary.currentDayMinutes * 60;
 
@@ -64,22 +62,27 @@ namespace SoftwareCo
             SaveSessionSummaryToDisk(_sessionSummary);
         }
 
-        private long GetMinutesSinceLastPayload()
+        public TimeGapData GetTimeBetweenLastPayload()
         {
-            long minutesSinceLastPayload = 1;
+            TimeGapData eTimeInfo = new TimeGapData();
+            long sessionSeconds = 0;
+            long elapsedSeconds = 0;
+
             long lastPayloadEnd = SoftwareCoUtil.getItemAsLong("latestPayloadTimestampEndUtc");
             if (lastPayloadEnd > 0)
             {
                 NowTime nowTime = SoftwareCoUtil.GetNowTime();
-                long diffInSec = nowTime.now - lastPayloadEnd;
+                elapsedSeconds = Math.Max(0, nowTime.now - lastPayloadEnd);
                 long sessionThresholdSeconds = 60 * 15;
-                if (diffInSec > 0 && diffInSec <= sessionThresholdSeconds)
+                if (elapsedSeconds > 0 && elapsedSeconds <= sessionThresholdSeconds)
                 {
-                    minutesSinceLastPayload = diffInSec / 60;
+                    sessionSeconds = elapsedSeconds;
                 }
+                sessionSeconds = Math.Max(60, sessionSeconds);
             }
-            return minutesSinceLastPayload;
-
+            eTimeInfo.elapsed_seconds = elapsedSeconds;
+            eTimeInfo.session_seconds = sessionSeconds;
+            return eTimeInfo;
         }
 
         public void ÇlearSessionSummaryData()

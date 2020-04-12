@@ -69,6 +69,7 @@
     <Compile Include="Models\CodeTimeSummary.cs" />
     <Compile Include="Models\CommitChangeStats.cs" />
     <Compile Include="Models\CommitInfo.cs" />
+    <Compile Include="Models\TimeGapData.cs" />
     <Compile Include="Models\FileChangeInfo.cs" />
     <Compile Include="Models\FileInfoSummary.cs" />
     <Compile Include="Models\KeystrokeAggregates.cs" />

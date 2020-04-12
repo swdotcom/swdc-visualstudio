@@ -25,7 +25,8 @@ namespace SoftwareCo
         public static String GetTimeDataFileData()
         {
             // make sure it's created
-            return File.ReadAllText(GetTimeDataFile(), System.Text.Encoding.UTF8);
+            string fileData = File.ReadAllText(GetTimeDataFile(), System.Text.Encoding.UTF8);
+            return fileData;
         }
 
         public static String GetTimeDataFile()
@@ -91,12 +92,11 @@ namespace SoftwareCo
             SaveTimeDataSummaryToDisk(td);
         }
 
-        public async Task UpdateSessionAndFileSeconds(long minutes_since_payload)
+        public async Task UpdateSessionAndFileSeconds(long session_seconds)
         {
             PluginDataProject project = await PluginData.GetPluginProject();
 
             TimeData td = await GetTodayTimeDataSummary(project);
-            long session_seconds = minutes_since_payload * 60;
             td.file_seconds += 60;
             td.session_seconds += session_seconds;
             td.editor_seconds = Math.Max(td.editor_seconds, td.session_seconds);
@@ -119,16 +119,24 @@ namespace SoftwareCo
 
             List<TimeData> list = GetTimeDataList();
             List<TimeData> listToSave = new List<TimeData>();
-            listToSave.Add(timeData);
+
+            bool foundTimeData = false;
             string projDir = timeData.project.directory;
             foreach (TimeData td in list)
             {
                 string tdDir = td.project != null ? td.project.directory : "";
-                if ((!tdDir.Equals(projDir) && !tdDir.Equals("")) ||
-                    (tdDir.Equals(projDir) && !td.day.Equals(nowTime.local_day)))
+                if (tdDir.Equals(projDir) && td.day.Equals(nowTime.local_day))
                 {
+                    listToSave.Add(timeData);
+                    foundTimeData = true;
+                } else {
                     listToSave.Add(td);
                 }
+            }
+
+            if (!foundTimeData)
+            {
+                listToSave.Add(timeData);
             }
 
             JsonArray jsonToSave = BuildJsonObjectFromList(listToSave);

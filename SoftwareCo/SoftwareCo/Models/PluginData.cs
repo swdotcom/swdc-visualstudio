@@ -26,6 +26,8 @@ namespace SoftwareCo
         public long local_end { get; set; }
         public String timezone { get; set; }
         public double offset { get; set; }
+        public long cumulative_editor_seconds { get; set; }
+        public long elapsed_seconds { get; set; }
 
         public PluginDataProject project { get; set; }
 
@@ -41,6 +43,8 @@ namespace SoftwareCo
             os = SoftwareCoPackage.GetOs();
             source = new List<PluginDataFileInfo>();
             project = GetPluginProjectUsingDir(projectDirectory);
+            cumulative_editor_seconds = 0;
+            elapsed_seconds = 0;
         }
 
         public static async Task<PluginDataProject> GetPluginProject()
@@ -71,11 +75,11 @@ namespace SoftwareCo
             return project;
         }
 
-        public async Task<string> CompletePayloadAndReturnJsonString()
+        public async Task<string> CompletePayloadAndReturnJsonString(TimeGapData eTimeInfo)
         {
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
-            end = nowTime.now;
-            local_end = nowTime.local_now;
+            this.end = nowTime.now;
+            this.local_end = nowTime.local_now;
 
             // get the TimeData for this project dir
             TimeData td = await TimeDataManager.Instance.GetTodayTimeDataSummary(this.project);
@@ -86,11 +90,13 @@ namespace SoftwareCo
                 editorSeconds = Math.Max(td.editor_seconds, td.session_seconds);
             }
 
+            this.cumulative_editor_seconds = editorSeconds;
+            this.elapsed_seconds = eTimeInfo.elapsed_seconds;
+
             // make sure all of the end times are set
             foreach (PluginDataFileInfo pdFileInfo in this.source)
             {
                 pdFileInfo.EndFileInfoTime(nowTime);
-                pdFileInfo.cumulative_editor_seconds = editorSeconds;
             }
 
             double offset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).TotalMinutes;
@@ -119,6 +125,8 @@ namespace SoftwareCo
             jsonObj.Add("os", this.os);
             jsonObj.Add("end", this.end);
             jsonObj.Add("local_end", this.local_end);
+            jsonObj.Add("cumulative_editor_seconds", this.cumulative_editor_seconds);
+            jsonObj.Add("elapsed_seconds", this.elapsed_seconds);
 
             // get the source as json
             jsonObj.Add("source", BuildSourceJson());

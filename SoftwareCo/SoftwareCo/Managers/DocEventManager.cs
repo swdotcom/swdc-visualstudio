@@ -221,10 +221,11 @@ namespace SoftwareCo
 
             if (_pluginData != null && _pluginData.source.Count > 0)
             {
-                string softwareDataContent = await _pluginData.CompletePayloadAndReturnJsonString();
+                TimeGapData eTimeInfo = SessionSummaryManager.Instance.GetTimeBetweenLastPayload();
+                string softwareDataContent = await _pluginData.CompletePayloadAndReturnJsonString(eTimeInfo);
 
                 // aggregate and update the time data and time project data
-                UpdateAggregates(_pluginData);
+                UpdateAggregates(_pluginData, eTimeInfo);
 
                 Logger.Info("Code Time: storing plugin data: " + softwareDataContent);
 
@@ -232,17 +233,17 @@ namespace SoftwareCo
 
                 // append to the file
                 File.AppendAllText(datastoreFile, softwareDataContent + Environment.NewLine);
-
-                // update the latestPayloadTimestampEndUtc
-                SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
             }
+
+            // update the latestPayloadTimestampEndUtc
+            SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
 
             // update the status bar and tree
             WallclockManager.Instance.DispatchUpdateAsync();
             _pluginData = null;
         }
 
-        private void UpdateAggregates(PluginData pd)
+        private void UpdateAggregates(PluginData pd, TimeGapData eTimeInfo)
         {
             List<FileInfoSummary> fileInfoList = pd.GetSourceFileInfoList();
             KeystrokeAggregates aggregates = new KeystrokeAggregates();
@@ -262,7 +263,7 @@ namespace SoftwareCo
                 FileChangeInfoDataManager.Instance.SaveFileChangeInfoDataSummaryToDisk(fileChangeInfo);
             }
 
-            sessionSummaryMgr.IncrementSessionSummaryData(aggregates);
+            sessionSummaryMgr.IncrementSessionSummaryData(aggregates, eTimeInfo);
         }
     }
 }

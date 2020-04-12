@@ -33,6 +33,8 @@ namespace SoftwareCo
 
         private WallclockManager()
         {
+            // fetch the current day from the sessions.json
+            this._currentDay = SoftwareCoUtil.getItemAsString("currentDay");
             timer = new System.Threading.Timer(
                       WallclcockTimerHandlerAsync,
                       null,

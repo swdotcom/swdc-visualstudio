@@ -24,7 +24,6 @@ namespace SoftwareCo
         public long local_start { get; set; }
         public long end { get; set; }
         public long local_end { get; set; }
-        public long cumulative_editor_seconds { get; set; }
 
         public PluginDataFileInfo(string file)
         {
@@ -42,7 +41,6 @@ namespace SoftwareCo
             this.length = 0;
             this.end = this.start + 60;
             this.local_end = this.local_start + 60;
-            this.cumulative_editor_seconds = 0;
         }
 
         public JsonObject GetPluginDataFileInfoAsJson()
@@ -62,7 +60,6 @@ namespace SoftwareCo
             jsonObj.Add("start", this.start);
             jsonObj.Add("end", this.end);
             jsonObj.Add("local_start", this.local_start);
-            jsonObj.Add("cumulative_editor_seconds", this.cumulative_editor_seconds);
             return jsonObj;
         }
 
@@ -83,7 +80,6 @@ namespace SoftwareCo
             dict.Add("start", this.start);
             dict.Add("end", this.end);
             dict.Add("local_start", this.local_start);
-            dict.Add("cumulative_editor_seconds", this.cumulative_editor_seconds);
             return dict;
         }
 
