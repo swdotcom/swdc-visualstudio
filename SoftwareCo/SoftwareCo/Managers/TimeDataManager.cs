@@ -127,16 +127,12 @@ namespace SoftwareCo
                 string tdDir = td.project != null ? td.project.directory : "";
                 if (tdDir.Equals(projDir) && td.day.Equals(nowTime.local_day))
                 {
+                    // replace the one found with the new time data info
                     listToSave.Add(timeData);
                     foundTimeData = true;
                 } else {
                     listToSave.Add(td);
                 }
-            }
-
-            if (!foundTimeData)
-            {
-                listToSave.Add(timeData);
             }
 
             JsonArray jsonToSave = BuildJsonObjectFromList(listToSave);

@@ -200,6 +200,10 @@ namespace SoftwareCo
                 // init the event manager and inject this
                 EventManager.Instance.InjectAsyncPackage(this);
 
+                // update the latestPayloadTimestampEndUtc
+                NowTime nowTime = SoftwareCoUtil.GetNowTime();
+                SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
+
                 // init the wallclock
                 WallclockManager wallclockMgr = WallclockManager.Instance;
                 wallclockMgr.InjectAsyncPackage(this, ObjDte);

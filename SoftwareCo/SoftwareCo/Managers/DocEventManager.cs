@@ -45,7 +45,7 @@ namespace SoftwareCo
 
         public bool hasData()
         {
-            if (_pluginData != null && _pluginData.source != null && _pluginData.source.Count > 0)
+            if (_pluginData != null && _pluginData.source != null && _pluginData.source.Count > 0 && _pluginData.keystrokes > 0)
             {
                 return true;
             }
@@ -159,7 +159,10 @@ namespace SoftwareCo
                 {
                     pdfileInfo.linesAdded += 1;
                 }
+                // file level keystrokes counter
                 pdfileInfo.keystrokes += 1;
+                // top level keystrokes counter
+                _pluginData.keystrokes += 1;
             }
         }
 
@@ -177,6 +180,7 @@ namespace SoftwareCo
             InitPluginDataIfNotExists();
             _pluginData.InitFileInfoIfNotExists(fileName);
 
+            /**
             try
             {
                 _pluginData.GetFileInfo(fileName).open += 1;
@@ -186,6 +190,7 @@ namespace SoftwareCo
             {
                 Logger.Error("DocEventsOnDocumentOpened", ex);
             }
+            **/
         }
 
         public async void DocEventsOnDocumentClosedAsync(Document document)
@@ -202,6 +207,7 @@ namespace SoftwareCo
             InitPluginDataIfNotExists();
             _pluginData.InitFileInfoIfNotExists(fileName);
 
+            /**
             try
             {
                 _pluginData.GetFileInfo(fileName).close += 1;
@@ -211,6 +217,7 @@ namespace SoftwareCo
             {
                 Logger.Error("DocEventsOnDocumentClosed", ex);
             }
+            **/
         }
 
         

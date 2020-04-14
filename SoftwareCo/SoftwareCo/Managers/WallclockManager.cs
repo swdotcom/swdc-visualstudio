@@ -20,6 +20,9 @@ namespace SoftwareCo
         private static int THIRTY_SECONDS_IN_MILLIS = 1000 * SECONDS_TO_INCREMENT;
         private static int ONE_MINUTE = THIRTY_SECONDS_IN_MILLIS * 2;
 
+        // 1 hour threshold
+        private static long EDITOR_ACTIVE_THRESHOLD = 60 * 60;
+
         private long _wctime = 0;
         private string _currentDay = "";
 
@@ -66,30 +69,8 @@ namespace SoftwareCo
 
         public bool IsVisualStudioAppInForeground()
         {
-            bool isRunning = false;
-            System.Diagnostics.Process[] processes =
-                System.Diagnostics.Process.GetProcesses();
-            foreach (System.Diagnostics.Process p in processes)
-            {
-                if (!string.IsNullOrEmpty(p.MainWindowTitle))
-                {
-                    string title = p.MainWindowTitle.ToLower();
-                    
-                    if (title.Contains("visual") && title.Contains("studio") && title.Contains("running"))
-                    {
-                        /**
-                         * [CodeTime Info 11:53:55 AM] Code Time: File open incremented
-                            [CodeTime Info 11:54:17 AM] process: MusicTime - Microsoft Visual Studio  - Experimental Instance, 00:00:27.2812500
-                            [CodeTime Info 11:54:17 AM] process: Software (Running) - Microsoft Visual Studio , 01:09:12.0468750
-                            [CodeTime Info 11:54:47 AM] process: MusicTime - Microsoft Visual Studio  - Experimental Instance, 00:00:28.3593750
-                            [CodeTime Info 11:54:47 AM] process: Software (Running) - Microsoft Visual Studio , 01:09:13.3281250
-                        **/
-                        // Logger.Info("app: " + p.MainWindowTitle);
-                        return true;
-                    }
-                }
-            }
-            return false;
+            TimeGapData tgd = SessionSummaryManager.Instance.GetTimeBetweenLastPayload();
+            return (tgd.elapsed_seconds < EDITOR_ACTIVE_THRESHOLD) ? true : false;
         }
 
         public void InjectAsyncPackage(SoftwareCoPackage package, DTE2 ObjDte)
