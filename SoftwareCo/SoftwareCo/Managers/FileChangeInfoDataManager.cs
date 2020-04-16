@@ -162,7 +162,8 @@ namespace SoftwareCo
             string fileChangeInfoSummary = SoftwareCoUtil.getFileChangeInfoSummaryData();
 
             // it'll be a map of file to FileChangeInfo objects
-            IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(fileChangeInfoSummary);
+            IDictionary<string, object> jsonObj =
+                (IDictionary<string, object>)SimpleJson.DeserializeObject(fileChangeInfoSummary, new Dictionary<string,object>());
             foreach (string key in jsonObj.Keys)
             {
                 FileChangeInfo info = new FileChangeInfo();

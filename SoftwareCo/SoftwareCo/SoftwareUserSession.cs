@@ -76,7 +76,7 @@ namespace SoftwareCo
                     if (SoftwareHttpManager.IsOk(response))
                     {
                         string responseBody = await response.Content.ReadAsStringAsync();
-                        IDictionary<string, object> respObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+                        IDictionary<string, object> respObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody, new Dictionary<string, object>());
                         respObj.TryGetValue("jwt", out object jwtObj);
                         string jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
                         if (jwt != null)
@@ -110,7 +110,7 @@ namespace SoftwareCo
                     if (SoftwareHttpManager.IsOk(response))
                     {
                         string responseBody = await response.Content.ReadAsStringAsync();
-                        IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+                        IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody, new Dictionary<string, object>());
                         jsonObj.TryGetValue("jwt", out object jwtObj);
                         string app_jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
                         return app_jwt;
@@ -138,7 +138,7 @@ namespace SoftwareCo
                     if (SoftwareHttpManager.IsOk(response))
                     {
                         string responseBody = await response.Content.ReadAsStringAsync();
-                        IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+                        IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody, new Dictionary<string, object>());
                         if (jsonObj != null)
                         {
                             jsonObj.TryGetValue("data", out object userObj);
@@ -193,7 +193,7 @@ namespace SoftwareCo
                     if (SoftwareHttpManager.IsOk(response))
                     {
                         string responseBody = await response.Content.ReadAsStringAsync();
-                        IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+                        IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody, new Dictionary<string, object>());
                         if (jsonObj != null)
                         {
                             jsonObj.TryGetValue("state", out object stateObj);

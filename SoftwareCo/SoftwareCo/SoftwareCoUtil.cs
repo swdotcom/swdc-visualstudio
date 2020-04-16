@@ -215,7 +215,7 @@ namespace SoftwareCo
             {
                 content = File.ReadAllText(sessionFile, System.Text.Encoding.UTF8);
                 // conver to dictionary
-                dict = (IDictionary<string, object>)SimpleJson.DeserializeObject(content);
+                dict = (IDictionary<string, object>)SimpleJson.DeserializeObject(content, new Dictionary<string, object>());
                 dict.Remove(key);
             }
             dict.Add(key, val);
@@ -762,6 +762,18 @@ namespace SoftwareCo
             Image image = new Image();
             image.Source = new BitmapImage(new Uri("Resources/" + iconName, UriKind.Relative));
             return image;
+        }
+
+        public static bool IsGitProject(string projDir)
+        {
+            if (projDir == null || projDir.Equals(""))
+            {
+                return false;
+            }
+            // string sessionFile = projDir + "\\.git";
+            // return File.Exists(sessionFile);
+
+            return true;
         }
     }
    

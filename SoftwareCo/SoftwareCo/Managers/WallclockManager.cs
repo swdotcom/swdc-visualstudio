@@ -149,7 +149,7 @@ namespace SoftwareCo
                 {
                     SessionSummary summary = SessionSummaryManager.Instance.GetSessionSummayData();
                     string responseBody = await response.Content.ReadAsStringAsync();
-                    IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+                    IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody, new Dictionary<string, object>());
                     if (jsonObj != null)
                     {
                         try

@@ -63,6 +63,7 @@ namespace SoftwareCo
 
         private System.Threading.Timer repoCommitsTimer;
         private System.Threading.Timer offlineDataTimer;
+        private System.Threading.Timer keystrokeTimer;
 
         // Used by Constants for version info
         public static DTE2 ObjDte;
@@ -247,6 +248,12 @@ namespace SoftwareCo
                     ONE_MINUTE * 5,
                     ONE_MINUTE * 20);
 
+                keystrokeTimer = new System.Threading.Timer(
+                    ProcessKeystrokePayload,
+                    autoEvent,
+                    ONE_MINUTE,
+                    ONE_MINUTE);
+
                 // initialize the status bar before we fetch the summary data
                 InitializeStatusBar();
 
@@ -302,6 +309,12 @@ namespace SoftwareCo
         #endregion
 
         #region Methods
+
+        private void ProcessKeystrokePayload(Object stateInfo)
+        {
+            // SoftwareCoUtil.SetTimeout(ONE_MINUTE, PostData, false);
+            DocEventManager.Instance.PostData();
+        }
 
         private void ProcessRepoJobs(Object stateInfo)
         {

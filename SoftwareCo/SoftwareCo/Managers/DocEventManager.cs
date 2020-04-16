@@ -81,7 +81,7 @@ namespace SoftwareCo
                     // set it to unnamed
                     _pluginData = new PluginData("Unnamed", "Untitled");
                 }
-                SoftwareCoUtil.SetTimeout(ONE_MINUTE, PostData, false);
+                // SoftwareCoUtil.SetTimeout(ONE_MINUTE, PostData, false);
             }
         }
 

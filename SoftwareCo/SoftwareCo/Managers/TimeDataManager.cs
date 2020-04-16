@@ -96,6 +96,7 @@ namespace SoftwareCo
         {
             PluginDataProject project = await PluginData.GetPluginProject();
 
+            
             TimeData td = await GetTodayTimeDataSummary(project);
             td.file_seconds += 60;
             td.session_seconds += session_seconds;
@@ -118,24 +119,23 @@ namespace SoftwareCo
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
 
             List<TimeData> list = GetTimeDataList();
-            List<TimeData> listToSave = new List<TimeData>();
 
-            bool foundTimeData = false;
             string projDir = timeData.project.directory;
-            foreach (TimeData td in list)
+            if (list != null && list.Count > 0)
             {
-                string tdDir = td.project != null ? td.project.directory : "";
-                if (tdDir.Equals(projDir) && td.day.Equals(nowTime.local_day))
+                for (int i = list.Count - 1; i >= 0; i--)
                 {
-                    // replace the one found with the new time data info
-                    listToSave.Add(timeData);
-                    foundTimeData = true;
-                } else {
-                    listToSave.Add(td);
+                    TimeData td = list[i];
+                    if (td.project.directory.Equals(timeData.project.directory) && td.day.Equals(timeData.day))
+                    {
+                        list.RemoveAt(i);
+                        break;
+                    }
                 }
             }
+            list.Add(timeData);
 
-            JsonArray jsonToSave = BuildJsonObjectFromList(listToSave);
+            JsonArray jsonToSave = BuildJsonObjectFromList(list);
 
             string file = GetTimeDataFile();
             File.SetAttributes(file, FileAttributes.Normal);
@@ -169,13 +169,22 @@ namespace SoftwareCo
         {
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             List<TimeData> list = GetTimeDataList();
-            string projDir = proj != null ? proj.directory : "";
+
+            if (proj == null || proj.directory == null || proj.directory.Equals(""))
+            {
+                proj = await PluginData.GetPluginProject();
+            }
+
+            if (proj == null || proj.directory == null || proj.directory.Equals(""))
+            {
+                proj = new PluginDataProject("Unnamed", "Untitled");
+            }
+            
             if (list != null && list.Count > 0)
             {
                 foreach (TimeData td in list)
                 {
-                    string tdDir = td.project != null ? td.project.directory : "";
-                    if (td.day.Equals(nowTime.local_day) && tdDir.Equals(projDir))
+                    if (td.day.Equals(nowTime.local_day) && td.project.directory.Equals(proj.directory))
                     {
                         return td;
                     }
@@ -190,7 +199,7 @@ namespace SoftwareCo
             
             string timeDataJson = GetTimeDataFileData();
 
-            JsonArray jsonArrayObj = (JsonArray)SimpleJson.DeserializeObject(timeDataJson);
+            JsonArray jsonArrayObj = (JsonArray)SimpleJson.DeserializeObject(timeDataJson, new JsonArray());
             foreach (JsonObject jsonObj in jsonArrayObj)
             {
                 TimeData td = new TimeData();

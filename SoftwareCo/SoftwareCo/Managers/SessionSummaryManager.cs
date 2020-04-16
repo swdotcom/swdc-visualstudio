@@ -65,7 +65,7 @@ namespace SoftwareCo
         public TimeGapData GetTimeBetweenLastPayload()
         {
             TimeGapData eTimeInfo = new TimeGapData();
-            long sessionSeconds = 0;
+            long sessionSeconds = 60;
             long elapsedSeconds = 0;
 
             long lastPayloadEnd = SoftwareCoUtil.getItemAsLong("latestPayloadTimestampEndUtc");
@@ -101,7 +101,7 @@ namespace SoftwareCo
 
             string sessionSummary = SoftwareCoUtil.getSessionSummaryFileData();
 
-            IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(sessionSummary);
+            IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(sessionSummary, new Dictionary<string, object>());
             _sessionSummary = new SessionSummary();
             _sessionSummary = _sessionSummary.GetSessionSummaryFromDictionary(jsonObj);
             return _sessionSummary;

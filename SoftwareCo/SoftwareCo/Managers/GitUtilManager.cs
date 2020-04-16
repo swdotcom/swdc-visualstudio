@@ -12,6 +12,10 @@ namespace SoftwareCo
 
         public static CommitChangeStats GetUncommitedChanges(string projectDir)
         {
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
+            {
+                return new CommitChangeStats();
+            }
             string cmd = "git diff --stat";
 
             return GetChangeStats(cmd, projectDir); ;
@@ -19,20 +23,36 @@ namespace SoftwareCo
 
         public static CommitChangeStats GetTodaysCommits(string projectDir, string email)
         {
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
+            {
+                return new CommitChangeStats();
+            }
             return GetCommitsForRange("today", projectDir, email);
         }
 
         public static CommitChangeStats GetYesterdayCommits(string projectDir, string email)
         {
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
+            {
+                return new CommitChangeStats();
+            }
             return GetCommitsForRange("yesterday", projectDir, email);
         }
 
         public static CommitChangeStats GetThisWeeksCommits(string projectDir, string email)
         {
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
+            {
+                return new CommitChangeStats();
+            }
             return GetCommitsForRange("thisWeek", projectDir, email);
         }
 
         public static CommitChangeStats GetCommitsForRange(string rangeType, string projectDir, string email) {
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
+            {
+                return new CommitChangeStats();
+            }
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             string sinceTime = nowTime.start_of_today.ToString("yyyy-MM-ddTHH:mm:sszzz");
             string untilTime = null;
@@ -59,6 +79,10 @@ namespace SoftwareCo
 
         private static CommitChangeStats GetChangeStats(string cmd, string projectDir)
         {
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
+            {
+                return new CommitChangeStats();
+            }
             CommitChangeStats stats = new CommitChangeStats();
 
             /**
@@ -123,6 +147,10 @@ namespace SoftwareCo
 
         public static RepoResourceInfo GetResourceInfo(string projectDir, bool includeMembers)
         {
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
+            {
+                return new RepoResourceInfo();
+            }
             RepoResourceInfo info = new RepoResourceInfo();
             try
             {
@@ -196,12 +224,19 @@ namespace SoftwareCo
 
         public static string GetUsersEmail(string projectDir)
         {
-            string email = SoftwareCoUtil.RunCommand("git config user.email", projectDir);
-            return email;
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
+            {
+                return "";
+            }
+            return SoftwareCoUtil.RunCommand("git config user.email", projectDir);
         }
 
         public static string GetRepoUrlLink(string projectDir)
         {
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
+            {
+                return "";
+            }
             string repoUrl = SoftwareCoUtil.RunCommand("git config --get remote.origin.url", projectDir);
             if (repoUrl != null)
             {
@@ -212,7 +247,10 @@ namespace SoftwareCo
 
         public static CommitInfo GetLastCommitInfo(string projectDir, string email)
         {
-
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
+            {
+                return new CommitInfo();
+            }
             CommitInfo commitInfo = new CommitInfo();
 
             string authorArg = (email != null) ? " --author=" + email + " " : " ";

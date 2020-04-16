@@ -536,8 +536,12 @@ namespace SoftwareCo
         /// </summary>
         /// <param name="json">A JSON string.</param>
         /// <returns>An IList&lt;object>, a IDictionary&lt;string,object>, a double, a string, null, true, or false</returns>
-        public static object DeserializeObject(string json)
+        public static object DeserializeObject(string json, object defaultVal)
         {
+            if (json == null || json.Equals(""))
+            {
+                return defaultVal;
+            }
             object obj;
             if (TryDeserializeObject(json, out obj))
                 return obj;
@@ -566,7 +570,7 @@ namespace SoftwareCo
 
         public static object GetValue(string json, string key)
         {
-            IDictionary<String, object> dict = (IDictionary<string, object>)DeserializeObject(json);
+            IDictionary<String, object> dict = (IDictionary<string, object>)DeserializeObject(json, new Dictionary<string, object>());
             object val = "";
             if (dict.TryGetValue(key, out val))
             {
@@ -608,7 +612,7 @@ namespace SoftwareCo
 
         public static object DeserializeObject(string json, Type type, IJsonSerializerStrategy jsonSerializerStrategy)
         {
-            object jsonObject = DeserializeObject(json);
+            object jsonObject = DeserializeObject(json, new object());
             return type == null || jsonObject != null && ReflectionUtils.IsAssignableFrom(jsonObject.GetType(), type)
                        ? jsonObject
                        : (jsonSerializerStrategy ?? CurrentJsonSerializerStrategy).DeserializeObject(jsonObject, type);

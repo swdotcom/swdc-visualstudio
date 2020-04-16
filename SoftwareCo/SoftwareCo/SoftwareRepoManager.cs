@@ -103,7 +103,7 @@ namespace SoftwareCo
 
         public List<RepoMember> GetRepoUsers(string projectDir)
         {
-            if (projectDir == null || projectDir.Equals(""))
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
             {
                 return new List<RepoMember>();
             }
@@ -118,6 +118,10 @@ namespace SoftwareCo
 
         public async Task ProcessRepoMembers(string projectDir)
         {
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
+            {
+                return;
+            }
             RepoResourceInfo info = GitUtilManager.GetResourceInfo(projectDir, true);
             if (info != null && info.Members.Count > 0)
             {
@@ -140,7 +144,7 @@ namespace SoftwareCo
         {
             try
             {
-                if (projectDir == null || projectDir.Equals(""))
+                if (!SoftwareCoUtil.IsGitProject(projectDir))
                 {
                     return null;
                 }
@@ -166,7 +170,7 @@ namespace SoftwareCo
 
                             // get the json data
                             string responseBody = await response.Content.ReadAsStringAsync();
-                            IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody);
+                            IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody, new Dictionary<string, object>());
 
                             jsonObj.TryGetValue("commitId", out object commitIdObj);
                             string commitId = (commitIdObj == null) ? "" : Convert.ToString(commitIdObj);
@@ -196,7 +200,7 @@ namespace SoftwareCo
         {
             try
             {
-                if (!SoftwareUserSession.isOnline || projectDir == null || projectDir.Equals(""))
+                if (!SoftwareCoUtil.IsGitProject(projectDir))
                 {
                     return;
                 }
@@ -394,7 +398,6 @@ namespace SoftwareCo
             
             }
            
-
         }
     }
 }
