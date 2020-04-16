@@ -36,19 +36,19 @@ You can connect multiple code editors on multiple devices using the same email a
 
 **2. Track your progress during the day**
 
-Your status bar shows you in real-time how many hours and minutes you code each day. A rocket will appear if your code time exceeds your daily average on this day of the week.
+Your status bar shows you in real-time how many hours and minutes you code each day. A rocket will appear if your active code time exceeds your daily average on this day of the week.
 
 **3. Check out your coding activity**
 
 To see an overview of your coding activity and project metrics, open the **Code Time panel** by clicking on the Code Time icon in your side bar.
 
-In your **Activity Metrics**, your _editor time_ is the total time you have spent in your editor today. Your _code time_ is the total time you have been typing in your editor today. Each metric shows how you compare today to your average and the global average. Each average is calculated by day of week over the last 90 days (e.g. a Friday average is an average of all previous Fridays).
+In your **Daily Metrics**, your _code time_ is the total time you have spent in your editor today. Your _active code time_ is the total time you have been typing in your editor today. Each metric shows how you compare today to your average and the global average. Each average is calculated by day of week over the last 90 days (e.g. a Friday average is an average of all previous Fridays).
 
 You can also see your top files today by KPM (keystrokes per minute), keystrokes, and code time.
 
-Your **Project Metrics** provides a breakdown for the current open project. The _Open changes_ section shows how many lines you have added and deleted before you commit them and the _Committed today_ section summarizes your commits today.
+If you have a Git repository open, **Contributors** provides a breakdown of contributors to the current open project and their latest commits.
 
-**4. View your Code Time summary**
+**4. Generate your Code Time dashboard**
 
 At the end of your first day, open Code Time in your side bar and click _View summary_ to open your dashboard in a new editor tab. Your dashboard summarizes your coding data—such as your code time by project, lines of code, and keystrokes per minute—today, yesterday, last week, and over the last 90 days.
 
