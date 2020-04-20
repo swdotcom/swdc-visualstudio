@@ -37,7 +37,7 @@ namespace SoftwareCo
         private WallclockManager()
         {
             // fetch the current day from the sessions.json
-            this._currentDay = SoftwareCoUtil.getItemAsString("currentDay");
+            this._currentDay = FileManager.getItemAsString("currentDay");
             timer = new System.Threading.Timer(
                       WallclcockTimerHandlerAsync,
                       null,
@@ -57,9 +57,9 @@ namespace SoftwareCo
             bool hasPluginData = DocEventManager.Instance.hasData();
             if (IsVisualStudioAppInForeground() || hasPluginData)
             {
-                this._wctime = SoftwareCoUtil.getItemAsLong("wctime");
+                this._wctime = FileManager.getItemAsLong("wctime");
                 this._wctime += SECONDS_TO_INCREMENT;
-                SoftwareCoUtil.setNumericItem("wctime", this._wctime);
+                FileManager.setNumericItem("wctime", this._wctime);
 
                 // update the file info file (async is fine)
                 TimeDataManager.Instance.UpdateEditorSeconds(SECONDS_TO_INCREMENT);
@@ -81,14 +81,14 @@ namespace SoftwareCo
 
         public long GetWcTimeInMinutes()
         {
-            this._wctime = SoftwareCoUtil.getItemAsLong("wctime");
+            this._wctime = FileManager.getItemAsLong("wctime");
             return this._wctime / 60;
         }
 
         public void ClearWcTime()
         {
             this._wctime = 0L;
-            SoftwareCoUtil.setNumericItem("wctime", this._wctime);
+            FileManager.setNumericItem("wctime", this._wctime);
         }
 
         public async Task DispatchUpdateAsync()
@@ -110,7 +110,7 @@ namespace SoftwareCo
                 SessionSummaryManager.Instance.ÇlearSessionSummaryData();
 
                 // send the offline data
-                SoftwareCoPackage.SendOfflinePluginBatchData(true);
+                SoftwareCoPackage.SendOfflinePluginBatchData();
 
                 // send the offline events
                 EventManager.Instance.SendOfflineEvents();
@@ -128,9 +128,9 @@ namespace SoftwareCo
                 _currentDay = nowTime.local_day;
 
                 // update the current day
-                SoftwareCoUtil.setItem("currentDay", _currentDay);
+                FileManager.setItem("currentDay", _currentDay);
                 // update the last payload timestamp
-                SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", 0);
+                FileManager.setNumericItem("latestPayloadTimestampEndUtc", 0);
 
                 // update the session summary global and averages for the new day
                 Task.Delay(ONE_MINUTE).ContinueWith((task) => { WallclockManager.Instance.UpdateSessionSummaryFromServerAsync(true); });
@@ -140,7 +140,7 @@ namespace SoftwareCo
 
         public async Task UpdateSessionSummaryFromServerAsync(bool isNewDay)
         {
-            object jwt = SoftwareCoUtil.getItem("jwt");
+            object jwt = FileManager.getItem("jwt");
             if (jwt != null)
             {
                 string api = "/sessions/summary?refresh=true";

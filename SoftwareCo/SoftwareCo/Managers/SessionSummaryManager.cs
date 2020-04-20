@@ -44,14 +44,12 @@ namespace SoftwareCo
         
         public void IncrementSessionSummaryData(KeystrokeAggregates aggregate, TimeGapData eTimeInfo)
         {
-            WallclockManager wcMgr = WallclockManager.Instance;
             _sessionSummary = GetSessionSummayData();
 
             if (eTimeInfo.session_seconds > 0)
             {
                 _sessionSummary.currentDayMinutes += (eTimeInfo.session_seconds / 60);
             }
-            TimeDataManager.Instance.UpdateSessionAndFileSeconds(eTimeInfo.session_seconds);
 
             long sessionSeconds = _sessionSummary.currentDayMinutes * 60;
 
@@ -66,13 +64,13 @@ namespace SoftwareCo
         {
             TimeGapData eTimeInfo = new TimeGapData();
             long sessionSeconds = 60;
-            long elapsedSeconds = 0;
+            long elapsedSeconds = 60;
 
-            long lastPayloadEnd = SoftwareCoUtil.getItemAsLong("latestPayloadTimestampEndUtc");
+            long lastPayloadEnd = FileManager.getItemAsLong("latestPayloadTimestampEndUtc");
             if (lastPayloadEnd > 0)
             {
                 NowTime nowTime = SoftwareCoUtil.GetNowTime();
-                elapsedSeconds = Math.Max(0, nowTime.now - lastPayloadEnd);
+                elapsedSeconds = Math.Max(60, nowTime.now - lastPayloadEnd);
                 long sessionThresholdSeconds = 60 * 15;
                 if (elapsedSeconds > 0 && elapsedSeconds <= sessionThresholdSeconds)
                 {
@@ -93,13 +91,13 @@ namespace SoftwareCo
 
         public SessionSummary GetSessionSummayData()
         {
-            if (!SoftwareCoUtil.SessionSummaryFileExists())
+            if (!FileManager.SessionSummaryFileExists())
             {
                 // create it
                 SaveSessionSummaryToDisk(new SessionSummary());
             }
 
-            string sessionSummary = SoftwareCoUtil.getSessionSummaryFileData();
+            string sessionSummary = FileManager.getSessionSummaryFileData();
 
             IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(sessionSummary, new Dictionary<string, object>());
             _sessionSummary = new SessionSummary();
@@ -119,10 +117,9 @@ namespace SoftwareCo
         public void SaveSessionSummaryToDisk(SessionSummary sessionSummary)
         {
             string MethodName = "saveSessionSummaryToDisk";
-            string sessionSummaryFile = SoftwareCoUtil.getSessionSummaryFile();
+            string sessionSummaryFile = FileManager.getSessionSummaryFile();
 
-
-            if (SoftwareCoUtil.SessionSummaryFileExists())
+            if (FileManager.SessionSummaryFileExists())
             {
                 File.SetAttributes(sessionSummaryFile, FileAttributes.Normal);
             }

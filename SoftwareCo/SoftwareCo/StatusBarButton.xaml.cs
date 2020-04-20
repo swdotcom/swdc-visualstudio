@@ -20,7 +20,7 @@ namespace SoftwareCo
         {
             await Dispatcher.BeginInvoke(new Action(() => {
                 string tooltip = "Active code time today. Click to see more from Code Time.";
-                string email = SoftwareCoUtil.getItemAsString("name");
+                string email = FileManager.getItemAsString("name");
                 if (email != null)
                 {
                     tooltip += " Logged in as " + email;

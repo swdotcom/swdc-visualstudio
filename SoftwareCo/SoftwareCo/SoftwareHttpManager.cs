@@ -55,7 +55,7 @@ namespace SoftwareCo
             HttpResponseMessage response = null;
             if (jwt == null)
             {
-                jwt = SoftwareCoUtil.getItemAsString("jwt");
+                jwt = FileManager.getItemAsString("jwt");
             }
             if (jwt != null)
             {

@@ -63,6 +63,25 @@ namespace SoftwareCo
             return jsonObj;
         }
 
+        public static PluginDataFileInfo GetPluginDataFromDict(IDictionary<string, object> dict)
+        {
+            string file = SoftwareCoUtil.ConvertObjectToString(dict, "file");
+            PluginDataFileInfo fileInfo = new PluginDataFileInfo(file);
+            fileInfo.start = SoftwareCoUtil.ConvertObjectToLong(dict, "start");
+            fileInfo.local_start = SoftwareCoUtil.ConvertObjectToLong(dict, "local_start");
+            fileInfo.end = SoftwareCoUtil.ConvertObjectToLong(dict, "end");
+            fileInfo.local_end = SoftwareCoUtil.ConvertObjectToLong(dict, "local_end");
+            fileInfo.add = SoftwareCoUtil.ConvertObjectToLong(dict, "add");
+            fileInfo.close = SoftwareCoUtil.ConvertObjectToLong(dict, "close");
+            fileInfo.paste = SoftwareCoUtil.ConvertObjectToLong(dict, "paste");
+            fileInfo.netkeys = SoftwareCoUtil.ConvertObjectToLong(dict, "netkeys");
+            fileInfo.linesAdded = SoftwareCoUtil.ConvertObjectToLong(dict, "linesAdded");
+            fileInfo.linesRemoved = SoftwareCoUtil.ConvertObjectToLong(dict, "linesRemoved");
+            fileInfo.delete = SoftwareCoUtil.ConvertObjectToLong(dict, "delete");
+            fileInfo.syntax = SoftwareCoUtil.ConvertObjectToString(dict, "syntax");
+            return fileInfo;
+        }
+
         public IDictionary<string, object> GetPluginDataFileInfoAsDictionary()
         {
             IDictionary<string, object> dict = new Dictionary<string, object>();

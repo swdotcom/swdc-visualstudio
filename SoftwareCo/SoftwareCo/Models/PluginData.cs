@@ -28,7 +28,11 @@ namespace SoftwareCo
         public double offset { get; set; }
         public long cumulative_editor_seconds { get; set; }
         public long elapsed_seconds { get; set; }
-
+        public long cumulative_session_seconds { get; set; }
+        public Int32 new_day { get; set; } // 1 or zero to denote new day or not
+        public String project_null_error { get; set; }
+        public String session_seconds_error { get; set; }
+        public String editor_seconds_error { get; set; }
         public PluginDataProject project { get; set; }
 
         public PluginData(string projectName, string projectDirectory)
@@ -45,6 +49,53 @@ namespace SoftwareCo
             project = GetPluginProjectUsingDir(projectDirectory);
             cumulative_editor_seconds = 0;
             elapsed_seconds = 0;
+            cumulative_session_seconds = 0;
+            project_null_error = "";
+            session_seconds_error = "";
+            editor_seconds_error = "";
+            new_day = 0;
+        }
+
+        public static PluginData BuildFromDictionary(IDictionary<string, object> dict)
+        {
+            PluginDataProject proj = SoftwareCoUtil.ConvertObjectToProject(dict);
+            PluginData pd = new PluginData(proj.name, proj.directory);
+            pd.end = SoftwareCoUtil.ConvertObjectToLong(dict, "end");
+            pd.start = SoftwareCoUtil.ConvertObjectToLong(dict, "start");
+            pd.local_end = SoftwareCoUtil.ConvertObjectToLong(dict, "local_end");
+            pd.local_start = SoftwareCoUtil.ConvertObjectToLong(dict, "local_start");
+            pd.keystrokes = SoftwareCoUtil.ConvertObjectToLong(dict, "keystrokes");
+            pd.cumulative_editor_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "cumulative_editor_seconds");
+            pd.os = SoftwareCoUtil.ConvertObjectToString(dict, "os");
+            pd.offset = SoftwareCoUtil.ConvertObjectToDouble(dict, "offset");
+            pd.version = SoftwareCoUtil.ConvertObjectToString(dict, "version");
+            pd.timezone = SoftwareCoUtil.ConvertObjectToString(dict, "timezone");
+            pd.cumulative_session_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "cumulative_session_seconds");
+            pd.pluginId = SoftwareCoUtil.ConvertObjectToInt(dict, "pluginId");
+            pd.elapsed_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "elapsed_seconds");
+            pd.new_day = SoftwareCoUtil.ConvertObjectToInt(dict, "new_day");
+            pd.project_null_error = SoftwareCoUtil.ConvertObjectToString(dict, "project_null_error");
+            pd.session_seconds_error = SoftwareCoUtil.ConvertObjectToString(dict, "session_seconds_error");
+            pd.editor_seconds_error = SoftwareCoUtil.ConvertObjectToString(dict, "editor_seconds_error");
+            pd.project = proj;
+            IDictionary<string, object> sourceDict = SoftwareCoUtil.ConvertObjectToSource(dict);
+            if (sourceDict != null && sourceDict.Count > 0)
+            {
+                foreach (KeyValuePair<string, object> entry in sourceDict)
+                {
+                    IDictionary<string, object> fileInfoDict = new Dictionary<string, object>();
+                    try
+                    {
+                        PluginDataFileInfo fileInfo = PluginDataFileInfo.GetPluginDataFromDict((JsonObject)entry.Value);
+                        pd.source.Add(fileInfo);
+                    }
+                    catch (Exception e)
+                    {
+                        //
+                    }
+                }
+            }
+            return pd;
         }
 
         public static async Task<PluginDataProject> GetPluginProject()
@@ -75,22 +126,16 @@ namespace SoftwareCo
             return project;
         }
 
-        public async Task<string> CompletePayloadAndReturnJsonString(TimeGapData eTimeInfo)
+        public async Task<string> CompletePayloadAndReturnJsonString()
         {
+            SessionSummaryManager summaryMgr = SessionSummaryManager.Instance;
+            TimeGapData eTimeInfo = summaryMgr.GetTimeBetweenLastPayload();
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             this.end = nowTime.now;
             this.local_end = nowTime.local_now;
 
             // get the TimeData for this project dir
-            TimeData td = await TimeDataManager.Instance.GetTodayTimeDataSummary(this.project);
-
-            long editorSeconds = 60;
-            if (td != null)
-            {
-                editorSeconds = Math.Max(td.editor_seconds, td.session_seconds);
-            }
-
-            this.cumulative_editor_seconds = editorSeconds;
+            await ValidateAndUpdateCumulativeDataAsync(eTimeInfo.session_seconds);
             this.elapsed_seconds = eTimeInfo.elapsed_seconds;
 
             // make sure all of the end times are set
@@ -110,6 +155,28 @@ namespace SoftwareCo
             {
                 this.timezone = TimeZone.CurrentTimeZone.StandardName;
             }
+
+            // update the file metrics used in the tree
+            List<FileInfoSummary> fileInfoList = this.GetSourceFileInfoList();
+            KeystrokeAggregates aggregates = new KeystrokeAggregates();
+            aggregates.directory = this.project.directory;
+
+            foreach (FileInfoSummary fileInfo in fileInfoList)
+            {
+                aggregates.Aggregate(fileInfo);
+
+                FileChangeInfo fileChangeInfo = FileChangeInfoDataManager.Instance.GetFileChangeInfo(fileInfo.fsPath);
+                if (fileChangeInfo == null)
+                {
+                    // create a new entry
+                    fileChangeInfo = new FileChangeInfo();
+                }
+                fileChangeInfo.UpdateFromFileInfo(fileInfo);
+                FileChangeInfoDataManager.Instance.SaveFileChangeInfoDataSummaryToDisk(fileChangeInfo);
+            }
+
+            // increment the session summary minutes and other metrics
+            summaryMgr.IncrementSessionSummaryData(aggregates, eTimeInfo);
 
             // create the json payload
             JsonObject jsonObj = new JsonObject();
@@ -132,6 +199,82 @@ namespace SoftwareCo
             jsonObj.Add("source", BuildSourceJson());
 
             return jsonObj.ToString();
+        }
+
+        private async Task ValidateAndUpdateCumulativeDataAsync(long session_seconds)
+        {
+
+            TimeData td = await TimeDataManager.Instance.UpdateSessionAndFileSecondsAsync(this.project, session_seconds);
+
+            // add the cumulative data
+
+            long lastPayloadEnd = FileManager.getItemAsLong("latestPayloadTimestampEndUtc");
+            this.new_day = lastPayloadEnd == 0 ? 1 : 0;
+
+            // get the current payloads so we can compare our last cumulative seconds
+            PluginData lastKpm = FileManager.GetLastSavedKeystrokeStats();
+            if (lastKpm != null)
+            {
+                if (lastKpm.cumulative_editor_seconds == 0 ||
+                    lastKpm.cumulative_session_seconds == 0)
+                {
+                    lastKpm = null;
+                }
+                
+                if (lastKpm != null)
+                {
+                    String lastKpmDay = SoftwareCoUtil.GetFormattedDay(lastKpm.start);
+                    String thisDay = SoftwareCoUtil.GetFormattedDay(this.start);
+                    if (!lastKpmDay.Equals(thisDay))
+                    {
+                        // the days don't match. don't use the editor or session seconds for a different day
+                        lastKpm = null;
+                    }
+                }
+            }
+
+            cumulative_session_seconds = 60;
+            cumulative_editor_seconds = 60;
+
+            if (td != null)
+            {
+                this.cumulative_editor_seconds = td.editor_seconds;
+                this.cumulative_session_seconds = td.session_seconds;
+                if (lastKpm != null)
+                {
+                    // editor seconds check
+                    if (lastKpm.cumulative_editor_seconds > cumulative_editor_seconds)
+                    {
+                        long diff = lastKpm.cumulative_editor_seconds - cumulative_editor_seconds;
+                        cumulative_editor_seconds = lastKpm.cumulative_editor_seconds + 60;
+                        this.editor_seconds_error = "TimeData has lower editor seconds than last saved keystroke data by " + diff + " seconds";
+                    }
+                    // session seconds check
+                    if (lastKpm.cumulative_session_seconds > cumulative_session_seconds)
+                    {
+                        long diff = lastKpm.cumulative_session_seconds - cumulative_session_seconds;
+                        cumulative_session_seconds = lastKpm.cumulative_session_seconds + 60;
+                        this.session_seconds_error = "TimeData has lower session seconds than last saved keystroke data by " + diff + " seconds";
+                    }
+                }
+            }
+            else if (lastKpm != null)
+            {
+                // no time data found, project null error
+                this.project_null_error = "TimeData not found using " + this.project.directory + " for editor and session seconds";
+                cumulative_editor_seconds = lastKpm.cumulative_editor_seconds + 60;
+                cumulative_session_seconds = lastKpm.cumulative_session_seconds + 60;
+            }
+
+            if (cumulative_editor_seconds < cumulative_session_seconds)
+            {
+                long diff = cumulative_session_seconds - cumulative_editor_seconds;
+                if (diff > 45)
+                {
+                    this.editor_seconds_error = "Cumulative editor seconds is behind session seconds by " + diff + " seconds";
+                }
+                cumulative_editor_seconds = cumulative_session_seconds;
+            }
         }
 
         private JsonObject BuildSourceJson()

@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Threading;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,8 +12,6 @@ namespace SoftwareCo
     public sealed class TimeDataManager
     {
         private static readonly Lazy<TimeDataManager> lazy = new Lazy<TimeDataManager>(() => new TimeDataManager());
-
-        private TimeData _timeDataSummary;
 
         public static TimeDataManager Instance { get { return lazy.Value; } }
 
@@ -25,15 +23,27 @@ namespace SoftwareCo
         public static String GetTimeDataFileData()
         {
             // make sure it's created
-            string fileData = File.ReadAllText(GetTimeDataFile(), System.Text.Encoding.UTF8);
-            return fileData;
+
+            try
+            {
+                string fileData = File.ReadAllText(GetTimeDataFile(), System.Text.Encoding.UTF8);
+                return fileData;
+            } catch (Exception e)
+            {
+                //
+            } finally
+            {
+
+            }
+            return null;
         }
 
         public static String GetTimeDataFile()
         {
+
             try
             {
-                string file = SoftwareCoUtil.getSoftwareDataDir(true) + "\\projectTimeData.json";
+                string file = FileManager.getSoftwareDataDir(true) + "\\projectTimeData.json";
                 if (!File.Exists(file))
                 {
                     try
@@ -51,6 +61,9 @@ namespace SoftwareCo
             catch (Exception e)
             {
                 return null;
+            } finally
+            {
+
             }
         }
 
@@ -67,6 +80,9 @@ namespace SoftwareCo
             catch (Exception e)
             {
                 //
+            } finally
+            {
+
             }
         }
 
@@ -92,18 +108,19 @@ namespace SoftwareCo
             SaveTimeDataSummaryToDisk(td);
         }
 
-        public async Task UpdateSessionAndFileSeconds(long session_seconds)
-        {
-            PluginDataProject project = await PluginData.GetPluginProject();
-
-            
+        public async Task<TimeData> UpdateSessionAndFileSecondsAsync(PluginDataProject project, long session_seconds)
+        {   
             TimeData td = await GetTodayTimeDataSummary(project);
-            td.file_seconds += 60;
-            td.session_seconds += session_seconds;
-            td.editor_seconds = Math.Max(td.editor_seconds, td.session_seconds);
-            td.file_seconds = Math.Min(td.file_seconds, td.session_seconds);
+            if (td != null)
+            {
+                td.file_seconds += 60;
+                td.session_seconds += session_seconds;
+                td.editor_seconds = Math.Max(td.editor_seconds, td.session_seconds);
+                td.file_seconds = Math.Min(td.file_seconds, td.session_seconds);
 
-            SaveTimeDataSummaryToDisk(td);
+                SaveTimeDataSummaryToDisk(td);
+            }
+            return td;
         }
 
         public void SaveTimeDataSummaryToDisk(TimeData timeData)
@@ -149,6 +166,9 @@ namespace SoftwareCo
             catch (Exception e)
             {
                 //
+            } finally
+            {
+
             }
 
         }
@@ -198,21 +218,23 @@ namespace SoftwareCo
             List<TimeData> existingList = new List<TimeData>();
             
             string timeDataJson = GetTimeDataFileData();
-
-            JsonArray jsonArrayObj = (JsonArray)SimpleJson.DeserializeObject(timeDataJson, new JsonArray());
-            foreach (JsonObject jsonObj in jsonArrayObj)
+            if (timeDataJson != null)
             {
-                TimeData td = new TimeData();
-                try
+                JsonArray jsonArrayObj = (JsonArray)SimpleJson.DeserializeObject(timeDataJson, new JsonArray());
+                foreach (JsonObject jsonObj in jsonArrayObj)
                 {
-                    td.CloneFromDictionary(jsonObj);
-                }
-                catch (Exception e)
-                {
-                    //
-                }
+                    TimeData td = new TimeData();
+                    try
+                    {
+                        td.CloneFromDictionary(jsonObj);
+                    }
+                    catch (Exception e)
+                    {
+                        //
+                    }
 
-                existingList.Add(td);
+                    existingList.Add(td);
+                }
             }
 
             return existingList;

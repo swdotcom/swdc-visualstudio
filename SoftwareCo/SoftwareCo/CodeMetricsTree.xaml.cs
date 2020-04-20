@@ -83,7 +83,7 @@ namespace SoftwareCo
         private List<StackPanel> BuildSignupPanels()
         {
             List<StackPanel> panels = new List<StackPanel>();
-            string email = SoftwareCoUtil.getItemAsString("name");
+            string email = FileManager.getItemAsString("name");
             if (email == null || email.Equals("")) {
                 panels.Add(BuildClickLabel("GoogleSignupPanel", "google.png", "Sign up with Google", GoogleConnectClickHandler));
                 panels.Add(BuildClickLabel("GitHubSignupPanel", "github.png", "Sign up with GitHub", GitHubConnectClickHandler));

@@ -226,51 +226,28 @@ namespace SoftwareCo
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             DateTime now = DateTime.UtcNow;
 
-            if (_pluginData != null && _pluginData.source.Count > 0)
+            if (_pluginData != null && _pluginData.source.Count > 0 && _pluginData.keystrokes > 0)
             {
-                TimeGapData eTimeInfo = SessionSummaryManager.Instance.GetTimeBetweenLastPayload();
-                string softwareDataContent = await _pluginData.CompletePayloadAndReturnJsonString(eTimeInfo);
+                // make sure there's a project
+                if (_pluginData.project == null || _pluginData.project.directory == null || _pluginData.project.directory.Equals(""))
+                {
+                    _pluginData.project = new PluginDataProject("Unnamed", "Untitled");
+                }
 
-                // aggregate and update the time data and time project data
-                UpdateAggregates(_pluginData, eTimeInfo);
+                // create the aggregates, end the file times, gather the cumulatives
+                string softwareDataContent = await _pluginData.CompletePayloadAndReturnJsonString();
 
                 Logger.Info("Code Time: storing plugin data: " + softwareDataContent);
 
-                string datastoreFile = SoftwareCoUtil.getSoftwareDataStoreFile();
-
-                // append to the file
-                File.AppendAllText(datastoreFile, softwareDataContent + Environment.NewLine);
+                FileManager.AppendPluginData(softwareDataContent);
             }
 
             // update the latestPayloadTimestampEndUtc
-            SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
+            FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
 
             // update the status bar and tree
             WallclockManager.Instance.DispatchUpdateAsync();
             _pluginData = null;
-        }
-
-        private void UpdateAggregates(PluginData pd, TimeGapData eTimeInfo)
-        {
-            List<FileInfoSummary> fileInfoList = pd.GetSourceFileInfoList();
-            KeystrokeAggregates aggregates = new KeystrokeAggregates();
-            aggregates.directory = pd.project.directory;
-
-            foreach (FileInfoSummary fileInfo in fileInfoList)
-            {
-                aggregates.Aggregate(fileInfo);
-
-                FileChangeInfo fileChangeInfo = FileChangeInfoDataManager.Instance.GetFileChangeInfo(fileInfo.fsPath);
-                if (fileChangeInfo == null)
-                {
-                    // create a new entry
-                    fileChangeInfo = new FileChangeInfo();
-                }
-                fileChangeInfo.UpdateFromFileInfo(fileInfo);
-                FileChangeInfoDataManager.Instance.SaveFileChangeInfoDataSummaryToDisk(fileChangeInfo);
-            }
-
-            sessionSummaryMgr.IncrementSessionSummaryData(aggregates, eTimeInfo);
         }
     }
 }

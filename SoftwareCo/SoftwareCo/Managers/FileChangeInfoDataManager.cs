@@ -22,9 +22,9 @@ namespace SoftwareCo
 
         public void ClearFileChangeInfoDataSummary()
         {
-            string file = SoftwareCoUtil.getFileChangeInfoSummaryFile();
+            string file = FileManager.getFileChangeInfoSummaryFile();
 
-            if (SoftwareCoUtil.FileChangeInfoSummaryFileExists())
+            if (FileManager.FileChangeInfoSummaryFileExists())
             {
                 File.SetAttributes(file, FileAttributes.Normal);
             }
@@ -61,9 +61,9 @@ namespace SoftwareCo
             {
                 changeInfos.Add(data);
             }
-            string file = SoftwareCoUtil.getFileChangeInfoSummaryFile();
+            string file = FileManager.getFileChangeInfoSummaryFile();
 
-            if (SoftwareCoUtil.FileChangeInfoSummaryFileExists())
+            if (FileManager.FileChangeInfoSummaryFileExists())
             {
                 File.SetAttributes(file, FileAttributes.Normal);
             }
@@ -153,13 +153,13 @@ namespace SoftwareCo
         public List<FileChangeInfo> GetFileChangeInfoSummaryList()
         {
             _fileChangeInfos = new List<FileChangeInfo>();
-            if (!SoftwareCoUtil.FileChangeInfoSummaryFileExists())
+            if (!FileManager.FileChangeInfoSummaryFileExists())
             {
                 // create it
                 ClearFileChangeInfoDataSummary();
             }
 
-            string fileChangeInfoSummary = SoftwareCoUtil.getFileChangeInfoSummaryData();
+            string fileChangeInfoSummary = FileManager.getFileChangeInfoSummaryData();
 
             // it'll be a map of file to FileChangeInfo objects
             IDictionary<string, object> jsonObj =

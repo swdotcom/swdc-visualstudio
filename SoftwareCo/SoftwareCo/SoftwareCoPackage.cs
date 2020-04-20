@@ -203,7 +203,7 @@ namespace SoftwareCo
 
                 // update the latestPayloadTimestampEndUtc
                 NowTime nowTime = SoftwareCoUtil.GetNowTime();
-                SoftwareCoUtil.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
+                FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
 
                 // init the wallclock
                 WallclockManager wallclockMgr = WallclockManager.Instance;
@@ -261,11 +261,11 @@ namespace SoftwareCo
                 wallclockMgr.UpdateSessionSummaryFromServerAsync(false);
 
                 // check if we've shown the readme or not
-                bool initializedVisualStudioPlugin = SoftwareCoUtil.getItemAsBool("visualstudio_CtInit");
+                bool initializedVisualStudioPlugin = FileManager.getItemAsBool("visualstudio_CtInit");
                 if (!initializedVisualStudioPlugin)
                 {
                     DashboardManager.Instance.LaunchReadmeFileAsync();
-                    SoftwareCoUtil.setBoolItem("visualstudio_CtInit", true);
+                    FileManager.setBoolItem("visualstudio_CtInit", true);
 
                     // launch the tree view
                     CodeMetricsTreeManager.Instance.OpenCodeMetricsPaneAsync();
@@ -341,10 +341,10 @@ namespace SoftwareCo
 
         public static async void SendOfflineData(object stateinfo)
         {
-            SendOfflinePluginBatchData(false);
+            SendOfflinePluginBatchData();
         }
 
-        public static async void SendOfflinePluginBatchData(bool isNewDay) {
+        public static async void SendOfflinePluginBatchData() {
             string MethodName = "SendOfflineData";
             Logger.Info(DateTime.Now.ToString());
             bool online = await SoftwareUserSession.IsOnlineAsync();
@@ -354,29 +354,14 @@ namespace SoftwareCo
                 return;
             }
 
-            string datastoreFile = SoftwareCoUtil.getSoftwareDataStoreFile();
-            if (File.Exists(datastoreFile))
+            string offlinePluginData = FileManager.GetOfflinePayloadsAsString();
+            if (offlinePluginData != null)
             {
-                // get the content
-                string[] lines = File.ReadAllLines(datastoreFile, System.Text.Encoding.UTF8);
-
-                if (lines != null && lines.Length > 0)
+                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", offlinePluginData);
+                if (SoftwareHttpManager.IsOk(response))
                 {
-                    List<String> jsonLines = new List<string>();
-                    foreach (string line in lines)
-                    {
-                        if (line != null && line.Trim().Length > 0)
-                        {
-                            jsonLines.Add(line);
-                        }
-                    }
-                    string jsonContent = "[" + string.Join(",", jsonLines) + "]";
-                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonContent);
-                    if (SoftwareHttpManager.IsOk(response))
-                    {
-                        // delete the file
-                        File.Delete(datastoreFile);
-                    }
+                    // delete the file
+                    File.Delete(FileManager.getSoftwareDataStoreFile());
                 }
             }
         }
@@ -388,15 +373,15 @@ namespace SoftwareCo
                 string MethodName = "InitializeUserInfo";
                 Logger.FileLog("Initializing User", MethodName);
                 bool online = await SoftwareUserSession.IsOnlineAsync();
-                bool softwareSessionFileExists = SoftwareCoUtil.softwareSessionFileExists();
-                object jwt = SoftwareCoUtil.getItem("jwt");
+                bool softwareSessionFileExists = FileManager.softwareSessionFileExists();
+                object jwt = FileManager.getItem("jwt");
                 if (!softwareSessionFileExists || jwt == null || jwt.ToString().Equals(""))
                 {
                     string result = await SoftwareUserSession.CreateAnonymousUserAsync(online);
                 }
 
                 // check if the "name" is set. if not, get the user
-                string name = SoftwareCoUtil.getItemAsString("name");
+                string name = FileManager.getItemAsString("name");
                 if (name == null || name.Equals(""))
                 {
                     await SoftwareUserSession.IsLoggedOn(online);
@@ -404,11 +389,11 @@ namespace SoftwareCo
                     SoftwareLaunchCommand.UpdateEnabledState(true);
                 }
 
-                long sessionTresholdSeconds = SoftwareCoUtil.getItemAsLong("sessionThresholdInSec");
+                long sessionTresholdSeconds = FileManager.getItemAsLong("sessionThresholdInSec");
                 if (sessionTresholdSeconds == 0)
                 {
                     // update the session threshold in seconds config
-                    SoftwareCoUtil.setNumericItem("sessionThresholdInSec", Constants.DEFAULT_SESSION_THRESHOLD_SECONDS);
+                    FileManager.setNumericItem("sessionThresholdInSec", Constants.DEFAULT_SESSION_THRESHOLD_SECONDS);
                 }
 
                 if (online)

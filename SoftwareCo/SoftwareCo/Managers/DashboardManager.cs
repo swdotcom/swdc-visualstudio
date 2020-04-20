@@ -37,7 +37,7 @@ namespace SoftwareCo
         {
 
             string summaryContent = "";
-            string summaryInfoFile = SoftwareCoUtil.getSessionSummaryInfoFile();
+            string summaryInfoFile = FileManager.getSessionSummaryInfoFile();
 
             bool online = await SoftwareUserSession.IsOnlineAsync();
 
@@ -70,7 +70,7 @@ namespace SoftwareCo
 
             }
 
-            string dashboardFile = SoftwareCoUtil.getDashboardFile();
+            string dashboardFile = FileManager.getDashboardFile();
             string dashboardContent = "";
             string suffix = SoftwareCoUtil.CreateDateSuffix(DateTime.Now);
             string formattedDate = DateTime.Now.ToString("ddd, MMM ") + suffix + DateTime.Now.ToString(" h:mm tt");
@@ -108,9 +108,9 @@ namespace SoftwareCo
                 dashboardContent += "\n";
             }
 
-            if (SoftwareCoUtil.SessionSummaryInfoFileExists())
+            if (FileManager.SessionSummaryInfoFileExists())
             {
-                string SummaryData = SoftwareCoUtil.getSessionSummaryInfoFileData();
+                string SummaryData = FileManager.getSessionSummaryInfoFileData();
                 dashboardContent += SummaryData;
             }
 
@@ -135,7 +135,7 @@ namespace SoftwareCo
             try
             {
                 await FetchCodeTimeDashboardAsync();
-                string dashboardFile = SoftwareCoUtil.getDashboardFile();
+                string dashboardFile = FileManager.getDashboardFile();
                 if (File.Exists(dashboardFile))
                 {
                     SoftwareCoPackage.ObjDte.ItemOperations.OpenFile(dashboardFile);
@@ -153,7 +153,7 @@ namespace SoftwareCo
         {
             try
             {
-                string vsReadmeFile = SoftwareCoUtil.getVSReadmeFile();
+                string vsReadmeFile = FileManager.getVSReadmeFile();
                 if (File.Exists(vsReadmeFile))
                 {
                     SoftwareCoPackage.ObjDte.ItemOperations.OpenFile(vsReadmeFile);

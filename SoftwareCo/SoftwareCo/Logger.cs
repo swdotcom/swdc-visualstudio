@@ -74,8 +74,8 @@ namespace SoftwareCo
 
             if(Enum.GetName(level.GetType(),level)=="File" || Enum.GetName(level.GetType(), level) == "HandledException")
             {
-                string LogContent   = outputMessage.ToString();
-                string LogDataPath      = SoftwareCoUtil.getLogFile();
+                string LogContent = outputMessage.ToString();
+                string LogDataPath = FileManager.getLogFile();
                     try
                     {
                     File.AppendAllText(LogDataPath, LogContent);

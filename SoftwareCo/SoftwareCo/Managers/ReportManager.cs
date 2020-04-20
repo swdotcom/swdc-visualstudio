@@ -25,7 +25,7 @@ namespace SoftwareCo
 
         public async Task DisplayProjectContributorSummaryDashboard()
         {
-            string file = SoftwareCoUtil.GetContributorDashboardFile();
+            string file = FileManager.GetContributorDashboardFile();
             StringBuilder sb = new StringBuilder();
 
             // fetch the git stats

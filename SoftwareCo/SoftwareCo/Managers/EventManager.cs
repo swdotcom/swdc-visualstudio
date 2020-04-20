@@ -55,9 +55,9 @@ namespace SoftwareCo
                 jsonArray.Add(existingEvent.GetAsJson());
             }
 
-            string file = SoftwareCoUtil.getCodeTimeEventsFile();
+            string file = FileManager.getCodeTimeEventsFile();
 
-            if (SoftwareCoUtil.CodeTimeEventsFileExists())
+            if (FileManager.CodeTimeEventsFileExists())
             {
                 File.SetAttributes(file, FileAttributes.Normal);
             }
@@ -97,14 +97,14 @@ namespace SoftwareCo
         {
 
             List<CodeTimeEvent> ctEvents = new List<CodeTimeEvent>();
-            string file = SoftwareCoUtil.getCodeTimeEventsFile();
+            string file = FileManager.getCodeTimeEventsFile();
 
-            if (SoftwareCoUtil.CodeTimeEventsFileExists())
+            if (FileManager.CodeTimeEventsFileExists())
             {
                 File.SetAttributes(file, FileAttributes.Normal);
             }
 
-            string eventsData = SoftwareCoUtil.getCodeTimeEventsData();
+            string eventsData = FileManager.getCodeTimeEventsData();
 
             // it'll be a map of file to events objects
             JsonArray jsonArrayObj = (JsonArray)SimpleJson.DeserializeObject(eventsData, new JsonArray());
@@ -128,9 +128,9 @@ namespace SoftwareCo
 
         public void ClearCodeTimeEventDataSummary()
         {
-            string file = SoftwareCoUtil.getCodeTimeEventsFile();
+            string file = FileManager.getCodeTimeEventsFile();
 
-            if (SoftwareCoUtil.CodeTimeEventsFileExists())
+            if (FileManager.CodeTimeEventsFileExists())
             {
                 File.SetAttributes(file, FileAttributes.Normal);
             }

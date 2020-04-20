@@ -1,20 +1,13 @@
 ﻿
 
-using Microsoft.VisualStudio.OLE.Interop;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Forms;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace SoftwareCo
@@ -22,7 +15,6 @@ namespace SoftwareCo
     class SoftwareCoUtil
     {
         private static bool _telemetryOn = true;
-        private static IDictionary<string, string> sessionMap = new Dictionary<string, string>();
         public static int DASHBOARD_LABEL_WIDTH = 25;
         public static int DASHBOARD_VALUE_WIDTH = 25;
         public static long DAY_IN_SEC = 60 * 60 * 24;
@@ -70,6 +62,7 @@ namespace SoftwareCo
                 string[] lines = commandResult.Split(
                     new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
                 resultList = new List<string>(lines);
+                resultList = new List<string>(lines);
             }
             return resultList;
         }
@@ -90,139 +83,36 @@ namespace SoftwareCo
             return hostname;
         }
 
-        public static long getItemAsLong(string key)
+        public static IDictionary<string, object> ConvertObjectToSource(IDictionary<string, object> dict)
         {
-            object val = getItem(key);
-            if (val != null)
+            dict.TryGetValue("source", out object sourceJson);
+            try
             {
-                return Convert.ToInt64(val);
+                IDictionary<string, object> sourceData = (sourceJson == null) ? null : (IDictionary<string, object>)sourceJson;
+                return sourceData;
+            } catch (Exception e)
+            {
+                //
             }
-            return 0L;
+            return new Dictionary<string, object>();
         }
 
-        public static string getItemAsString(string key)
+        public static PluginDataProject ConvertObjectToProject(IDictionary<string, object> dict)
         {
-            object val = getItem(key);
-            if (val != null)
+            dict.TryGetValue("project", out object projJson);
+            try
             {
-                try
+                JsonObject projJsonObj = (projJson == null) ? null : (JsonObject)projJson;
+                if (projJson != null)
                 {
-                    return val.ToString();
-                } catch(Exception e)
-                {
-                    return null;
+                    return PluginDataProject.GetPluginDataFromDictionary(projJsonObj);
                 }
             }
-            return null;
-        }
-
-        public static bool getItemAsBool(string key)
-        {
-            object val = getItem(key);
-            if (val != null)
+            catch (Exception e)
             {
-                try
-                {
-                    return Convert.ToBoolean(val);
-                }
-                catch (Exception e)
-                {
-                    return false;
-                }
+                //
             }
-            return false;
-        }
-
-        public static object getItem(string key)
-        {
-            sessionMap.TryGetValue(key, out string valObject);
-            string val = (valObject == null) ? null : valObject;
-            if (val != null)
-            {
-                return val;
-            }
-
-            // read the session json file
-            string sessionFile = getSoftwareSessionFile();
-            if (File.Exists(sessionFile))
-            {
-                string content = File.ReadAllText(sessionFile, System.Text.Encoding.UTF8);
-                if (content != null)
-                {
-                    object jsonVal = SimpleJson.GetValue(content, key);
-                    if (jsonVal != null)
-                    {
-                        return jsonVal;
-                    }
-                }
-            }
-            return null;
-        }
-
-        public static void setBoolItem(string key, bool val)
-        {
-            if (sessionMap.TryGetValue(key, out string outval))
-            {
-                // value exists!
-                sessionMap[key] = val.ToString();
-            }
-            else
-            {
-                // lets add the value
-                sessionMap.Add(key, val.ToString());
-            }
-            SaveSessionItem(key, val);
-        }
-
-        public static void setNumericItem(string key, long val)
-        {
-            if (sessionMap.TryGetValue(key, out string outval))
-            {
-                // value exists!
-                sessionMap[key] = val.ToString();
-            }
-            else
-            {
-                // lets add the value
-                sessionMap.Add(key, val.ToString());
-            }
-
-            SaveSessionItem(key, val);
-        }
-
-        public static void setItem(String key, string val)
-        {
-            if (sessionMap.TryGetValue(key, out string outval))
-            {
-                // value exists!
-                sessionMap[key] = val;
-            }
-            else
-            {
-                // lets add the value
-                sessionMap.Add(key, val);
-            }
-
-            SaveSessionItem(key, val);
-        }
-
-        private static void SaveSessionItem(string key, object val)
-        {
-            string sessionFile = getSoftwareSessionFile();
-            IDictionary<string, object> dict = new Dictionary<string, object>();
-            string content = "";
-            if (File.Exists(sessionFile))
-            {
-                content = File.ReadAllText(sessionFile, System.Text.Encoding.UTF8);
-                // conver to dictionary
-                dict = (IDictionary<string, object>)SimpleJson.DeserializeObject(content, new Dictionary<string, object>());
-                dict.Remove(key);
-            }
-            dict.Add(key, val);
-            content = SimpleJson.SerializeObject(dict);
-            // write it back to the file
-            content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
-            File.WriteAllText(sessionFile, content, System.Text.Encoding.UTF8);
+            return new PluginDataProject("Unnamed", "Untitled");
         }
 
         public static string ConvertObjectToString(IDictionary<string, object> dict, string key)
@@ -347,145 +237,6 @@ namespace SoftwareCo
             }
         }
 
-        public static String getDashboardFile()
-        {
-            return getSoftwareDataDir(true) + "\\CodeTime.txt";
-        }
-
-        public static String GetContributorDashboardFile()
-        {
-            return getSoftwareDataDir(true) + "\\ProjectContributorCodeSummary.txt";
-        }
-
-        public static String getVSReadmeFile()
-        {
-            return getSoftwareDataDir(true) + "\\VS_README.txt";
-        }
-
-        public static String getSoftwareDataDir(bool autoCreate)
-        {
-            String userHomeDir = Environment.ExpandEnvironmentVariables("%HOMEPATH%");
-            string softwareDataDir = userHomeDir + "\\.software";
-            if (autoCreate && !Directory.Exists(softwareDataDir))
-            {
-                try
-                {
-                    // create it
-                    Directory.CreateDirectory(softwareDataDir);
-                }
-                catch (Exception ex)
-                {
-
-                    
-                }
-               
-            }
-            return softwareDataDir;
-        }
-
-        public static bool softwareSessionFileExists()
-        {
-            string file = getSoftwareDataDir(false) + "\\session.json";
-            return File.Exists(file);
-        }
-
-        public static bool SessionSummaryFileExists()
-        {
-            string file = getSoftwareDataDir(false) + "\\sessionSummary.json";
-            return File.Exists(file);
-        }
-        public static String getSessionSummaryFile()
-        {
-            return getSoftwareDataDir(true) + "\\sessionSummary.json";
-        }
-
-        public static String getSessionSummaryFileData()
-        {
-            try
-            {
-                return File.ReadAllText(getSoftwareDataDir(true) + "\\sessionSummary.json", System.Text.Encoding.UTF8);
-            } catch (Exception e)
-            {
-                return new JsonObject().ToString();
-            }
-        }
-
-        public static String getSoftwareSessionFile()
-        {
-            return getSoftwareDataDir(true) + "\\session.json";
-        }
-        
-        public static bool FileChangeInfoSummaryFileExists()
-        {
-            string file = getSoftwareDataDir(false) + "\\fileChangeSummary.json";
-            return File.Exists(file);
-        }
-        public static String getFileChangeInfoSummaryData()
-        {
-            try
-            {
-                return File.ReadAllText(getSoftwareDataDir(true) + "\\fileChangeSummary.json", System.Text.Encoding.UTF8);
-            } catch (Exception e)
-            {
-                return new JsonObject().ToString();
-            }
-        }
-
-        public static String getFileChangeInfoSummaryFile()
-        {
-            return getSoftwareDataDir(true) + "\\fileChangeSummary.json";
-        }
-
-        public static String getSessionSummaryInfoFile()
-        {
-            return getSoftwareDataDir(true) + "\\SummaryInfo.txt";
-        }
-        public static String getSessionSummaryInfoFileData()
-        {
-            return File.ReadAllText(getSoftwareDataDir(false) + "\\SummaryInfo.txt",System.Text.Encoding.UTF8);
-        }
-        public static bool SessionSummaryInfoFileExists()
-        {
-            string file = getSoftwareDataDir(false) + "\\SummaryInfo.txt";
-            return File.Exists(file);
-        }
-
-        public static String getCodeTimeEventsFile()
-        {
-            return getSoftwareDataDir(true) + "\\events.json";
-        }
-
-        public static bool CodeTimeEventsFileExists()
-        {
-            string file = getSoftwareDataDir(false) + "\\events.json";
-            return File.Exists(file);
-        }
-
-        public static String getCodeTimeEventsData()
-        {
-            try
-            {
-                return File.ReadAllText(getSoftwareDataDir(true) + "\\events.json", System.Text.Encoding.UTF8);
-            } catch (Exception e)
-            {
-                return new JsonArray().ToString();
-            }
-        }
-
-        public static String getSoftwareDataStoreFile()
-        {
-            return getSoftwareDataDir(true) + "\\data.json";
-        }
-        public static bool LogFileExists()
-        {
-            string file = getSoftwareDataDir(true) + "\\Log.txt";
-            return File.Exists(file);
-        }
-        public static String getLogFile()
-        {
-            return getSoftwareDataDir(true) + "\\Log.txt";
-        }
-
         public static string getSectionHeader( string  label)
         {
             string result = "";
@@ -522,7 +273,7 @@ namespace SoftwareCo
         {
             try
             {
-                string jwt = SoftwareCoUtil.getItemAsString("jwt");
+                string jwt = FileManager.getItemAsString("jwt");
                 string url = "";
                 if (loginType.Equals("google"))
                 {
@@ -547,8 +298,13 @@ namespace SoftwareCo
 
                 Logger.Error("launchLogin, error : " + ex.Message, ex);
             }
-            
 
+        }
+
+        public static String GetFormattedDay(long seconds)
+        {
+            DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(seconds);
+            return dateTimeOffset.ToString(@"yyyy-MM-dd");
         }
 
         public static NowTime GetNowTime()

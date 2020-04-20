@@ -81,7 +81,7 @@ namespace SoftwareCo
                         string jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
                         if (jwt != null)
                         {
-                            SoftwareCoUtil.setItem("jwt", jwt);
+                            FileManager.setItem("jwt", jwt);
                             return jwt;
                         }
                     }
@@ -128,7 +128,7 @@ namespace SoftwareCo
 
         private static async Task<User> GetUserAsync(bool online)
         {
-            string jwt = SoftwareCoUtil.getItemAsString("jwt");
+            string jwt = FileManager.getItemAsString("jwt");
             try
             {
                 if (jwt != null && online)
@@ -176,14 +176,14 @@ namespace SoftwareCo
         {
             try
             {
-                string jwt = SoftwareCoUtil.getItemAsString("jwt");
+                string jwt = FileManager.getItemAsString("jwt");
                 if (online && jwt != null)
                 {
                     User user = await GetUserAsync(online);
                     if (user != null && SoftwareCoUtil.IsValidEmail(user.email))
                     {
-                        SoftwareCoUtil.setItem("name", user.email);
-                        SoftwareCoUtil.setItem("jwt", user.plugin_jwt);
+                        FileManager.setItem("name", user.email);
+                        FileManager.setItem("jwt", user.plugin_jwt);
                         lastJwt = user.plugin_jwt;
                         return true;
                     }
@@ -206,26 +206,25 @@ namespace SoftwareCo
                                 string name = (nameObj == null) ? null : Convert.ToString(nameObj);
                                 if (name != null)
                                 {
-                                    SoftwareCoUtil.setItem("name", name);
+                                    FileManager.setItem("name", name);
                                 }
-                                SoftwareCoUtil.setItem("jwt", pluginJwt);
+                                FileManager.setItem("jwt", pluginJwt);
                                 lastJwt = pluginJwt;
                             }
                             else if (state.Equals("NOT_FOUND"))
                             {
-                                SoftwareCoUtil.setItem("jwt", null);
+                                FileManager.setItem("jwt", null);
                                 lastJwt = null;
                             }
                         }
                     }
 
                 }
-                SoftwareCoUtil.setItem("name", null);
+                FileManager.setItem("name", null);
             }
             catch (Exception ex)
             {
-
-              
+                //
             }  
           
             return false;
@@ -259,7 +258,7 @@ namespace SoftwareCo
                         // fetch the session summary to get the user's averages
                         WallclockManager.Instance.UpdateSessionSummaryFromServerAsync(false);
 
-                        SoftwareCoPackage.SendOfflinePluginBatchData(false);
+                        SoftwareCoPackage.SendOfflinePluginBatchData();
                         
                     }
                 }
@@ -275,7 +274,7 @@ namespace SoftwareCo
         public static async void SendHeartbeat(string reason)
         {
 
-            string jwt = SoftwareCoUtil.getItemAsString("jwt");
+            string jwt = FileManager.getItemAsString("jwt");
             bool online = await IsOnlineAsync();
             if (online && jwt != null)
             {
