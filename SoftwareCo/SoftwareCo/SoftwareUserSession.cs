@@ -256,7 +256,7 @@ namespace SoftwareCo
                         SoftwareUserSession.SendHeartbeat("STATE_CHANGE: LOGGED_IN:true");
 
                         // fetch the session summary to get the user's averages
-                        WallclockManager.Instance.UpdateSessionSummaryFromServerAsync(false);
+                        WallclockManager.Instance.UpdateSessionSummaryFromServerAsync();
 
                         SoftwareCoPackage.SendOfflinePluginBatchData();
                         

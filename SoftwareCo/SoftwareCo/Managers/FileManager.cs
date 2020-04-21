@@ -23,6 +23,11 @@ namespace SoftwareCo
             return lastSavedKeystrokeStats;
         }
 
+        public static void ClearLastSavedKeystrokeStats()
+        {
+            lastSavedKeystrokeStats = null;
+        }
+
         public static void UpdateLastSavedKeystrokesStats()
         {
             string offlinePluginData = GetOfflinePayloadsAsString();

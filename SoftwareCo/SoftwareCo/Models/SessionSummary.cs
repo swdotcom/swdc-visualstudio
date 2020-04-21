@@ -153,13 +153,9 @@ namespace SoftwareCo
             return sessionSummary;
         }
 
-        public void CloneSessionSummary(SessionSummary summary, bool isNewDay)
+        public void CloneSessionSummary(SessionSummary summary)
         {
-            if (!isNewDay && summary.currentDayMinutes > this.currentDayMinutes)
-            {
-                this.currentDayMinutes = summary.currentDayMinutes;
-            }
-
+            this.currentDayMinutes = summary.currentDayMinutes;
             // add the current attributes
             this.currentDayKeystrokes = summary.currentDayKeystrokes;
             this.currentDayKpm = summary.currentDayKpm;

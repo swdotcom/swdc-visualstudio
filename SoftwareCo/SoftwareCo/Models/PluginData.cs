@@ -213,24 +213,24 @@ namespace SoftwareCo
 
             // get the current payloads so we can compare our last cumulative seconds
             PluginData lastKpm = FileManager.GetLastSavedKeystrokeStats();
+            bool initiateNewDayCheck = false;
             if (lastKpm != null)
             {
-                if (lastKpm.cumulative_editor_seconds == 0 ||
-                    lastKpm.cumulative_session_seconds == 0)
+                String lastKpmDay = SoftwareCoUtil.GetFormattedDay(lastKpm.start);
+                String thisDay = SoftwareCoUtil.GetFormattedDay(this.start);
+                if (!lastKpmDay.Equals(thisDay))
                 {
+                    // the days don't match. don't use the editor or session seconds for a different day
                     lastKpm = null;
+                    initiateNewDayCheck = true;
+                    td = null;
                 }
-                
-                if (lastKpm != null)
-                {
-                    String lastKpmDay = SoftwareCoUtil.GetFormattedDay(lastKpm.start);
-                    String thisDay = SoftwareCoUtil.GetFormattedDay(this.start);
-                    if (!lastKpmDay.Equals(thisDay))
-                    {
-                        // the days don't match. don't use the editor or session seconds for a different day
-                        lastKpm = null;
-                    }
-                }
+            }
+
+            if (initiateNewDayCheck)
+            {
+                // clear out data from the previous day
+                await WallclockManager.Instance.GetNewDayCheckerAsync();
             }
 
             cumulative_session_seconds = 60;
@@ -240,23 +240,6 @@ namespace SoftwareCo
             {
                 this.cumulative_editor_seconds = td.editor_seconds;
                 this.cumulative_session_seconds = td.session_seconds;
-                if (lastKpm != null)
-                {
-                    // editor seconds check
-                    if (lastKpm.cumulative_editor_seconds > cumulative_editor_seconds)
-                    {
-                        long diff = lastKpm.cumulative_editor_seconds - cumulative_editor_seconds;
-                        cumulative_editor_seconds = lastKpm.cumulative_editor_seconds + 60;
-                        this.editor_seconds_error = "TimeData has lower editor seconds than last saved keystroke data by " + diff + " seconds";
-                    }
-                    // session seconds check
-                    if (lastKpm.cumulative_session_seconds > cumulative_session_seconds)
-                    {
-                        long diff = lastKpm.cumulative_session_seconds - cumulative_session_seconds;
-                        cumulative_session_seconds = lastKpm.cumulative_session_seconds + 60;
-                        this.session_seconds_error = "TimeData has lower session seconds than last saved keystroke data by " + diff + " seconds";
-                    }
-                }
             }
             else if (lastKpm != null)
             {
@@ -269,7 +252,7 @@ namespace SoftwareCo
             if (cumulative_editor_seconds < cumulative_session_seconds)
             {
                 long diff = cumulative_session_seconds - cumulative_editor_seconds;
-                if (diff > 45)
+                if (diff > 30)
                 {
                     this.editor_seconds_error = "Cumulative editor seconds is behind session seconds by " + diff + " seconds";
                 }
@@ -306,11 +289,6 @@ namespace SoftwareCo
             {
                 source.Add(new PluginDataFileInfo(file));
             }
-        }
-
-        public void UpdatePluginDataFileInfo(PluginDataFileInfo fileInfo)
-        {
-            //
         }
 
         public List<FileInfoSummary> GetSourceFileInfoList()

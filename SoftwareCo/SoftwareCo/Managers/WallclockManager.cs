@@ -46,7 +46,7 @@ namespace SoftwareCo
             sessionSummaryMgr = SessionSummaryManager.Instance;
 
             newDayTimer = new System.Threading.Timer(
-                    GetNewDayCheckerAsync,
+                    GetNewDayChecker,
                     null,
                     1000,
                     ONE_MINUTE * 10);
@@ -102,8 +102,12 @@ namespace SoftwareCo
             package.RebuildGitMetricsAsync();
         }
 
-        private async void GetNewDayCheckerAsync(object stateinfo)
+        public async void GetNewDayChecker(object stateinfo)
         {
+            GetNewDayCheckerAsync();
+        }
+
+        public async Task GetNewDayCheckerAsync() {
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             if (!nowTime.local_day.Equals(_currentDay))
             {
@@ -133,12 +137,12 @@ namespace SoftwareCo
                 FileManager.setNumericItem("latestPayloadTimestampEndUtc", 0);
 
                 // update the session summary global and averages for the new day
-                Task.Delay(ONE_MINUTE).ContinueWith((task) => { WallclockManager.Instance.UpdateSessionSummaryFromServerAsync(true); });
+                Task.Delay(ONE_MINUTE).ContinueWith((task) => { WallclockManager.Instance.UpdateSessionSummaryFromServerAsync(); });
 
             }
         }
 
-        public async Task UpdateSessionSummaryFromServerAsync(bool isNewDay)
+        public async Task UpdateSessionSummaryFromServerAsync()
         {
             object jwt = FileManager.getItem("jwt");
             if (jwt != null)
@@ -155,8 +159,10 @@ namespace SoftwareCo
                         try
                         {
                             SessionSummary incomingSummary = summary.GetSessionSummaryFromDictionary(jsonObj);
-                            summary.CloneSessionSummary(incomingSummary, isNewDay);
+                            summary.CloneSessionSummary(incomingSummary);
                             SessionSummaryManager.Instance.SaveSessionSummaryToDisk(summary);
+
+                            DispatchUpdatesProcessorAsync();
                         } catch (Exception e)
                         {
                             Logger.Error("failed to read json: " + e.Message);

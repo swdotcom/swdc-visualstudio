@@ -257,8 +257,8 @@ namespace SoftwareCo
                 // initialize the status bar before we fetch the summary data
                 InitializeStatusBar();
 
-                // fetch the session summary
-                wallclockMgr.UpdateSessionSummaryFromServerAsync(false);
+                // make sure the last payload is in memory
+                FileManager.UpdateLastSavedKeystrokesStats();
 
                 // check if we've shown the readme or not
                 bool initializedVisualStudioPlugin = FileManager.getItemAsBool("visualstudio_CtInit");
@@ -402,6 +402,9 @@ namespace SoftwareCo
                     // send heartbeat
                     SoftwareUserSession.SendHeartbeat("INITIALIZED");
                 }
+
+                // fetch the session summary
+                WallclockManager.Instance.UpdateSessionSummaryFromServerAsync();
 
             }
             catch (Exception ex)
