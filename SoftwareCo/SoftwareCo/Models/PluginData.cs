@@ -206,35 +206,25 @@ namespace SoftwareCo
 
             TimeData td = await TimeDataManager.Instance.UpdateSessionAndFileSecondsAsync(this.project, session_seconds);
 
-            // add the cumulative data
+            // get the current payloads so we can compare our last cumulative seconds
+            PluginData lastKpm = FileManager.GetLastSavedKeystrokeStats();
+            if (SoftwareCoUtil.IsNewDay())
+            {
+                // the days don't match. don't use the editor or session seconds for a different day
+                lastKpm = null;
+                // clear out data from the previous day
+                await WallclockManager.Instance.GetNewDayCheckerAsync();
+                if (td != null) {
+                    td = null;
+                    this.project_null_error = "TimeData should be null as its a new day";
+                }
+            }
 
             long lastPayloadEnd = FileManager.getItemAsLong("latestPayloadTimestampEndUtc");
             this.new_day = lastPayloadEnd == 0 ? 1 : 0;
 
-            // get the current payloads so we can compare our last cumulative seconds
-            PluginData lastKpm = FileManager.GetLastSavedKeystrokeStats();
-            bool initiateNewDayCheck = false;
-            if (lastKpm != null)
-            {
-                String lastKpmDay = SoftwareCoUtil.GetFormattedDay(lastKpm.start);
-                String thisDay = SoftwareCoUtil.GetFormattedDay(this.start);
-                if (!lastKpmDay.Equals(thisDay))
-                {
-                    // the days don't match. don't use the editor or session seconds for a different day
-                    lastKpm = null;
-                    initiateNewDayCheck = true;
-                    td = null;
-                }
-            }
-
-            if (initiateNewDayCheck)
-            {
-                // clear out data from the previous day
-                await WallclockManager.Instance.GetNewDayCheckerAsync();
-            }
-
-            cumulative_session_seconds = 60;
-            cumulative_editor_seconds = 60;
+            this.cumulative_session_seconds = 60;
+            this.cumulative_editor_seconds = 60;
 
             if (td != null)
             {
@@ -245,18 +235,18 @@ namespace SoftwareCo
             {
                 // no time data found, project null error
                 this.project_null_error = "TimeData not found using " + this.project.directory + " for editor and session seconds";
-                cumulative_editor_seconds = lastKpm.cumulative_editor_seconds + 60;
-                cumulative_session_seconds = lastKpm.cumulative_session_seconds + 60;
+                this.cumulative_editor_seconds = lastKpm.cumulative_editor_seconds + 60;
+                this.cumulative_session_seconds = lastKpm.cumulative_session_seconds + 60;
             }
 
-            if (cumulative_editor_seconds < cumulative_session_seconds)
+            if (this.cumulative_editor_seconds < this.cumulative_session_seconds)
             {
-                long diff = cumulative_session_seconds - cumulative_editor_seconds;
+                long diff = this.cumulative_session_seconds - this.cumulative_editor_seconds;
                 if (diff > 30)
                 {
                     this.editor_seconds_error = "Cumulative editor seconds is behind session seconds by " + diff + " seconds";
                 }
-                cumulative_editor_seconds = cumulative_session_seconds;
+                this.cumulative_editor_seconds = cumulative_session_seconds;
             }
         }
 

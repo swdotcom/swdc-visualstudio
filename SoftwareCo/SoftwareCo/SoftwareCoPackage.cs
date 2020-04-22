@@ -154,7 +154,7 @@ namespace SoftwareCo
                 _solutionEvents = events.SolutionEvents;
 
                 // _solutionEvents.Opened += this.SolutionEventOpenedAsync;
-                Task.Delay(5000).ContinueWith((task) =>
+                Task.Delay(3000).ContinueWith((task) =>
                 {
                     SolutionEventOpenedAsync();
                 });
@@ -184,7 +184,7 @@ namespace SoftwareCo
                 string solutionDir = await GetSolutionDirectory();
                 if (solutionDir == null || solutionDir.Equals(""))
                 {
-                    Task.Delay(5000).ContinueWith((task) =>
+                    Task.Delay(3000).ContinueWith((task) =>
                     {
                         SolutionEventOpenedAsync();
                     });

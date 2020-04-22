@@ -108,8 +108,7 @@ namespace SoftwareCo
         }
 
         public async Task GetNewDayCheckerAsync() {
-            NowTime nowTime = SoftwareCoUtil.GetNowTime();
-            if (!nowTime.local_day.Equals(_currentDay))
+            if (SoftwareCoUtil.IsNewDay())
             {
                 SessionSummaryManager.Instance.ÇlearSessionSummaryData();
 
@@ -129,6 +128,7 @@ namespace SoftwareCo
                 ClearWcTime();
 
                 // set the current day
+                NowTime nowTime = SoftwareCoUtil.GetNowTime();
                 _currentDay = nowTime.local_day;
 
                 // update the current day

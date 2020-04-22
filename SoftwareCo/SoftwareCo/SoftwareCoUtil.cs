@@ -307,6 +307,13 @@ namespace SoftwareCo
             return dateTimeOffset.ToString(@"yyyy-MM-dd");
         }
 
+        public static bool IsNewDay()
+        {
+            NowTime nowTime = SoftwareCoUtil.GetNowTime();
+            string currentDay = FileManager.getItemAsString("currentDay");
+            return (!nowTime.local_day.Equals(currentDay)) ? true : false;
+        }
+
         public static NowTime GetNowTime()
         {
             NowTime timeParam = new NowTime();
