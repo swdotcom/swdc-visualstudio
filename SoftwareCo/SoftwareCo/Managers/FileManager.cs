@@ -13,22 +13,12 @@ namespace SoftwareCo
         private static Object dataFileLock = new object();
         private static IDictionary<string, string> sessionMap = new Dictionary<string, string>();
 
-        public static PluginData GetLastSavedKeystrokeStats()
-        {
-            if (lastSavedKeystrokeStats == null)
-            {
-                // build it then return it
-                UpdateLastSavedKeystrokesStats();
-            }
-            return lastSavedKeystrokeStats;
-        }
-
         public static void ClearLastSavedKeystrokeStats()
         {
             lastSavedKeystrokeStats = null;
         }
 
-        public static void UpdateLastSavedKeystrokesStats()
+        public static PluginData GetLastSavedKeystrokeStats()
         {
             string offlinePluginData = GetOfflinePayloadsAsString();
             if (offlinePluginData != null && !offlinePluginData.Equals(""))
@@ -44,6 +34,8 @@ namespace SoftwareCo
                     }
                 }
             }
+
+            return lastSavedKeystrokeStats;
         }
 
         public static String getDashboardFile()
@@ -224,8 +216,6 @@ namespace SoftwareCo
                 // append to the file
                 File.AppendAllText(datastoreFile, pluginDataContent + Environment.NewLine);
             }
-
-            UpdateLastSavedKeystrokesStats();
         }
 
         public static long getItemAsLong(string key)

@@ -228,11 +228,6 @@ namespace SoftwareCo
 
             if (_pluginData != null && _pluginData.source.Count > 0 && _pluginData.keystrokes > 0)
             {
-                // make sure there's a project
-                if (_pluginData.project == null || _pluginData.project.directory == null || _pluginData.project.directory.Equals(""))
-                {
-                    _pluginData.project = new PluginDataProject("Unnamed", "Untitled");
-                }
 
                 // create the aggregates, end the file times, gather the cumulatives
                 string softwareDataContent = await _pluginData.CompletePayloadAndReturnJsonString();

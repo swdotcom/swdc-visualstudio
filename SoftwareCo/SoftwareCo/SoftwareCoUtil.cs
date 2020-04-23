@@ -19,6 +19,8 @@ namespace SoftwareCo
         public static int DASHBOARD_VALUE_WIDTH = 25;
         public static long DAY_IN_SEC = 60 * 60 * 24;
 
+        public static String workspace_name = Guid.NewGuid().ToString();
+
         public static string RunCommand(String cmd, String dir)
         {
             try

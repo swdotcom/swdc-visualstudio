@@ -115,6 +115,9 @@ namespace SoftwareCo
                 // send the offline data
                 SoftwareCoPackage.SendOfflinePluginBatchData();
 
+                // clear the last payload in memory
+                FileManager.ClearLastSavedKeystrokeStats();
+
                 // send the offline events
                 EventManager.Instance.SendOfflineEvents();
 

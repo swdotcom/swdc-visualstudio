@@ -29,10 +29,8 @@ namespace SoftwareCo
         public long cumulative_editor_seconds { get; set; }
         public long elapsed_seconds { get; set; }
         public long cumulative_session_seconds { get; set; }
-        public Int32 new_day { get; set; } // 1 or zero to denote new day or not
         public String project_null_error { get; set; }
-        public String session_seconds_error { get; set; }
-        public String editor_seconds_error { get; set; }
+        public String workspace_name { get; set; }
         public PluginDataProject project { get; set; }
 
         public PluginData(string projectName, string projectDirectory)
@@ -51,9 +49,7 @@ namespace SoftwareCo
             elapsed_seconds = 0;
             cumulative_session_seconds = 0;
             project_null_error = "";
-            session_seconds_error = "";
-            editor_seconds_error = "";
-            new_day = 0;
+            workspace_name = "";
         }
 
         public static PluginData BuildFromDictionary(IDictionary<string, object> dict)
@@ -73,10 +69,8 @@ namespace SoftwareCo
             pd.cumulative_session_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "cumulative_session_seconds");
             pd.pluginId = SoftwareCoUtil.ConvertObjectToInt(dict, "pluginId");
             pd.elapsed_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "elapsed_seconds");
-            pd.new_day = SoftwareCoUtil.ConvertObjectToInt(dict, "new_day");
+            pd.workspace_name = SoftwareCoUtil.ConvertObjectToString(dict, "workspace_name");
             pd.project_null_error = SoftwareCoUtil.ConvertObjectToString(dict, "project_null_error");
-            pd.session_seconds_error = SoftwareCoUtil.ConvertObjectToString(dict, "session_seconds_error");
-            pd.editor_seconds_error = SoftwareCoUtil.ConvertObjectToString(dict, "editor_seconds_error");
             pd.project = proj;
             IDictionary<string, object> sourceDict = SoftwareCoUtil.ConvertObjectToSource(dict);
             if (sourceDict != null && sourceDict.Count > 0)
@@ -111,12 +105,7 @@ namespace SoftwareCo
             {
                 FileInfo fi = new FileInfo(projectDir);
                 name = fi.Name;
-                RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(projectDir, false);
                 project = new PluginDataProject(name, projectDir);
-                if (resourceInfo != null && resourceInfo.identifier != null && !resourceInfo.identifier.Equals(""))
-                {
-                    project.identifier = resourceInfo.identifier;
-                }
             }
             else
             {
@@ -128,6 +117,28 @@ namespace SoftwareCo
 
         public async Task<string> CompletePayloadAndReturnJsonString()
         {
+            RepoResourceInfo resourceInfo = null;
+            // make sure we have a valid project and identifier if possible
+            if (this.project == null || this.project.directory == null || this.project.directory.Equals("Untitled"))
+            {
+                // try to get a valid project
+                string projectDir = await DocEventManager.GetSolutionDirectory();
+                if (projectDir != null && !projectDir.Equals(""))
+                {
+                    FileInfo fi = new FileInfo(projectDir);
+                    project = new PluginDataProject(fi.Name, projectDir);
+                    resourceInfo = GitUtilManager.GetResourceInfo(projectDir, false);
+                }
+            } else
+            {
+                resourceInfo = GitUtilManager.GetResourceInfo(this.project.directory, false);
+            }
+
+            if (resourceInfo != null && resourceInfo.identifier != null && !resourceInfo.identifier.Equals(""))
+            {
+                project.identifier = resourceInfo.identifier;
+            }
+
             SessionSummaryManager summaryMgr = SessionSummaryManager.Instance;
             TimeGapData eTimeInfo = summaryMgr.GetTimeBetweenLastPayload();
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
@@ -193,7 +204,10 @@ namespace SoftwareCo
             jsonObj.Add("end", this.end);
             jsonObj.Add("local_end", this.local_end);
             jsonObj.Add("cumulative_editor_seconds", this.cumulative_editor_seconds);
+            jsonObj.Add("cumulative_session_seconds", this.cumulative_session_seconds);
             jsonObj.Add("elapsed_seconds", this.elapsed_seconds);
+            jsonObj.Add("workspace_name", this.workspace_name);
+            jsonObj.Add("project_null_error", this.project_null_error);
 
             // get the source as json
             jsonObj.Add("source", BuildSourceJson());
@@ -220,8 +234,7 @@ namespace SoftwareCo
                 }
             }
 
-            long lastPayloadEnd = FileManager.getItemAsLong("latestPayloadTimestampEndUtc");
-            this.new_day = lastPayloadEnd == 0 ? 1 : 0;
+            this.workspace_name = SoftwareCoUtil.workspace_name;
 
             this.cumulative_session_seconds = 60;
             this.cumulative_editor_seconds = 60;
@@ -241,11 +254,6 @@ namespace SoftwareCo
 
             if (this.cumulative_editor_seconds < this.cumulative_session_seconds)
             {
-                long diff = this.cumulative_session_seconds - this.cumulative_editor_seconds;
-                if (diff > 30)
-                {
-                    this.editor_seconds_error = "Cumulative editor seconds is behind session seconds by " + diff + " seconds";
-                }
                 this.cumulative_editor_seconds = cumulative_session_seconds;
             }
         }

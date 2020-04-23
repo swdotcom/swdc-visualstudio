@@ -258,7 +258,7 @@ namespace SoftwareCo
                 InitializeStatusBar();
 
                 // make sure the last payload is in memory
-                FileManager.UpdateLastSavedKeystrokesStats();
+                FileManager.GetLastSavedKeystrokeStats();
 
                 // check if we've shown the readme or not
                 bool initializedVisualStudioPlugin = FileManager.getItemAsBool("visualstudio_CtInit");
