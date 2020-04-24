@@ -185,7 +185,6 @@ namespace SoftwareCo
 
                         IDictionary<string, string> memberMap = new Dictionary<string, string>();
 
-
                         if (gitLogData != null && !gitLogData.Equals(""))
                         {
                             string[] lines = gitLogData.Split(

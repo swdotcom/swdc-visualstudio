@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
-using System.Windows.Threading;
-using EnvDTE;
 using EnvDTE80;
 
 namespace SoftwareCo
@@ -21,7 +18,7 @@ namespace SoftwareCo
         private static int ONE_MINUTE = THIRTY_SECONDS_IN_MILLIS * 2;
 
         // 1 hour threshold
-        private static long EDITOR_ACTIVE_THRESHOLD = 60 * 60;
+        private static long EDITOR_ACTIVE_THRESHOLD = 60 * 15;
 
         private long _wctime = 0;
         private string _currentDay = "";
