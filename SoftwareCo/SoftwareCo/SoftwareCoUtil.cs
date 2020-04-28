@@ -313,12 +313,13 @@ namespace SoftwareCo
         {
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             string currentDay = FileManager.getItemAsString("currentDay");
-            return (!nowTime.local_day.Equals(currentDay)) ? true : false;
+            return (!nowTime.day.Equals(currentDay)) ? true : false;
         }
 
         public static NowTime GetNowTime()
         {
             NowTime timeParam = new NowTime();
+            timeParam.day = DateTime.Now.ToString(@"yyyy-MM-dd");
             DateTimeOffset offset = DateTimeOffset.Now;
             // utc now in seconds
             timeParam.now = offset.ToUnixTimeSeconds();
@@ -329,6 +330,7 @@ namespace SoftwareCo
             // local now in seconds
             timeParam.local_now = Convert.ToInt64(timeParam.now + timeParam.offset_seconds);
             timeParam.local_day = offset.ToLocalTime().ToString(@"yyyy-MM-dd");
+
 
             // start and end of day
             timeParam.start_of_today = StartOfDay();
@@ -564,6 +566,7 @@ namespace SoftwareCo
         public double offset_minutes { get; set; }
         public double offset_seconds { get; set; }
         public string local_day { get; set; }
+        public string day { get; set; }
         public long local_start_of_day { get; set; }
         public long local_end_of_day { get; set; }
         public long utc_end_of_day { get; set; }

@@ -31,6 +31,7 @@ namespace SoftwareCo
         public long cumulative_session_seconds { get; set; }
         public String project_null_error { get; set; }
         public String workspace_name { get; set; }
+        public String hostname { get; set; }
         public PluginDataProject project { get; set; }
 
         public PluginData(string projectName, string projectDirectory)
@@ -50,6 +51,7 @@ namespace SoftwareCo
             cumulative_session_seconds = 0;
             project_null_error = "";
             workspace_name = "";
+            hostname = "";
         }
 
         public static PluginData BuildFromDictionary(IDictionary<string, object> dict)
@@ -70,6 +72,7 @@ namespace SoftwareCo
             pd.pluginId = SoftwareCoUtil.ConvertObjectToInt(dict, "pluginId");
             pd.elapsed_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "elapsed_seconds");
             pd.workspace_name = SoftwareCoUtil.ConvertObjectToString(dict, "workspace_name");
+            pd.hostname = SoftwareCoUtil.ConvertObjectToString(dict, "hostname");
             pd.project_null_error = SoftwareCoUtil.ConvertObjectToString(dict, "project_null_error");
             pd.project = proj;
             IDictionary<string, object> sourceDict = SoftwareCoUtil.ConvertObjectToSource(dict);
@@ -207,6 +210,7 @@ namespace SoftwareCo
             jsonObj.Add("cumulative_session_seconds", this.cumulative_session_seconds);
             jsonObj.Add("elapsed_seconds", this.elapsed_seconds);
             jsonObj.Add("workspace_name", this.workspace_name);
+            jsonObj.Add("hostname", this.hostname);
             jsonObj.Add("project_null_error", this.project_null_error);
 
             // get the source as json
@@ -235,7 +239,7 @@ namespace SoftwareCo
             }
 
             this.workspace_name = SoftwareCoUtil.workspace_name;
-
+            this.hostname = SoftwareCoUtil.getHostname();
             this.cumulative_session_seconds = 60;
             this.cumulative_editor_seconds = 60;
 

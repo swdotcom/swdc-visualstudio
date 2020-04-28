@@ -129,7 +129,7 @@ namespace SoftwareCo
 
                 // set the current day
                 NowTime nowTime = SoftwareCoUtil.GetNowTime();
-                _currentDay = nowTime.local_day;
+                _currentDay = nowTime.day;
 
                 // update the current day
                 FileManager.setItem("currentDay", _currentDay);

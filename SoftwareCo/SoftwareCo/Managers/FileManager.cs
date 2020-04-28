@@ -11,7 +11,6 @@ namespace SoftwareCo
         private static PluginData lastSavedKeystrokeStats = null;
         private static Object sessionFileLock = new object();
         private static Object dataFileLock = new object();
-        private static IDictionary<string, string> sessionMap = new Dictionary<string, string>();
 
         public static void ClearLastSavedKeystrokeStats()
         {
@@ -264,13 +263,6 @@ namespace SoftwareCo
 
         public static object getItem(string key)
         {
-            sessionMap.TryGetValue(key, out string valObject);
-            string val = (valObject == null) ? null : valObject;
-            if (val != null)
-            {
-                return val;
-            }
-
             // read the session json file
             string sessionFile = FileManager.getSoftwareSessionFile();
             lock (sessionFileLock)
@@ -301,48 +293,16 @@ namespace SoftwareCo
 
         public static void setBoolItem(string key, bool val)
         {
-            if (sessionMap.TryGetValue(key, out string outval))
-            {
-                // value exists!
-                sessionMap[key] = val.ToString();
-            }
-            else
-            {
-                // lets add the value
-                sessionMap.Add(key, val.ToString());
-            }
             SaveSessionItem(key, val);
         }
 
         public static void setNumericItem(string key, long val)
         {
-            if (sessionMap.TryGetValue(key, out string outval))
-            {
-                // value exists!
-                sessionMap[key] = val.ToString();
-            }
-            else
-            {
-                // lets add the value
-                sessionMap.Add(key, val.ToString());
-            }
-
             SaveSessionItem(key, val);
         }
 
         public static void setItem(String key, string val)
         {
-            if (sessionMap.TryGetValue(key, out string outval))
-            {
-                // value exists!
-                sessionMap[key] = val;
-            }
-            else
-            {
-                // lets add the value
-                sessionMap.Add(key, val);
-            }
-
             SaveSessionItem(key, val);
         }
 
