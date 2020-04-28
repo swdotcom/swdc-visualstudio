@@ -19,10 +19,11 @@ namespace SoftwareCo
 
         public static PluginData GetLastSavedKeystrokeStats()
         {
-            string offlinePluginData = GetOfflinePayloadsAsString();
-            if (offlinePluginData != null && !offlinePluginData.Equals(""))
+            List<string> offlinePluginData = GetOfflinePayloadList();
+            if (offlinePluginData != null && offlinePluginData.Count > 0)
             {
-                JsonArray jsonArrayObj = (JsonArray)SimpleJson.DeserializeObject(offlinePluginData, new JsonArray());
+                string jsonData = "[" + string.Join(",", offlinePluginData) + "]";
+                JsonArray jsonArrayObj = (JsonArray)SimpleJson.DeserializeObject(jsonData, new JsonArray());
                 long latestStart = 0;
                 foreach (JsonObject jsonObj in jsonArrayObj)
                 {
@@ -178,9 +179,10 @@ namespace SoftwareCo
             return getSoftwareDataDir(true) + "\\Log.txt";
         }
 
-        public static string GetOfflinePayloadsAsString()
+        public static List<string> GetOfflinePayloadList()
         {
-            string jsonData = null;
+
+            List<String> jsonLines = new List<string>();
             string datastoreFile = getSoftwareDataStoreFile();
             if (File.Exists(datastoreFile))
             {
@@ -193,7 +195,7 @@ namespace SoftwareCo
 
                 if (lines != null && lines.Length > 0)
                 {
-                    List<String> jsonLines = new List<string>();
+                    
                     foreach (string line in lines)
                     {
                         if (line != null && line.Trim().Length > 0)
@@ -201,10 +203,10 @@ namespace SoftwareCo
                             jsonLines.Add(line);
                         }
                     }
-                    jsonData = "[" + string.Join(",", jsonLines) + "]";
+                    // jsonData = "[" + string.Join(",", jsonLines) + "]";
                 }
             }
-            return jsonData;
+            return jsonLines;
         }
 
         public static void AppendPluginData(string pluginDataContent)

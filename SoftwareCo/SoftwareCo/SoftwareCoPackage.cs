@@ -354,16 +354,48 @@ namespace SoftwareCo
                 return;
             }
 
-            string offlinePluginData = FileManager.GetOfflinePayloadsAsString();
-            if (offlinePluginData != null)
+            int batch_limit = 5;
+            HttpResponseMessage response = null;
+            string jsonData = "";
+            List<string> offlinePluginData = FileManager.GetOfflinePayloadList();
+            List<string> batchList = new List<string>();
+            if (offlinePluginData != null && offlinePluginData.Count > 0)
             {
-                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", offlinePluginData);
-                if (SoftwareHttpManager.IsOk(response))
+                
+                for (int i = 0; i < offlinePluginData.Count; i++)
                 {
-                    // delete the file
-                    File.Delete(FileManager.getSoftwareDataStoreFile());
+                    string line = offlinePluginData[i];
+                    if (i >= batch_limit)
+                    {
+                        // send this batch off
+                        jsonData = "[" + string.Join(",", batchList) + "]";
+                        response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonData);
+                        if (!SoftwareHttpManager.IsOk(response))
+                        {
+                            // there was an error, don't delete the offline data
+                            return;
+                        }
+                        batchList.Clear();
+                    }
+                    batchList.Add(line);
                 }
+
+                if (batchList.Count > 0)
+                {
+                    jsonData = "[" + string.Join(",", batchList) + "]";
+                    response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonData);
+                    if (!SoftwareHttpManager.IsOk(response))
+                    {
+                        // there was an error, don't delete the offline data
+                        return;
+                    }
+                }
+
+                // delete the file
+                File.Delete(FileManager.getSoftwareDataStoreFile());
             }
+
+            
         }
 
         private async Task InitializeUserInfoAsync()
