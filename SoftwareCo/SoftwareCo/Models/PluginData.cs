@@ -97,7 +97,7 @@ namespace SoftwareCo
 
         public static async Task<PluginDataProject> GetPluginProject()
         {
-            string projectDir = await DocEventManager.GetSolutionDirectory();
+            string projectDir = await ProjectManager.GetSolutionDirectory();
             return GetPluginProjectUsingDir(projectDir);
         }
 
@@ -118,14 +118,14 @@ namespace SoftwareCo
             return project;
         }
 
-        public async Task<string> CompletePayloadAndReturnJsonString()
+        public async Task<string> CompletePayload()
         {
             RepoResourceInfo resourceInfo = null;
             // make sure we have a valid project and identifier if possible
             if (this.project == null || this.project.directory == null || this.project.directory.Equals("Untitled"))
             {
                 // try to get a valid project
-                string projectDir = await DocEventManager.GetSolutionDirectory();
+                string projectDir = await ProjectManager.GetSolutionDirectory();
                 if (projectDir != null && !projectDir.Equals(""))
                 {
                     FileInfo fi = new FileInfo(projectDir);
@@ -192,6 +192,11 @@ namespace SoftwareCo
             // increment the session summary minutes and other metrics
             summaryMgr.IncrementSessionSummaryData(aggregates, eTimeInfo);
 
+            
+        }
+
+        public string JsonStringify()
+        {
             // create the json payload
             JsonObject jsonObj = new JsonObject();
             jsonObj.Add("start", this.start);
@@ -309,7 +314,7 @@ namespace SoftwareCo
                 fileInfo.linesRemoved = pdFileInfo.linesRemoved;
                 fileInfo.delete = pdFileInfo.delete;
                 fileInfo.add = pdFileInfo.add;
-                fileInfo.keystrokes = fileInfo.add + fileInfo.delete + fileInfo.paste + fileInfo.linesAdded + fileInfo.linesRemoved;
+                fileInfo.keystrokes = pdFileInfo.keystrokes;
                 fileInfo.syntax = pdFileInfo.syntax;
                 fileInfo.local_start = pdFileInfo.local_start;
                 fileInfo.local_end = pdFileInfo.local_end;

@@ -13,6 +13,7 @@ namespace SoftwareCo
         public long delete { get; set; }
         public long linesAdded { get; set; }
         public long linesRemoved { get; set; }
+        public long charsPasted { get; set; }
         public long open { get; set; }
         public long paste { get; set; }
         public long keystrokes { get; set; }

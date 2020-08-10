@@ -39,7 +39,13 @@ namespace SoftwareCo
             try
             {
                 CodeMetricsTreeManager.Instance.OpenCodeMetricsPaneAsync();
-                EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "ShowTreeView");
+                UIElementEntity entity = new UIElementEntity();
+                entity.color = null;
+                entity.element_location = "ct_menu_tree";
+                entity.element_name = "ct_status_bar_metrics_btn";
+                entity.cta_text = "status bar metrics";
+                entity.icon_name = "clock";
+                TrackerUtilManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
             }
             catch (Exception e)
             {

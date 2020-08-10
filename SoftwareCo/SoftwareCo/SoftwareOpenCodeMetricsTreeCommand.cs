@@ -87,7 +87,6 @@ namespace SoftwareCo
             try
             {
                 CodeMetricsTreeManager.Instance.OpenCodeMetricsPaneAsync();
-                EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "ShowTreeView");
             }
             catch (Exception ex)
             {

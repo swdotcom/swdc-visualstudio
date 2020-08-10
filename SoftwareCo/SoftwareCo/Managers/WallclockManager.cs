@@ -115,9 +115,6 @@ namespace SoftwareCo
                 // clear the last payload in memory
                 FileManager.ClearLastSavedKeystrokeStats();
 
-                // send the offline events
-                EventManager.Instance.SendOfflineEvents();
-
                 // send the offline TimeData payloads
                 // this will clear the time data summary as well
                 TimeDataManager.Instance.SendTimeDataAsync();

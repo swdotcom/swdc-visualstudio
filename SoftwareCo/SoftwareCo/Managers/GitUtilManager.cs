@@ -178,6 +178,20 @@ namespace SoftwareCo
                         info.tag = tag;
                     }
 
+                    // get the ownerId and repoName from the identifier
+                    string[] parts = identifier.Split("/");
+                    if (parts.Length > 2)
+                    {
+                        string repoNamePart = parts[parts.Length - 1];
+                        int typeIdx = repoNamePart.IndexOf(".git");
+                        if (typeIdx != -1)
+                        {
+                            // it's a git identifier
+                            info.ownerId = parts[parts.Length - 2];
+                            info.repoName = repoNamePart.Substring(0, typeIdx);
+                        }
+                    }
+
                     if (includeMembers)
                     {
                         List<RepoMember> repoMembers = new List<RepoMember>();

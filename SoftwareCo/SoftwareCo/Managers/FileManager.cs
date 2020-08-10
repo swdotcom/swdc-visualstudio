@@ -142,29 +142,6 @@ namespace SoftwareCo
             return File.Exists(file);
         }
 
-        public static String getCodeTimeEventsFile()
-        {
-            return getSoftwareDataDir(true) + "\\events.json";
-        }
-
-        public static bool CodeTimeEventsFileExists()
-        {
-            string file = getSoftwareDataDir(false) + "\\events.json";
-            return File.Exists(file);
-        }
-
-        public static String getCodeTimeEventsData()
-        {
-            try
-            {
-                return File.ReadAllText(getSoftwareDataDir(true) + "\\events.json", System.Text.Encoding.UTF8);
-            }
-            catch (Exception e)
-            {
-                return new JsonArray().ToString();
-            }
-        }
-
         public static String getSoftwareDataStoreFile()
         {
             return getSoftwareDataDir(true) + "\\data.json";

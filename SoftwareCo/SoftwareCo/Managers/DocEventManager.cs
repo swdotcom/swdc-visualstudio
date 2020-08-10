@@ -57,21 +57,11 @@ namespace SoftwareCo
             return (fileName == null || fileName.IndexOf("CodeTime.txt") != -1) ? false : true;
         }
 
-        public static async Task<string> GetSolutionDirectory()
-        {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
-            {
-                _solutionDirectory = Path.GetDirectoryName(ObjDte.Solution.FileName);
-            }
-            return _solutionDirectory;
-        }
-
         private async void InitPluginDataIfNotExists()
         {
             if (_pluginData == null)
             {
-                _solutionDirectory = await GetSolutionDirectory();
+                _solutionDirectory = await ProjectManager.GetSolutionDirectory();
                 if (_solutionDirectory != null && !_solutionDirectory.Equals(""))
                 {
                     FileInfo fi = new FileInfo(_solutionDirectory);
@@ -180,7 +170,8 @@ namespace SoftwareCo
             InitPluginDataIfNotExists();
             _pluginData.InitFileInfoIfNotExists(fileName);
 
-            /**
+            TrackerUtilManager.TrackEditorFileActionEvent("file", "open", fileName);
+
             try
             {
                 _pluginData.GetFileInfo(fileName).open += 1;
@@ -190,7 +181,7 @@ namespace SoftwareCo
             {
                 Logger.Error("DocEventsOnDocumentOpened", ex);
             }
-            **/
+
         }
 
         public async void DocEventsOnDocumentClosedAsync(Document document)
@@ -207,17 +198,7 @@ namespace SoftwareCo
             InitPluginDataIfNotExists();
             _pluginData.InitFileInfoIfNotExists(fileName);
 
-            /**
-            try
-            {
-                _pluginData.GetFileInfo(fileName).close += 1;
-                Logger.Info("Code Time: File close incremented");
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("DocEventsOnDocumentClosed", ex);
-            }
-            **/
+            TrackerUtilManager.TrackEditorFileActionEvent("file", "close", fileName);
         }
 
         
@@ -228,9 +209,12 @@ namespace SoftwareCo
 
             if (_pluginData != null && _pluginData.source.Count > 0 && _pluginData.keystrokes > 0)
             {
-
                 // create the aggregates, end the file times, gather the cumulatives
-                string softwareDataContent = await _pluginData.CompletePayloadAndReturnJsonString();
+                await _pluginData.CompletePayload();
+
+                TrackerUtilManager.TrackCodeTimeEventAsync(_pluginData);
+
+                string softwareDataContent = _pluginData.JsonStringify();
 
                 Logger.Info("Code Time: storing plugin data: " + softwareDataContent);
 

@@ -72,7 +72,6 @@ namespace SoftwareCo
         private bool _addedStatusBarButton = false;
 
         private CodeMetricsToolPane _codeMetricsWindow;
-
         private SoftwareRepoManager _softwareRepoUtil;
         private SessionSummaryManager sessionSummaryMgr;
         private DocEventManager docEventMgr;
@@ -166,23 +165,13 @@ namespace SoftwareCo
             }
         }
 
-        public async Task<string> GetSolutionDirectory()
-        {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
-            {
-                return Path.GetDirectoryName(ObjDte.Solution.FileName);
-            }
-            return null;
-        }
-
         public async void SolutionEventOpenedAsync()
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             if (!PLUGIN_READY)
             {
-                string solutionDir = await GetSolutionDirectory();
-                if (solutionDir == null || solutionDir.Equals(""))
+                string solutionDir = await ProjectManager.GetSolutionDirectory();
+                if (string.IsNullOrEmpty(solutionDir))
                 {
                     Task.Delay(3000).ContinueWith((task) =>
                     {
@@ -193,6 +182,8 @@ namespace SoftwareCo
                 // init the doc event mgr and inject ObjDte
                 docEventMgr = DocEventManager.Instance;
                 DocEventManager.ObjDte = ObjDte;
+
+                ProjectManager.ObjDte = ObjDte;
 
                 // init the session summary mgr
                 sessionSummaryMgr = SessionSummaryManager.Instance;
@@ -234,7 +225,7 @@ namespace SoftwareCo
 
                 // Create an AutoResetEvent to signal the timeout threshold in the
                 // timer callback has been reached.
-                var autoEvent = new AutoResetEvent(false);
+                AutoResetEvent autoEvent = new AutoResetEvent(false);
 
                 offlineDataTimer = new System.Threading.Timer(
                       SendOfflineData,
@@ -271,11 +262,6 @@ namespace SoftwareCo
                     CodeMetricsTreeManager.Instance.OpenCodeMetricsPaneAsync();
                 }
 
-                Task.Delay(3000).ContinueWith((task) =>
-                {
-                    EventManager.Instance.CreateCodeTimeEvent("resource", "load", "EditorActivate");
-                });
-
                 string PluginVersion = GetVersion();
                 Logger.Info(string.Format("Initialized Code Time v{0}", PluginVersion));
 
@@ -285,7 +271,7 @@ namespace SoftwareCo
 
         public void Dispose()
         {
-            EventManager.Instance.CreateCodeTimeEvent("resource", "unload", "EditorDeactivate");
+            TrackerUtilManager.TrackEditorActionEvent("editor", "deactivate");
             if (offlineDataTimer != null)
             {
                 _textDocKeyEvent.AfterKeyPress -= docEventMgr.AfterKeyPressedAsync;

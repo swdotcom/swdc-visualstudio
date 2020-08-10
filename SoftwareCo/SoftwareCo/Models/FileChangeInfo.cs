@@ -14,6 +14,7 @@ namespace SoftwareCo
         public long delete { get; set; }
         public long linesAdded { get; set; }
         public long linesRemoved { get; set; }
+        public long charsPasted { get; set; }
         public long open { get; set; }
         public long paste { get; set; }
         public long keystrokes { get; set; }
@@ -40,6 +41,7 @@ namespace SoftwareCo
             this.delete = SoftwareCoUtil.ConvertObjectToLong(dict, "delete");
             this.linesAdded = SoftwareCoUtil.ConvertObjectToLong(dict, "linesAdded");
             this.linesRemoved = SoftwareCoUtil.ConvertObjectToLong(dict, "linesRemoved");
+            this.charsPasted = SoftwareCoUtil.ConvertObjectToLong(dict, "charsPasted");
             this.open = SoftwareCoUtil.ConvertObjectToLong(dict, "open");
             this.paste = SoftwareCoUtil.ConvertObjectToLong(dict, "paste");
             this.keystrokes = SoftwareCoUtil.ConvertObjectToLong(dict, "keystrokes");
@@ -63,6 +65,7 @@ namespace SoftwareCo
             this.delete = info.delete;
             this.linesAdded = info.linesAdded;
             this.linesRemoved = info.linesRemoved;
+            this.charsPasted = info.charsPasted;
             this.open = info.open;
             this.paste = info.paste;
             this.keystrokes = info.keystrokes;
@@ -89,6 +92,7 @@ namespace SoftwareCo
             this.delete += fileInfo.delete;
             this.linesAdded += fileInfo.linesAdded;
             this.linesRemoved += fileInfo.linesRemoved;
+            this.charsPasted += fileInfo.charsPasted;
             this.open += fileInfo.open;
             this.paste += fileInfo.paste;
             this.keystrokes += fileInfo.keystrokes;
@@ -109,6 +113,7 @@ namespace SoftwareCo
             jsonObj.Add("delete", this.delete);
             jsonObj.Add("linesAdded", this.linesAdded);
             jsonObj.Add("linesRemoved", this.linesRemoved);
+            jsonObj.Add("charsPasted", this.charsPasted);
             jsonObj.Add("open", this.open);
             jsonObj.Add("paste", this.paste);
             jsonObj.Add("keystrokes", this.keystrokes);

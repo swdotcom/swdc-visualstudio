@@ -353,10 +353,10 @@ namespace SoftwareCo
 
         public async Task RebuildContributorMetricsAsync()
         {
-            string dir = DocEventManager._solutionDirectory;
+            string dir = ProjectManager.solutionDirectory;
             if ((dir == null || dir.Equals("")) && SoftwareCoPackage.PLUGIN_READY)
             {
-                dir = await DocEventManager.GetSolutionDirectory();
+                dir = await ProjectManager.GetSolutionDirectory();
             }
 
             RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(dir, true);
@@ -394,10 +394,10 @@ namespace SoftwareCo
         public async Task RebuildGitMetricsAsync()
         {
 
-            string dir = DocEventManager._solutionDirectory;
+            string dir = ProjectManager.solutionDirectory;
             if ((dir == null || dir.Equals("")) && SoftwareCoPackage.PLUGIN_READY)
             {
-                dir = await DocEventManager.GetSolutionDirectory();
+                dir = await ProjectManager.GetSolutionDirectory();
             }
 
             // if (dir == null || dir.Equals(""))
@@ -485,19 +485,30 @@ namespace SoftwareCo
         private void ConnectClickHandler(string loginType)
         {
             SoftwareCoUtil.launchLogin(loginType);
-            EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchLoginOnboard");
         }
 
         private void LaunchWebDashboard(object sender, MouseButtonEventArgs args)
         {
             SoftwareCoUtil.launchWebDashboard();
-            EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchWebDashboard");
+            UIElementEntity entity = new UIElementEntity();
+            entity.color = "blue";
+            entity.element_location = "ct_menu_tree";
+            entity.element_name = "ct_web_metrics_btn";
+            entity.cta_text = "See rich data visualizations in the web app";
+            entity.icon_name = "paw";
+            TrackerUtilManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
         }
 
         private void DashboardClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
             DashboardManager.Instance.LaunchCodeTimeDashboardAsync();
-            EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchDashboard");
+            UIElementEntity entity = new UIElementEntity();
+            entity.color = "white";
+            entity.element_location = "ct_menu_tree";
+            entity.element_name = "ct_summary_btn";
+            entity.cta_text = "View your summary report";
+            entity.icon_name = "guage";
+            TrackerUtilManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
         }
 
         private void RepoIdentifierClickHandler(object sender, MouseButtonEventArgs args)
@@ -513,7 +524,13 @@ namespace SoftwareCo
         private void LearnMoreClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
             DashboardManager.Instance.LaunchReadmeFileAsync();
-            EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchReadme");
+            UIElementEntity entity = new UIElementEntity();
+            entity.color = null;
+            entity.element_location = "ct_menu_tree";
+            entity.element_name = "ct_submit_feedback_btn";
+            entity.cta_text = "Submit feedback";
+            entity.icon_name = "envelope";
+            TrackerUtilManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
         }
 
         private void FeedbackClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)

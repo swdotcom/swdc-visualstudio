@@ -12,6 +12,8 @@ namespace SoftwareCo
         public string tag { get; set; }
         public string branch { get; set; }
         public string identifier { get; set; }
+        public string repoName { get; set; }
+        public string ownerId { get; set; }
         internal List<RepoMember> Members { get => members; set => members = value; }
 
         private List<RepoMember> members = new List<RepoMember>();
