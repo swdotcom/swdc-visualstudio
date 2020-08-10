@@ -83,6 +83,7 @@
     <Compile Include="Models\RepoResourceInfo.cs" />
     <Compile Include="Models\SessionSummary.cs" />
     <Compile Include="Models\TimeData.cs" />
+    <Compile Include="Models\UserEncryptedData.cs" />
     <Compile Include="SoftwareDashboardLaunchCommand.cs" />
     <Compile Include="SoftwareHttpManager.cs" />
     <Compile Include="SoftwareLoginCommand.cs" />

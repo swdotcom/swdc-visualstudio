@@ -4,7 +4,7 @@ namespace SoftwareCo
 {
     public class PluginEntity
     {
-        public string plugin_id { get; set; }
+        public int plugin_id { get; set; }
         public string plugin_version { get; set; }
         public string plugin_name { get; set; }
 

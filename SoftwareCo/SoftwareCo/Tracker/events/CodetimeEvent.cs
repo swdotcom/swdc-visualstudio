@@ -6,13 +6,13 @@ namespace SoftwareCo
 {
     public class CodetimeEvent
     {
-        public int keystrokes { get; set; }
-        public int chars_added { get; set; }
-        public int chars_deleted { get; set; }
-        public int chars_pasted { get; set; }
-        public int pastes { get; set; }
-        public int lines_added { get; set; }
-        public int lines_deleted { get; set; }
+        public long keystrokes { get; set; }
+        public long chars_added { get; set; }
+        public long chars_deleted { get; set; }
+        public long chars_pasted { get; set; }
+        public long pastes { get; set; }
+        public long lines_added { get; set; }
+        public long lines_deleted { get; set; }
         public string start_time { get; set; }
         public string end_time { get; set; }
 

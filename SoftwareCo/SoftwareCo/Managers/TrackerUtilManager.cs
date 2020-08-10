@@ -41,8 +41,8 @@ namespace SoftwareCo
                 codetimeEvent.pluginEntity = pluginEntity;
                 codetimeEvent.authEntity = authEntity;
 
-                codetimeEvent.fileEntity = GetFileEntity(fileInfo.file);
-                codetimeEvent.projectEntity = GetProjectEntity(fileInfo.file);
+                codetimeEvent.fileEntity = await GetFileEntity(fileInfo.file);
+                codetimeEvent.projectEntity = await GetProjectEntity(fileInfo.file);
 
                 if (repoEntity == null)
                 {
@@ -77,8 +77,8 @@ namespace SoftwareCo
             editorActionEvent.pluginEntity = GetPluginEntity();
             editorActionEvent.authEntity = GetAuthEntity();
 
-            editorActionEvent.fileEntity = GetFileEntity(fileName);
-            editorActionEvent.projectEntity = GetProjectEntity(fileName);
+            editorActionEvent.fileEntity = await GetFileEntity(fileName);
+            editorActionEvent.projectEntity = await GetProjectEntity(fileName);
 
             editorActionEvent.repoEntity = GetRepoEntity(editorActionEvent.projectEntity.project_directory);
 
@@ -94,7 +94,7 @@ namespace SoftwareCo
 
             UIInteractionEvent uIInteractionEvent = new UIInteractionEvent();
             uIInteractionEvent.interaction_type = interaction_type;
-            uIInteractionEvent.uiElementEntity = UIElementEntity;
+            uIInteractionEvent.uiElementEntity = uIElementEntity;
 
             // entities
             uIInteractionEvent.pluginEntity = GetPluginEntity();
@@ -105,9 +105,9 @@ namespace SoftwareCo
 
         private static AuthEntity GetAuthEntity()
         {
-            string jwt = FileManager.getItem("jwt");
+            string jwt = FileManager.getItem("jwt").ToString();
             AuthEntity authEntity = new AuthEntity();
-            authEntity.jwt = !string.IsNullOrEmpty(jwt) ? jwt.Split("JWT ")[1] : jwt;
+            authEntity.jwt = !string.IsNullOrEmpty(jwt) ? jwt.Substring("JWT ".Length) : jwt;
             return authEntity;
         }
 
@@ -120,9 +120,9 @@ namespace SoftwareCo
             return pluginEntity;
         }
 
-        public static ProjectEntity GetProjectEntity(string fileName)
+        public static async Task<ProjectEntity> GetProjectEntity(string fileName)
         {
-            FileDetails fd = ProjectManager.GetFileDatails(fileName);
+            FileDetails fd = await ProjectManager.GetFileDatails(fileName);
             ProjectEntity projectEntity = new ProjectEntity();
             projectEntity.project_directory = fd.project_directory;
             projectEntity.project_name = fd.project_name;
@@ -141,9 +141,9 @@ namespace SoftwareCo
             return repoEntity;
         }
 
-        public static FileEntity GetFileEntity(string fileName)
+        public static async Task<FileEntity> GetFileEntity(string fileName)
         {
-            FileDetails fd = ProjectManager.GetFileDatails(fileName);
+            FileDetails fd = await ProjectManager.GetFileDatails(fileName);
             FileEntity fileEntity = new FileEntity();
             fileEntity.file_name = fd.project_file_name;
             fileEntity.file_path = fd.full_file_name;

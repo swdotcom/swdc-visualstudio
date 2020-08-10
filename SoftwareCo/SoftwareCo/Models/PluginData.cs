@@ -118,7 +118,7 @@ namespace SoftwareCo
             return project;
         }
 
-        public async Task<string> CompletePayload()
+        public async Task CompletePayload()
         {
             RepoResourceInfo resourceInfo = null;
             // make sure we have a valid project and identifier if possible

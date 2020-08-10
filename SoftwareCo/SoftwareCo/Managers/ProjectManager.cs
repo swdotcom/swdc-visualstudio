@@ -2,6 +2,8 @@
 using System.IO;
 using EnvDTE;
 using EnvDTE80;
+using System;
+using Microsoft.VisualStudio.Shell;
 
 namespace SoftwareCo
 {
@@ -14,7 +16,7 @@ namespace SoftwareCo
          * This will return the project and file detail info.
          * A fileName does not have to be passed in to fetch the current project.
          **/
-        public static FileDetails GetFileDatails(string fileName)
+        public static async Task<FileDetails> GetFileDatails(string fileName)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             FileDetails fd = new FileDetails();
@@ -40,7 +42,7 @@ namespace SoftwareCo
                 if (!string.IsNullOrEmpty(fileName))
                 {
                     // get the project file name
-                    fd.project_file_name = fileName.Split(solutionDirectory)[1];
+                    fd.project_file_name = fileName.Substring(solutionDirectory.Length);
                 }
 
                 try
@@ -60,16 +62,18 @@ namespace SoftwareCo
                 fd.project_name = "Unnamed";
                 fd.project_directory = "Untitled";
             }
+            return fd;
         }
 
         public static async Task<string> GetSolutionDirectory()
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            string solutionDirectory = "";
             if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
             {
-                _solutionDirectory = Path.GetDirectoryName(ObjDte.Solution.FileName);
+                solutionDirectory = Path.GetDirectoryName(ObjDte.Solution.FileName);
             }
-            return _solutionDirectory;
+            return solutionDirectory;
         }
     }
 }

@@ -179,7 +179,7 @@ namespace SoftwareCo
                     }
 
                     // get the ownerId and repoName from the identifier
-                    string[] parts = identifier.Split("/");
+                    string[] parts = identifier.Split('/');
                     if (parts.Length > 2)
                     {
                         string repoNamePart = parts[parts.Length - 1];
