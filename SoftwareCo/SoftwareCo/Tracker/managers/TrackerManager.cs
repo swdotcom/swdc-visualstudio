@@ -68,18 +68,21 @@ namespace SoftwareCo
         {
             CacheManager.jwt = codetimeEvent.authEntity != null ? codetimeEvent.authEntity.jwt : "";
             SelfDescribing selfDescribing = codetimeEvent.buildContexts();
+            t.Track(selfDescribing);
         }
 
         public void TrackEditorActionEvent(EditorActionEvent editorActionEvent)
         {
             CacheManager.jwt = editorActionEvent.authEntity != null ? editorActionEvent.authEntity.jwt : "";
             SelfDescribing selfDescribing = editorActionEvent.buildContexts();
+            t.Track(selfDescribing);
         }
 
         public void TrackUIInteractionEvent(UIInteractionEvent uIInteractionEvent)
         {
             CacheManager.jwt = uIInteractionEvent.authEntity != null ? uIInteractionEvent.authEntity.jwt : "";
             SelfDescribing selfDescribing = uIInteractionEvent.buildContexts();
+            t.Track(selfDescribing);
         }
 
         private void sendEvent(SelfDescribing selfDescribing)

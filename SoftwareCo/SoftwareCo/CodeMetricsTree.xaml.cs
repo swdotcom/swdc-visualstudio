@@ -372,23 +372,6 @@ namespace SoftwareCo
                 // build the repo contributors
                 //
             }
-
-
-
-            // < TreeView x: Name = "TopCodeTimeFiles" Background = "Transparent" BorderBrush = "Transparent" Width = "auto" Height = "auto" ScrollViewer.VerticalScrollBarVisibility = "Auto" ScrollViewer.HorizontalScrollBarVisibility = "Disabled" >
-
-            // < TreeView.Resources >
-
-            // < SolidColorBrush x: Key = "{x:Static SystemColors.HighlightBrushKey}"
-            // Color = "Transparent" />
-            // < SolidColorBrush x: Key = "{x:Static SystemColors.HighlightTextBrushKey}"
-            // Color = "Transparent" />
-            // < SolidColorBrush x: Key = "{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
-            // Color = "Transparent" />
-            // < SolidColorBrush x: Key = "{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
-            // Color = "Transparent" />
-            //  </ TreeView.Resources >
-            // </ TreeView >
         }
 
         public async Task RebuildGitMetricsAsync()
@@ -399,17 +382,6 @@ namespace SoftwareCo
             {
                 dir = await ProjectManager.GetSolutionDirectory();
             }
-
-            // if (dir == null || dir.Equals(""))
-            // {
-                // Uncommitted.Visibility = Visibility.Hidden;
-                // CommittedToday.Visibility = Visibility.Hidden;
-                // return;
-            // } else
-            // {
-                // Uncommitted.Visibility = Visibility.Visible;
-                // CommittedToday.Visibility = Visibility.Visible;
-            // }
 
             string name = "";
             try
@@ -525,17 +497,24 @@ namespace SoftwareCo
         {
             DashboardManager.Instance.LaunchReadmeFileAsync();
             UIElementEntity entity = new UIElementEntity();
-            entity.color = null;
+            entity.color = "yellow";
             entity.element_location = "ct_menu_tree";
-            entity.element_name = "ct_submit_feedback_btn";
-            entity.cta_text = "Submit feedback";
-            entity.icon_name = "envelope";
+            entity.element_name = "ct_learn_more_btn";
+            entity.cta_text = "View the Code Time Readme to learn more";
+            entity.icon_name = "document";
             TrackerUtilManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
         }
 
         private void FeedbackClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
             SoftwareCoUtil.launchMailToCody();
+            UIElementEntity entity = new UIElementEntity();
+            entity.color = null;
+            entity.element_location = "ct_menu_tree";
+            entity.element_name = "ct_submit_feedback_btn";
+            entity.cta_text = "Send us an email";
+            entity.icon_name = "envelop";
+            TrackerUtilManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
         }
 
         private TreeViewItem BuildMetricNode(string id, string label, string iconName = null)

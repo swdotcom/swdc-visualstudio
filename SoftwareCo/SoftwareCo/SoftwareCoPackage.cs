@@ -170,6 +170,9 @@ namespace SoftwareCo
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             if (!PLUGIN_READY)
             {
+                // make sure the proj manager has the objdte before anything else requests project dir info
+                ProjectManager.ObjDte = ObjDte;
+
                 string solutionDir = await ProjectManager.GetSolutionDirectory();
                 if (string.IsNullOrEmpty(solutionDir))
                 {
@@ -183,7 +186,8 @@ namespace SoftwareCo
                 docEventMgr = DocEventManager.Instance;
                 DocEventManager.ObjDte = ObjDte;
 
-                ProjectManager.ObjDte = ObjDte;
+                // initialize the tracker manager
+                TrackerUtilManager.init();
 
                 // init the session summary mgr
                 sessionSummaryMgr = SessionSummaryManager.Instance;
