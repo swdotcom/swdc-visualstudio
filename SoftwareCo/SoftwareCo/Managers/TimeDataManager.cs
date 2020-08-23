@@ -132,7 +132,7 @@ namespace SoftwareCo
             {
                 return;
             }
-            string MethodName = "saveTimeDataSummaryToDisk";
+
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
 
             List<TimeData> list = GetTimeDataList();

@@ -290,9 +290,9 @@ namespace SoftwareCo
 
                 Process.Start(url);
 
-                if (!SoftwareUserSession.checkingLoginState)
+                if (!SoftwareUserManager.checkingLoginState)
                 {
-                    SoftwareUserSession.RefetchUserStatusLazily(40);
+                    SoftwareUserManager.RefetchUserStatusLazily(40);
                 }
             }
             catch (Exception ex)

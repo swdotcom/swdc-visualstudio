@@ -100,7 +100,6 @@ namespace SoftwareCo
 
         public void SaveSessionSummaryToDisk(SessionSummary sessionSummary)
         {
-            string MethodName = "saveSessionSummaryToDisk";
             string sessionSummaryFile = FileManager.getSessionSummaryFile();
 
             if (FileManager.SessionSummaryFileExists())
@@ -123,7 +122,6 @@ namespace SoftwareCo
 
         public async Task UpdateStatusBarWithSummaryDataAsync()
         {
-            string MethodName = "UpdateStatusBarWithSummaryDataAsync";
 
             CodeTimeSummary ctSummary = TimeDataManager.Instance.GetCodeTimeSummary();
 

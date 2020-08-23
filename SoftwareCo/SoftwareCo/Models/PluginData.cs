@@ -37,13 +37,13 @@ namespace SoftwareCo
         public PluginData(string projectName, string projectDirectory)
         {
             this.type = "Events";
-            this.pluginId = Constants.PluginId;
+            this.pluginId = EnvUtil.getPluginId();
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
             start = nowTime.now;
             local_start = nowTime.local_now;
             offset = nowTime.offset_minutes;
-            version = SoftwareCoPackage.GetVersion();
-            os = SoftwareCoPackage.GetOs();
+            version = EnvUtil.GetVersion();
+            os = EnvUtil.GetOs();
             source = new List<PluginDataFileInfo>();
             project = GetPluginProjectUsingDir(projectDirectory);
             cumulative_editor_seconds = 0;

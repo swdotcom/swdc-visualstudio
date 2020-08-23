@@ -8,9 +8,6 @@ using Microsoft.VisualStudio.Shell;
 using System.IO;
 using System.Net.Http;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Windows.Forms;
-using System.Threading.Tasks;
 using EnvDTE80;
 
 namespace SoftwareCo
@@ -53,7 +50,7 @@ namespace SoftwareCo
         private DocumentEvents _docEvents;
         private TextDocumentKeyPressEvents _textDocKeyEvent;
 
-        private System.Threading.Timer offlineDataTimer;
+        private Timer offlineDataTimer;
 
         // Used by Constants for version info
         public static DTE ObjDte;
@@ -77,7 +74,6 @@ namespace SoftwareCo
             // any Visual Studio service because at this point the package object is created but
             // not sited yet inside Visual Studio environment. The place to do all the other
             // initialization is the Initialize method.
-            Console.WriteLine("Initializing SoftwareCo");
         }
 
 
@@ -89,7 +85,6 @@ namespace SoftwareCo
         /// </summary>
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
-            Console.WriteLine("Initializing SoftwareCo - ASYNC");
             try
             {
                 await JoinableTaskFactory.SwitchToMainThreadAsync();
@@ -98,7 +93,7 @@ namespace SoftwareCo
                 ObjDte = await GetServiceAsync(typeof(DTE)) as DTE;
                 _dteEvents = ObjDte.Events.DTEEvents;
 
-                Task.Delay(2000).ContinueWith((task) => { InitializeListenersAsync(); });
+                InitializeListenersAsync();
                 
             }
             catch (Exception ex)
@@ -106,28 +101,15 @@ namespace SoftwareCo
                 Logger.Error("Error in InitializeAsync", ex);
                 
             }
-           
-        }
-
-        public static string GetVersion()
-        {
-            return string.Format("{0}.{1}.{2}", CodeTimeAssembly.Version.Major, CodeTimeAssembly.Version.Minor, CodeTimeAssembly.Version.Build);
-        }
-
-        public static string GetOs()
-        {
-            return System.Environment.OSVersion.VersionString;
         }
 
         public async Task InitializeListenersAsync()
         {
-            string MethodName = "InitializeListenersAsync";
             try
             {
                 await JoinableTaskFactory.SwitchToMainThreadAsync();
-                string PluginVersion = GetVersion();
+                string PluginVersion = EnvUtil.GetVersion();
                 Logger.Info(string.Format("Initializing Code Time v{0}", PluginVersion));
-                Logger.FileLog("Initializing Code Time", MethodName);
 
                 PackageManager.initialize(this, ObjDte);
 
@@ -224,7 +206,7 @@ namespace SoftwareCo
                     CodeMetricsTreeManager.Instance.OpenCodeMetricsPaneAsync();
                 }
 
-                string PluginVersion = GetVersion();
+                string PluginVersion = EnvUtil.GetVersion();
                 Logger.Info(string.Format("Initialized Code Time v{0}", PluginVersion));
 
                 ProcessKeystrokePayload(null);
@@ -265,38 +247,15 @@ namespace SoftwareCo
             DocEventManager.Instance.PostData();
         }
 
-        private async void ProcessRepoJobs(Object stateInfo)
-        {
-            try
-            {
-                SoftwareUserSession.SendHeartbeat("HOURLY");
-
-                string dir = await PackageManager.GetSolutionDirectory();
-
-                if (dir != null)
-                {
-                    _softwareRepoUtil.GetHistoricalCommitsAsync(dir);
-
-                    _softwareRepoUtil.ProcessRepoMembers(dir);
-                }
-            }
-            catch (Exception ex)
-            {
-
-                Logger.Error("ProcessHourlyJobs, error: " + ex.Message, ex);
-            }
-            
-        }
-
         public static async void SendOfflineData(object stateinfo)
         {
             SendOfflinePluginBatchData();
         }
 
         public static async void SendOfflinePluginBatchData() {
-            string MethodName = "SendOfflineData";
+
             Logger.Info(DateTime.Now.ToString());
-            bool online = await SoftwareUserSession.IsOnlineAsync();
+            bool online = await SoftwareUserManager.IsOnlineAsync();
 
             if (!online)
             {
@@ -351,21 +310,19 @@ namespace SoftwareCo
         {
             try
             {
-                string MethodName = "InitializeUserInfo";
-                Logger.FileLog("Initializing User", MethodName);
-                bool online = await SoftwareUserSession.IsOnlineAsync();
+                bool online = await SoftwareUserManager.IsOnlineAsync();
                 bool softwareSessionFileExists = FileManager.softwareSessionFileExists();
                 object jwt = FileManager.getItem("jwt");
                 if (!softwareSessionFileExists || jwt == null || jwt.ToString().Equals(""))
                 {
-                    string result = await SoftwareUserSession.CreateAnonymousUserAsync(online);
+                    string result = await SoftwareUserManager.CreateAnonymousUserAsync(online);
                 }
 
                 // check if the "name" is set. if not, get the user
                 string name = FileManager.getItemAsString("name");
                 if (name == null || name.Equals(""))
                 {
-                    await SoftwareUserSession.IsLoggedOn(online);
+                    await SoftwareUserManager.IsLoggedOn(online);
                     SoftwareLoginCommand.UpdateEnabledState(true);
                     SoftwareLaunchCommand.UpdateEnabledState(true);
                 }
@@ -375,13 +332,6 @@ namespace SoftwareCo
                 {
                     // update the session threshold in seconds config
                     FileManager.setNumericItem("sessionThresholdInSec", Constants.DEFAULT_SESSION_THRESHOLD_SECONDS);
-                }
-
-                if (online)
-                {
-
-                    // send heartbeat
-                    SoftwareUserSession.SendHeartbeat("INITIALIZED");
                 }
 
                 // fetch the session summary
@@ -396,27 +346,6 @@ namespace SoftwareCo
             
         }
 
-        
-
-        private async Task ShowOfflinePromptAsync()
-        {
-            string msg = "Our service is temporarily unavailable. We will try to reconnect again in 10 minutes. Your status bar will not update at this time.";
-            string caption = "Code Time";
-            MessageBoxButtons buttons = MessageBoxButtons.OK;
-
-            // Displays the MessageBox.
-            System.Windows.Forms.MessageBox.Show(msg, caption, buttons);
-        }
-
         #endregion
-
-        public static class CodeTimeAssembly
-        {
-            static readonly Assembly Reference = typeof(CodeTimeAssembly).Assembly;
-           
-            public static readonly Version Version = Reference.GetName().Version;
-        }
-
-
     }
 }

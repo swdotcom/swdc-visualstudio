@@ -2,16 +2,12 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System.Threading;
 using System.Windows.Forms;
 
 namespace SoftwareCo
 {
-    class SoftwareUserSession
+    class SoftwareUserManager
     {
-
-        private static bool loggedInCacheState = false;
-        private static string lastJwt = null;
         public static bool checkingLoginState = false;
         public static bool isOnline = true;
         public static long lastOnlineCheck = 0;
@@ -184,7 +180,6 @@ namespace SoftwareCo
                     {
                         FileManager.setItem("name", user.email);
                         FileManager.setItem("jwt", user.plugin_jwt);
-                        lastJwt = user.plugin_jwt;
                         return true;
                     }
 
@@ -209,12 +204,10 @@ namespace SoftwareCo
                                     FileManager.setItem("name", name);
                                 }
                                 FileManager.setItem("jwt", pluginJwt);
-                                lastJwt = pluginJwt;
                             }
                             else if (state.Equals("NOT_FOUND"))
                             {
                                 FileManager.setItem("jwt", null);
-                                lastJwt = null;
                             }
                         }
                     }
@@ -253,7 +246,6 @@ namespace SoftwareCo
                         string msg = "Successfully logged on to Code Time.";
                         const string caption = "Code Time";
                         MessageBox.Show(msg, caption, MessageBoxButtons.OK);
-                        SoftwareUserSession.SendHeartbeat("STATE_CHANGE: LOGGED_IN:true");
 
                         // fetch the session summary to get the user's averages
                         WallclockManager.Instance.UpdateSessionSummaryFromServerAsync();
@@ -269,35 +261,6 @@ namespace SoftwareCo
               
             }
             
-        }
-
-        public static async void SendHeartbeat(string reason)
-        {
-
-            string jwt = FileManager.getItemAsString("jwt");
-            bool online = await IsOnlineAsync();
-            if (online && jwt != null)
-            {
-
-                string version = Constants.EditorVersion;
-
-                JsonObject jsonObj = new JsonObject();
-                jsonObj.Add("version", SoftwareCoPackage.GetVersion());
-                jsonObj.Add("os", SoftwareCoPackage.GetOs());
-                jsonObj.Add("pluginId", Constants.PluginId);
-                jsonObj.Add("start", SoftwareCoUtil.GetNowInSeconds());
-                jsonObj.Add("trigger_annotation", reason);
-                jsonObj.Add("hostname", SoftwareCoUtil.getHostname());
-
-                string api = "/data/heartbeat";
-                string jsonData = jsonObj.ToString();
-                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, api, jsonData, jwt);
-
-                if (!SoftwareHttpManager.IsOk(response))
-                {
-                    Logger.Warning("Code Time: Unable to send heartbeat");
-                }
-            }
         }
     }
 }

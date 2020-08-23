@@ -39,8 +39,6 @@ namespace SoftwareCo
             string summaryContent = "";
             string summaryInfoFile = FileManager.getSessionSummaryInfoFile();
 
-            bool online = await SoftwareUserSession.IsOnlineAsync();
-
 
             HttpResponseMessage resp =
             await SoftwareHttpManager.SendDashboardRequestAsync(HttpMethod.Get, "/dashboard?showMusic=false&showGit=false&showRank=false&showToday=false");

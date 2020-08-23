@@ -42,7 +42,7 @@ namespace SoftwareCo
                 return null;
             }
 
-            if (!isOnlineCheck && !SoftwareUserSession.isOnline)
+            if (!isOnlineCheck && !SoftwareUserManager.isOnline)
             {
                 return null;
             }

@@ -45,7 +45,6 @@ namespace SoftwareCo
 
         public async Task SaveFileChangeInfoDataSummaryToDisk(FileChangeInfo data)
         {
-            string MethodName = "SaveFileChangeInfoDataSummaryToDisk";
             List<FileChangeInfo> changeInfos = GetFileChangeInfoSummaryList();
             bool foundExisting = false;
             foreach (FileChangeInfo changeInfo in changeInfos)

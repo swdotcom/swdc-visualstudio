@@ -54,8 +54,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Constants.cs" />
-    <Compile Include="Guids.cs" />
+    <Compile Include="Utils\Constants.cs" />
+    <Compile Include="Utils\EnvUtil.cs" />
+    <Compile Include="Utils\Guids.cs" />
     <Compile Include="Managers\CodeMetricsTreeManager.cs" />
     <Compile Include="Managers\DashboardManager.cs" />
     <Compile Include="Managers\DocEventManager.cs" />
@@ -66,7 +67,6 @@
     <Compile Include="Managers\ReportManager.cs" />
     <Compile Include="Managers\SessionSummaryManager.cs" />
     <Compile Include="Managers\TimeDataManager.cs" />
-    <Compile Include="Models\CodeTimeEvent.cs" />
     <Compile Include="Models\CodeTimeSummary.cs" />
     <Compile Include="Models\CommitChangeStats.cs" />
     <Compile Include="Models\CommitInfo.cs" />
@@ -87,20 +87,20 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="SoftwareHttpManager.cs" />
+    <Compile Include="Client\SoftwareHttpManager.cs" />
     <Compile Include="Commands\SoftwareLoginCommand.cs" />
-    <Compile Include="Logger.cs" />
+    <Compile Include="Utils\Logger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SimpleJson.cs" />
+    <Compile Include="Utils\SimpleJson.cs" />
     <Compile Include="SoftwareCoPackage.cs" />
-    <Compile Include="SoftwareCoUtil.cs" />
+    <Compile Include="Utils\SoftwareCoUtil.cs" />
     <Compile Include="Commands\SoftwareLaunchCommand.cs" />
     <Compile Include="Commands\SoftwareOpenCodeMetricsTreeCommand.cs" />
-    <Compile Include="SoftwareRepoManager.cs" />
+    <Compile Include="Managers\SoftwareRepoManager.cs" />
     <Compile Include="Commands\SoftwareTopFortyCommand.cs" />
-    <Compile Include="SoftwareUserSession.cs" />
+    <Compile Include="Managers\SoftwareUserManager.cs" />
     <Compile Include="Commands\SoftwareToggleStatusInfoCommand.cs" />
-    <Compile Include="StatusBarButton.xaml.cs">
+    <Compile Include="Statusbar\StatusBarButton.xaml.cs">
       <DependentUpon>StatusBarButton.xaml</DependentUpon>
     </Compile>
     <Compile Include="Managers\WallclockManager.cs" />
@@ -346,7 +346,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="StatusBarButton.xaml">
+    <Page Include="Statusbar\StatusBarButton.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
