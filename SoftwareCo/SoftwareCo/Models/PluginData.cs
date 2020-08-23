@@ -97,7 +97,7 @@ namespace SoftwareCo
 
         public static async Task<PluginDataProject> GetPluginProject()
         {
-            string projectDir = await DocEventManager.GetSolutionDirectory();
+            string projectDir = await PackageManager.GetSolutionDirectory();
             return GetPluginProjectUsingDir(projectDir);
         }
 
@@ -125,7 +125,7 @@ namespace SoftwareCo
             if (this.project == null || this.project.directory == null || this.project.directory.Equals("Untitled"))
             {
                 // try to get a valid project
-                string projectDir = await DocEventManager.GetSolutionDirectory();
+                string projectDir = await PackageManager.GetSolutionDirectory();
                 if (projectDir != null && !projectDir.Equals(""))
                 {
                     FileInfo fi = new FileInfo(projectDir);

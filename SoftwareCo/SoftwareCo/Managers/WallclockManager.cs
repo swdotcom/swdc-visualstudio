@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using EnvDTE80;
 
 namespace SoftwareCo
 {
@@ -23,8 +22,6 @@ namespace SoftwareCo
         private long _wctime = 0;
         private string _currentDay = "";
 
-        private DTE2 ObjDte;
-        private SoftwareCoPackage package;
         private SessionSummaryManager sessionSummaryMgr;
 
         public static WallclockManager Instance { get { return lazy.Value; } }
@@ -70,12 +67,6 @@ namespace SoftwareCo
             return (tgd.elapsed_seconds < EDITOR_ACTIVE_THRESHOLD) ? true : false;
         }
 
-        public void InjectAsyncPackage(SoftwareCoPackage package, DTE2 ObjDte)
-        {
-            this.package = package;
-            this.ObjDte = ObjDte;
-        }
-
         public long GetWcTimeInMinutes()
         {
             this._wctime = FileManager.getItemAsLong("wctime");
@@ -95,8 +86,8 @@ namespace SoftwareCo
 
         private async Task DispatchUpdatesProcessorAsync() {
             SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
-            package.RebuildCodeMetricsAsync();
-            package.RebuildGitMetricsAsync();
+            PackageManager.RebuildCodeMetricsAsync();
+            PackageManager.RebuildGitMetricsAsync();
         }
 
         public async void GetNewDayChecker(object stateinfo)
@@ -114,9 +105,6 @@ namespace SoftwareCo
 
                 // clear the last payload in memory
                 FileManager.ClearLastSavedKeystrokeStats();
-
-                // send the offline events
-                EventManager.Instance.SendOfflineEvents();
 
                 // send the offline TimeData payloads
                 // this will clear the time data summary as well
@@ -169,7 +157,7 @@ namespace SoftwareCo
                         }
                     }
 
-                    package.RebuildMenuButtonsAsync();
+                    PackageManager.RebuildMenuButtonsAsync();
                 }
             }
         }

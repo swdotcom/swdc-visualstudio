@@ -40,7 +40,12 @@ namespace SoftwareCo
 
         public async void OpenCodeMetricsPaneAsync()
         {
-            await package.OpenCodeMetricsPaneAsync();
+            PackageManager.OpenCodeMetricsPaneAsync();
+        }
+
+        public async void ToggleStatusbarMetrics()
+        {
+            PackageManager.ToggleStatusbarMetrics();
         }
     }
 }

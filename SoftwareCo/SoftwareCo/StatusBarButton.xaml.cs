@@ -10,6 +10,8 @@ namespace SoftwareCo
     /// </summary>
     public partial class StatusBarButton : UserControl
     {
+
+        public static Boolean showingStatusbarMetrics = true;
         public StatusBarButton()
         {
             InitializeComponent();
@@ -18,6 +20,17 @@ namespace SoftwareCo
 
         public async Task UpdateDisplayAsync(string label, string iconName)
         {
+            if (!showingStatusbarMetrics)
+            {
+                label = "";
+                iconName = "clock.png";
+            }
+
+            if (string.IsNullOrEmpty(iconName))
+            {
+                iconName = "cpaw.png";
+            }
+
             await Dispatcher.BeginInvoke(new Action(() => {
                 string tooltip = "Active code time today. Click to see more from Code Time.";
                 string email = FileManager.getItemAsString("name");
@@ -39,7 +52,6 @@ namespace SoftwareCo
             try
             {
                 CodeMetricsTreeManager.Instance.OpenCodeMetricsPaneAsync();
-                EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "ShowTreeView");
             }
             catch (Exception e)
             {

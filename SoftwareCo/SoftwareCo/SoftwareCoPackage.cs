@@ -4,20 +4,14 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Task = System.Threading.Tasks.Task;
 using EnvDTE;
-using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 using System.IO;
 using System.Net.Http;
 using System.Collections.Generic;
 using System.Reflection;
-using Microsoft.VisualStudio;
 using System.Windows.Forms;
-using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Controls;
-using System.Windows;
-using System.Windows.Media;
+using EnvDTE80;
 
 namespace SoftwareCo
 {
@@ -41,7 +35,7 @@ namespace SoftwareCo
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
     [Guid(SoftwareCoPackage.PackageGuidString)]
-    [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
+    // [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideToolWindow(typeof(CodeMetricsToolPane),
@@ -58,20 +52,11 @@ namespace SoftwareCo
         private DTEEvents _dteEvents;
         private DocumentEvents _docEvents;
         private TextDocumentKeyPressEvents _textDocKeyEvent;
-        private SolutionEvents _solutionEvents;
 
-
-        private System.Threading.Timer repoCommitsTimer;
         private System.Threading.Timer offlineDataTimer;
-        private System.Threading.Timer keystrokeTimer;
 
         // Used by Constants for version info
-        public static DTE2 ObjDte;
-
-        private StatusBarButton _statusBarButton;
-        private bool _addedStatusBarButton = false;
-
-        private CodeMetricsToolPane _codeMetricsWindow;
+        public static DTE ObjDte;
 
         private SoftwareRepoManager _softwareRepoUtil;
         private SessionSummaryManager sessionSummaryMgr;
@@ -79,8 +64,6 @@ namespace SoftwareCo
 
         private static int THIRTY_SECONDS = 1000 * 30;
         private static int ONE_MINUTE = THIRTY_SECONDS * 2;
-        private static int ONE_HOUR = ONE_MINUTE * 60;
-        private static int THIRTY_MINUTES = ONE_MINUTE * 30;
         public static bool PLUGIN_READY = false;
 
         #endregion
@@ -94,7 +77,9 @@ namespace SoftwareCo
             // any Visual Studio service because at this point the package object is created but
             // not sited yet inside Visual Studio environment. The place to do all the other
             // initialization is the Initialize method.
+            Console.WriteLine("Initializing SoftwareCo");
         }
+
 
         #region Package Members
 
@@ -104,12 +89,13 @@ namespace SoftwareCo
         /// </summary>
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
+            Console.WriteLine("Initializing SoftwareCo - ASYNC");
             try
             {
                 await JoinableTaskFactory.SwitchToMainThreadAsync();
                 base.Initialize();
 
-                ObjDte = await GetServiceAsync(typeof(DTE)) as DTE2;
+                ObjDte = await GetServiceAsync(typeof(DTE)) as DTE;
                 _dteEvents = ObjDte.Events.DTEEvents;
 
                 Task.Delay(2000).ContinueWith((task) => { InitializeListenersAsync(); });
@@ -143,7 +129,7 @@ namespace SoftwareCo
                 Logger.Info(string.Format("Initializing Code Time v{0}", PluginVersion));
                 Logger.FileLog("Initializing Code Time", MethodName);
 
-                _statusBarButton = new StatusBarButton();
+                PackageManager.initialize(this, ObjDte);
 
                 await this.InitializeUserInfoAsync();
 
@@ -151,13 +137,8 @@ namespace SoftwareCo
                 Events2 events = (Events2)ObjDte.Events;
                 _textDocKeyEvent = events.TextDocumentKeyPressEvents;
                 _docEvents = events.DocumentEvents;
-                _solutionEvents = events.SolutionEvents;
 
-                // _solutionEvents.Opened += this.SolutionEventOpenedAsync;
-                Task.Delay(3000).ContinueWith((task) =>
-                {
-                    SolutionEventOpenedAsync();
-                });
+                SolutionEventOpenedAsync();
 
             }
             catch (Exception ex)
@@ -166,22 +147,12 @@ namespace SoftwareCo
             }
         }
 
-        public async Task<string> GetSolutionDirectory()
-        {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
-            {
-                return Path.GetDirectoryName(ObjDte.Solution.FileName);
-            }
-            return null;
-        }
-
         public async void SolutionEventOpenedAsync()
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            await this.JoinableTaskFactory.SwitchToMainThreadAsync();
             if (!PLUGIN_READY)
             {
-                string solutionDir = await GetSolutionDirectory();
+                string solutionDir = await PackageManager.GetSolutionDirectory();
                 if (solutionDir == null || solutionDir.Equals(""))
                 {
                     Task.Delay(3000).ContinueWith((task) =>
@@ -192,14 +163,10 @@ namespace SoftwareCo
                 }
                 // init the doc event mgr and inject ObjDte
                 docEventMgr = DocEventManager.Instance;
-                DocEventManager.ObjDte = ObjDte;
 
                 // init the session summary mgr
                 sessionSummaryMgr = SessionSummaryManager.Instance;
                 sessionSummaryMgr.InjectAsyncPackage(this);
-
-                // init the event manager and inject this
-                EventManager.Instance.InjectAsyncPackage(this);
 
                 // update the latestPayloadTimestampEndUtc
                 NowTime nowTime = SoftwareCoUtil.GetNowTime();
@@ -207,7 +174,6 @@ namespace SoftwareCo
 
                 // init the wallclock
                 WallclockManager wallclockMgr = WallclockManager.Instance;
-                wallclockMgr.InjectAsyncPackage(this, ObjDte);
 
                 // setup event handlers
                 _textDocKeyEvent.AfterKeyPress += docEventMgr.AfterKeyPressedAsync;
@@ -242,20 +208,7 @@ namespace SoftwareCo
                       ONE_MINUTE,
                       ONE_MINUTE * 15);
 
-                repoCommitsTimer = new System.Threading.Timer(
-                    ProcessRepoJobs,
-                    autoEvent,
-                    ONE_MINUTE * 5,
-                    ONE_MINUTE * 20);
-
-                keystrokeTimer = new System.Threading.Timer(
-                    ProcessKeystrokePayload,
-                    autoEvent,
-                    ONE_MINUTE,
-                    ONE_MINUTE);
-
-                // initialize the status bar before we fetch the summary data
-                InitializeStatusBar();
+                
 
                 // make sure the last payload is in memory
                 FileManager.GetLastSavedKeystrokeStats();
@@ -271,13 +224,10 @@ namespace SoftwareCo
                     CodeMetricsTreeManager.Instance.OpenCodeMetricsPaneAsync();
                 }
 
-                Task.Delay(3000).ContinueWith((task) =>
-                {
-                    EventManager.Instance.CreateCodeTimeEvent("resource", "load", "EditorActivate");
-                });
-
                 string PluginVersion = GetVersion();
                 Logger.Info(string.Format("Initialized Code Time v{0}", PluginVersion));
+
+                ProcessKeystrokePayload(null);
 
                 PLUGIN_READY = true;
             }
@@ -285,7 +235,6 @@ namespace SoftwareCo
 
         public void Dispose()
         {
-            EventManager.Instance.CreateCodeTimeEvent("resource", "unload", "EditorDeactivate");
             if (offlineDataTimer != null)
             {
                 _textDocKeyEvent.AfterKeyPress -= docEventMgr.AfterKeyPressedAsync;
@@ -310,19 +259,19 @@ namespace SoftwareCo
 
         #region Methods
 
-        private void ProcessKeystrokePayload(Object stateInfo)
+        protected void ProcessKeystrokePayload(Object stateInfo)
         {
             // SoftwareCoUtil.SetTimeout(ONE_MINUTE, PostData, false);
             DocEventManager.Instance.PostData();
         }
 
-        private void ProcessRepoJobs(Object stateInfo)
+        private async void ProcessRepoJobs(Object stateInfo)
         {
             try
             {
                 SoftwareUserSession.SendHeartbeat("HOURLY");
 
-                string dir = DocEventManager._solutionDirectory;
+                string dir = await PackageManager.GetSolutionDirectory();
 
                 if (dir != null)
                 {
@@ -447,141 +396,7 @@ namespace SoftwareCo
             
         }
 
-        public async Task UpdateStatusBarButtonText(String text, String iconName = null)
-        {
-            await JoinableTaskFactory.SwitchToMainThreadAsync();
-            await InitializeStatusBar();
-
-            if (!EventManager.Instance.IsShowingStatusText())
-            {
-                text = "";
-                iconName = "clock.png";
-            }
-
-            if (iconName == null || iconName.Equals(""))
-            {
-                iconName = "cpaw.png";
-            }
-
-            _statusBarButton.UpdateDisplayAsync(text, iconName);
-        }
-
-        public async Task InitializeStatusBar()
-        {
-            if (_addedStatusBarButton)
-            {
-                return;
-            }
-            await JoinableTaskFactory.SwitchToMainThreadAsync();
-            DockPanel statusBarObj = FindChildControl<DockPanel>(System.Windows.Application.Current.MainWindow, "StatusBarPanel");
-            if (statusBarObj != null)
-            {
-                statusBarObj.Children.Insert(0, _statusBarButton);
-                _addedStatusBarButton = true;
-            }
-        }
-
-        public T FindChildControl<T>(DependencyObject parent, string childName)
-          where T : DependencyObject
-        {
-            if (parent == null) return null;
-
-            T foundChild = null;
-
-            int childrenCount = VisualTreeHelper.GetChildrenCount(parent);
-            for (int i = 0; i < childrenCount; i++)
-            {
-                var child = VisualTreeHelper.GetChild(parent, i);
-
-                T childType = child as T;
-                if (childType == null)
-                {
-
-                    foundChild = FindChildControl<T>(child, childName);
-
-
-                    if (foundChild != null) break;
-                }
-                else if (!string.IsNullOrEmpty(childName))
-                {
-
-                    if (child is FrameworkElement frameworkElement && frameworkElement.Name == childName)
-                    {
-
-                        foundChild = (T)child;
-                        break;
-                    }
-                }
-                else
-                {
-                    foundChild = (T)child;
-                    break;
-                }
-            }
-
-            return foundChild;
-        }
-
-        public async Task RebuildMenuButtonsAsync()
-        {
-            if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
-            {
-                _codeMetricsWindow.RebuildMenuButtons();
-            }
-
-            await JoinableTaskFactory.SwitchToMainThreadAsync();
-            _codeMetricsWindow = (CodeMetricsToolPane)this.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
-            if ((null == _codeMetricsWindow) || (null == _codeMetricsWindow.Frame))
-            {
-                throw new NotSupportedException("Cannot create tool window");
-            }
-            _codeMetricsWindow.RebuildMenuButtons();
-        }
-
-        public async Task RebuildCodeMetricsAsync()
-        {
-            if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
-            {
-                _codeMetricsWindow.RebuildCodeMetrics();
-            }
-
-            await JoinableTaskFactory.SwitchToMainThreadAsync();
-            _codeMetricsWindow = (CodeMetricsToolPane)this.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
-            if ((null == _codeMetricsWindow) || (null == _codeMetricsWindow.Frame))
-            {
-                throw new NotSupportedException("Cannot create tool window");
-            }
-            _codeMetricsWindow.RebuildCodeMetrics();
-        }
-
-        public async Task RebuildGitMetricsAsync()
-        {
-            if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
-            {
-                _codeMetricsWindow.RebuildGitMetricsAsync();
-            }
-
-            await JoinableTaskFactory.SwitchToMainThreadAsync();
-            _codeMetricsWindow = (CodeMetricsToolPane)this.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
-            if ((null == _codeMetricsWindow) || (null == _codeMetricsWindow.Frame))
-            {
-                throw new NotSupportedException("Cannot create tool window");
-            }
-            _codeMetricsWindow.RebuildGitMetricsAsync();
-        }
-
-        public async Task OpenCodeMetricsPaneAsync()
-        {
-            await JoinableTaskFactory.SwitchToMainThreadAsync();
-            ToolWindowPane window = this.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
-            if ((null == window) || (null == window.Frame))
-            {
-                throw new NotSupportedException("Cannot create tool window");
-            }
-
-            IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
-            Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
-        }
+        
 
         private async Task ShowOfflinePromptAsync()
         {

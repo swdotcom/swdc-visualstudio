@@ -1,8 +1,8 @@
 ﻿namespace SoftwareCo
 {
+    using Microsoft.VisualStudio.Shell;
     using System;
     using System.Runtime.InteropServices;
-    using Microsoft.VisualStudio.Shell;
 
     [Guid("B9ADECFD-3D3C-451D-AE3A-90994DB55AA4")]
     public class CodeMetricsToolPane : ToolWindowPane
@@ -35,6 +35,16 @@
             {
                 ((CodeMetricsTree)this.Content).RebuildCodeMetricsAsync();
             }
+        }
+
+        public void ToggleClickHandler()
+        {
+            StatusBarButton.showingStatusbarMetrics = false;
+            if (this.Content != null)
+            {
+                ((CodeMetricsTree)this.Content).RebuildCodeMetricsAsync();
+            }
+            SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
         }
 
         public void RebuildGitMetricsAsync()

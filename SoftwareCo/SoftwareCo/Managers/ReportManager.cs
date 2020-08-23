@@ -29,7 +29,7 @@ namespace SoftwareCo
             StringBuilder sb = new StringBuilder();
 
             // fetch the git stats
-            string projectDir = DocEventManager._solutionDirectory;
+            string projectDir = await PackageManager.GetSolutionDirectory();
 
             RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(projectDir, false);
             string identifier = resourceInfo != null && resourceInfo.identifier != null ? resourceInfo.identifier : "Untitled";

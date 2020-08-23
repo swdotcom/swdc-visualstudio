@@ -27,8 +27,6 @@ namespace SoftwareCo
         // private SoftwareData _softwareData;
         private PluginData _pluginData;
         // Used by Constants for version info
-        public static DTE2 ObjDte { set; get; }
-        public static string _solutionDirectory { get; set; }
 
         private static int THIRTY_SECONDS = 1000 * 30;
         private static int ONE_MINUTE = THIRTY_SECONDS * 2;
@@ -57,21 +55,13 @@ namespace SoftwareCo
             return (fileName == null || fileName.IndexOf("CodeTime.txt") != -1) ? false : true;
         }
 
-        public static async Task<string> GetSolutionDirectory()
-        {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
-            {
-                _solutionDirectory = Path.GetDirectoryName(ObjDte.Solution.FileName);
-            }
-            return _solutionDirectory;
-        }
+       
 
         private async void InitPluginDataIfNotExists()
         {
             if (_pluginData == null)
             {
-                _solutionDirectory = await GetSolutionDirectory();
+                string _solutionDirectory = await PackageManager.GetSolutionDirectory();
                 if (_solutionDirectory != null && !_solutionDirectory.Equals(""))
                 {
                     FileInfo fi = new FileInfo(_solutionDirectory);
@@ -121,7 +111,7 @@ namespace SoftwareCo
         public async void AfterKeyPressedAsync(
             string Keypress, TextSelection Selection, bool InStatementCompletion)
         {
-            String fileName = ObjDte.ActiveWindow.Document.FullName;
+            String fileName = await PackageManager.GetActiveDocumentFileName();
             if (!IsTrueEventFile(fileName))
             {
                 return;
@@ -130,9 +120,11 @@ namespace SoftwareCo
             _pluginData.InitFileInfoIfNotExists(fileName);
 
             PluginDataFileInfo pdfileInfo = _pluginData.GetFileInfo(fileName);
-            if (ObjDte.ActiveWindow.Document.Language != null)
+            string syntax = await PackageManager.GetActiveDocumentSyntax();
+
+            if (!string.IsNullOrEmpty(syntax))
             {
-                pdfileInfo.syntax = ObjDte.ActiveWindow.Document.Language;
+                pdfileInfo.syntax = syntax;
             }
             if (!String.IsNullOrEmpty(Keypress))
             {

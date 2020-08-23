@@ -1,24 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
-using System.Threading;
 using Task = System.Threading.Tasks.Task;
-using EnvDTE;
-using EnvDTE80;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 using System.IO;
-using System.Net.Http;
-using System.Reflection;
-using Microsoft.VisualStudio;
-using System.Windows.Forms;
-using System.Windows.Threading;
-using System.Windows.Controls;
-using Microsoft.VisualStudio.Threading;
 
 namespace SoftwareCo
 {
@@ -156,7 +140,7 @@ namespace SoftwareCo
             // string msg = string.Format("{0}{1}", inFlowIcon, currentDayMinutesTime);
 
             // it's ok not to await on this
-            package.UpdateStatusBarButtonText(currentDayMinutesTime, iconName);
+            PackageManager.UpdateStatusBarButtonText(currentDayMinutesTime, iconName);
         }
 
         internal class SessionSummaryResult

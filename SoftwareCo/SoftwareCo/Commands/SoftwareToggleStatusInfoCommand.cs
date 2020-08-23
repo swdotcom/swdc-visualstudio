@@ -5,43 +5,48 @@ using Microsoft.VisualStudio.Shell;
 namespace SoftwareCo
 {
     /// <summary>
-    /// Command handler
+    /// Command handler for toggling the status bar text
     /// </summary>
-    internal sealed class SoftwareOpenCodeMetricsTreeCommand
+    internal sealed class SoftwareToggleStatusInfoCommand
     {
         /// <summary>
         /// Command ID.
         /// </summary>
-        public const int CommandId = 4135;
+        public const int CommandId = 4134;
 
         /// <summary>
         /// Command menu group (command set GUID).
         /// </summary>
-        
         public static readonly Guid CommandSet = new Guid("76eda5aa-cf64-4fb5-9d52-06c48a00adbd");
+
         /// <summary>
         /// VS Package that provides this command, not null.
         /// </summary>
         private readonly AsyncPackage package;
 
         private static MenuCommand menuItem;
-        private static bool loggedIn = false;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SoftwareTopFortyCommand"/> class.
+        /// Initializes a new instance of the <see cref="SoftwareToggleStatusInfoCommand"/> class.
         /// Adds our command handlers for menu (commands must exist in the command table file)
         /// </summary>
         /// <param name="package">Owner package, not null.</param>
         /// <param name="commandService">Command service to add command to, not null.</param>
-        private SoftwareOpenCodeMetricsTreeCommand(AsyncPackage package, OleMenuCommandService commandService)
+        private SoftwareToggleStatusInfoCommand(AsyncPackage package, OleMenuCommandService commandService)
         {
             this.package = package ?? throw new ArgumentNullException("package");
+            if (commandService != null)
+            {
+                var menuCommandID = new CommandID(CommandSet, CommandId);
+                menuItem = new MenuCommand(this.Execute, menuCommandID);
+                commandService.AddCommand(menuItem);
+            }
         }
 
         /// <summary>
         /// Gets the instance of the command.
         /// </summary>
-        public static SoftwareOpenCodeMetricsTreeCommand Instance
+        public static SoftwareToggleStatusInfoCommand Instance
         {
             get;
             private set;
@@ -64,15 +69,8 @@ namespace SoftwareCo
         /// <param name="package">Owner package, not null.</param>
         public static async System.Threading.Tasks.Task InitializeAsync(AsyncPackage package)
         {
-            OleMenuCommandService commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
-            if (commandService != null)
-            {
-                var menuCommandID = new CommandID(CommandSet, CommandId);
-                menuItem = new MenuCommand(Execute, menuCommandID);
-                commandService.AddCommand(menuItem);
-            }
-
-            Instance = new SoftwareOpenCodeMetricsTreeCommand(package, commandService);
+            OleMenuCommandService commandService = await package.GetServiceAsync((typeof(IMenuCommandService))) as OleMenuCommandService;
+            Instance = new SoftwareToggleStatusInfoCommand(package, commandService);
         }
 
         /// <summary>
@@ -82,16 +80,15 @@ namespace SoftwareCo
         /// </summary>
         /// <param name="sender">Event sender.</param>
         /// <param name="e">Event args.</param>
-        private static void Execute(object sender, EventArgs e)
+        private void Execute(object sender, EventArgs e)
         {
             try
             {
-                CodeMetricsTreeManager.Instance.OpenCodeMetricsPaneAsync();
-                EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "ShowTreeView");
+                CodeMetricsTreeManager.Instance.ToggleStatusbarMetrics();
             }
             catch (Exception ex)
             {
-                Logger.Error("Error launching the code metrics view", ex);
+                Logger.Error("Error toggling the code metrics view", ex);
             }
         }
     }

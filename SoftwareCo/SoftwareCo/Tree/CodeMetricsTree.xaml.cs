@@ -62,7 +62,7 @@ namespace SoftwareCo
             DashboardImage.Source = SoftwareCoUtil.CreateImage("dashboard.png").Source;
 
             // Toggle status label
-            if (EventManager.Instance.IsShowingStatusText())
+            if (!StatusBarButton.showingStatusbarMetrics)
             {
                 ToggleStatusLabel.Content = "Hide status bar metrics";
             } else
@@ -353,10 +353,10 @@ namespace SoftwareCo
 
         public async Task RebuildContributorMetricsAsync()
         {
-            string dir = DocEventManager._solutionDirectory;
+            string dir = await PackageManager.GetSolutionDirectory();
             if ((dir == null || dir.Equals("")) && SoftwareCoPackage.PLUGIN_READY)
             {
-                dir = await DocEventManager.GetSolutionDirectory();
+                dir = await PackageManager.GetSolutionDirectory();
             }
 
             RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(dir, true);
@@ -394,10 +394,10 @@ namespace SoftwareCo
         public async Task RebuildGitMetricsAsync()
         {
 
-            string dir = DocEventManager._solutionDirectory;
+            string dir = await PackageManager.GetSolutionDirectory();
             if ((dir == null || dir.Equals("")) && SoftwareCoPackage.PLUGIN_READY)
             {
-                dir = await DocEventManager.GetSolutionDirectory();
+                dir = await PackageManager.GetSolutionDirectory();
             }
 
             // if (dir == null || dir.Equals(""))
@@ -485,19 +485,16 @@ namespace SoftwareCo
         private void ConnectClickHandler(string loginType)
         {
             SoftwareCoUtil.launchLogin(loginType);
-            EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchLoginOnboard");
         }
 
         private void LaunchWebDashboard(object sender, MouseButtonEventArgs args)
         {
             SoftwareCoUtil.launchWebDashboard();
-            EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchWebDashboard");
         }
 
         private void DashboardClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
             DashboardManager.Instance.LaunchCodeTimeDashboardAsync();
-            EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchDashboard");
         }
 
         private void RepoIdentifierClickHandler(object sender, MouseButtonEventArgs args)
@@ -505,15 +502,16 @@ namespace SoftwareCo
             ReportManager.Instance.DisplayProjectContributorSummaryDashboard();
         }
 
-        private void ToggleClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
+        public void ToggleClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
-            EventManager.Instance.ToggleStatusInfo();
+            StatusBarButton.showingStatusbarMetrics = false;
+            RebuildMenuButtonsAsync();
+            SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
         }
 
         private void LearnMoreClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
             DashboardManager.Instance.LaunchReadmeFileAsync();
-            EventManager.Instance.CreateCodeTimeEvent("mouse", "click", "LaunchReadme");
         }
 
         private void FeedbackClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
