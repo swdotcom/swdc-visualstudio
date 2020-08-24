@@ -309,7 +309,7 @@ namespace SoftwareCo
                 fileInfo.linesRemoved = pdFileInfo.linesRemoved;
                 fileInfo.delete = pdFileInfo.delete;
                 fileInfo.add = pdFileInfo.add;
-                fileInfo.keystrokes = fileInfo.add + fileInfo.delete + fileInfo.paste + fileInfo.linesAdded + fileInfo.linesRemoved;
+                fileInfo.keystrokes = fileInfo.keystrokes;
                 fileInfo.syntax = pdFileInfo.syntax;
                 fileInfo.local_start = pdFileInfo.local_start;
                 fileInfo.local_end = pdFileInfo.local_end;

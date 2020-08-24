@@ -46,11 +46,12 @@ namespace SoftwareCo
         /// </summary>
         public const string PackageGuidString = "0ae38c4e-1ac5-4457-bdca-bb2dfc342a1c";
 
-        private DTEEvents _dteEvents;
         private DocumentEvents _docEvents;
         private TextDocumentKeyPressEvents _textDocKeyEvent;
 
+
         private Timer offlineDataTimer;
+        private Timer processPayloadTimer;
 
         // Used by Constants for version info
         public static DTE ObjDte;
@@ -59,8 +60,7 @@ namespace SoftwareCo
         private SessionSummaryManager sessionSummaryMgr;
         private DocEventManager docEventMgr;
 
-        private static int THIRTY_SECONDS = 1000 * 30;
-        private static int ONE_MINUTE = THIRTY_SECONDS * 2;
+        private static int ONE_MINUTE = 1000 * 60;
         public static bool PLUGIN_READY = false;
 
         #endregion
@@ -91,37 +91,22 @@ namespace SoftwareCo
                 base.Initialize();
 
                 ObjDte = await GetServiceAsync(typeof(DTE)) as DTE;
-                _dteEvents = ObjDte.Events.DTEEvents;
 
-                InitializeListenersAsync();
-                
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("Error in InitializeAsync", ex);
-                
-            }
-        }
-
-        public async Task InitializeListenersAsync()
-        {
-            try
-            {
-                await JoinableTaskFactory.SwitchToMainThreadAsync();
                 string PluginVersion = EnvUtil.GetVersion();
                 Logger.Info(string.Format("Initializing Code Time v{0}", PluginVersion));
 
+                // init the package manager that will use the AsyncPackage to run main thread requests
                 PackageManager.initialize(this, ObjDte);
 
                 await this.InitializeUserInfoAsync();
 
-                // VisualStudio Object
+                // Intialize the document event handlers
                 Events2 events = (Events2)ObjDte.Events;
                 _textDocKeyEvent = events.TextDocumentKeyPressEvents;
+                
                 _docEvents = events.DocumentEvents;
 
                 SolutionEventOpenedAsync();
-
             }
             catch (Exception ex)
             {
@@ -135,9 +120,9 @@ namespace SoftwareCo
             if (!PLUGIN_READY)
             {
                 string solutionDir = await PackageManager.GetSolutionDirectory();
-                if (solutionDir == null || solutionDir.Equals(""))
+                if (string.IsNullOrEmpty(solutionDir))
                 {
-                    Task.Delay(3000).ContinueWith((task) =>
+                    Task.Delay(5000).ContinueWith((task) =>
                     {
                         SolutionEventOpenedAsync();
                     });
@@ -159,13 +144,11 @@ namespace SoftwareCo
 
                 // setup event handlers
                 _textDocKeyEvent.AfterKeyPress += docEventMgr.AfterKeyPressedAsync;
+
                 _docEvents.DocumentOpened += docEventMgr.DocEventsOnDocumentOpenedAsync;
                 _docEvents.DocumentClosing += docEventMgr.DocEventsOnDocumentClosedAsync;
                 _docEvents.DocumentSaved += docEventMgr.DocEventsOnDocumentSaved;
                 _docEvents.DocumentOpening += docEventMgr.DocEventsOnDocumentOpeningAsync;
-
-                // init the code metrics tree mgr
-                CodeMetricsTreeManager.Instance.InjectAsyncPackage(this);
 
                 // initialize the menu commands
                 await SoftwareLaunchCommand.InitializeAsync(this);
@@ -184,13 +167,17 @@ namespace SoftwareCo
                 // timer callback has been reached.
                 var autoEvent = new AutoResetEvent(false);
 
-                offlineDataTimer = new System.Threading.Timer(
+                offlineDataTimer = new Timer(
                       SendOfflineData,
                       null,
-                      ONE_MINUTE,
+                      ONE_MINUTE / 2,
                       ONE_MINUTE * 15);
 
-                
+                processPayloadTimer = new Timer(
+                    ProcessKeystrokePayload,
+                    null,
+                    ONE_MINUTE,
+                    ONE_MINUTE);
 
                 // make sure the last payload is in memory
                 FileManager.GetLastSavedKeystrokeStats();
@@ -203,7 +190,7 @@ namespace SoftwareCo
                     FileManager.setBoolItem("visualstudio_CtInit", true);
 
                     // launch the tree view
-                    CodeMetricsTreeManager.Instance.OpenCodeMetricsPaneAsync();
+                    PackageManager.OpenCodeMetricsPaneAsync();
                 }
 
                 string PluginVersion = EnvUtil.GetVersion();
@@ -228,14 +215,11 @@ namespace SoftwareCo
                 offlineDataTimer.Dispose();
                 offlineDataTimer = null;
             }
-        }
-        #endregion
-
-        #region Event Handlers
-
-        private void OnActiveWindow()
-        {
-
+            if (processPayloadTimer != null)
+            {
+                processPayloadTimer.Dispose();
+                processPayloadTimer = null;
+            }
         }
         #endregion
 
@@ -243,7 +227,6 @@ namespace SoftwareCo
 
         protected void ProcessKeystrokePayload(Object stateInfo)
         {
-            // SoftwareCoUtil.SetTimeout(ONE_MINUTE, PostData, false);
             DocEventManager.Instance.PostData();
         }
 

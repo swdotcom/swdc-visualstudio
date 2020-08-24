@@ -12,6 +12,8 @@ namespace SoftwareCo
         public long add { get; set; }
         public long close { get; set; }
         public long delete { get; set; }
+
+        public long charsPasted { get; set; }
         public long linesAdded { get; set; }
         public long linesRemoved { get; set; }
         public long open { get; set; }
@@ -31,6 +33,7 @@ namespace SoftwareCo
             this.file = file;
             this.start = nowTime.now;
             this.local_start = nowTime.local_now;
+            this.charsPasted = 0;
             this.add = 0;
             this.close = 0;
             this.linesAdded = 0;
@@ -50,6 +53,7 @@ namespace SoftwareCo
             jsonObj.Add("add", this.add);
             jsonObj.Add("close", this.close);
             jsonObj.Add("delete", this.delete);
+            jsonObj.Add("charsPasted", this.charsPasted);
             jsonObj.Add("linesAdded", this.linesAdded);
             jsonObj.Add("linesRemoved", this.linesRemoved);
             jsonObj.Add("open", this.open);
@@ -71,6 +75,7 @@ namespace SoftwareCo
             fileInfo.local_start = SoftwareCoUtil.ConvertObjectToLong(dict, "local_start");
             fileInfo.end = SoftwareCoUtil.ConvertObjectToLong(dict, "end");
             fileInfo.local_end = SoftwareCoUtil.ConvertObjectToLong(dict, "local_end");
+            fileInfo.charsPasted = SoftwareCoUtil.ConvertObjectToLong(dict, "charsPasted");
             fileInfo.add = SoftwareCoUtil.ConvertObjectToLong(dict, "add");
             fileInfo.close = SoftwareCoUtil.ConvertObjectToLong(dict, "close");
             fileInfo.paste = SoftwareCoUtil.ConvertObjectToLong(dict, "paste");
@@ -89,6 +94,7 @@ namespace SoftwareCo
             dict.Add("add", this.add);
             dict.Add("close", this.close);
             dict.Add("delete", this.delete);
+            dict.Add("charsPasted", this.charsPasted);
             dict.Add("linesAdded", this.linesAdded);
             dict.Add("linesRemoved", this.linesRemoved);
             dict.Add("open", this.open);

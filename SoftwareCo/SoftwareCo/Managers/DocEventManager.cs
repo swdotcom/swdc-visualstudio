@@ -1,22 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EnvDTE;
-using EnvDTE80;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
-using System.Threading;
-using Task = System.Threading.Tasks.Task;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 using System.IO;
-using System.Net.Http;
-using System.Reflection;
-using Microsoft.VisualStudio;
-using System.Windows.Forms;
-using Microsoft.VisualStudio.Threading;
 
 namespace SoftwareCo
 {
@@ -26,11 +10,6 @@ namespace SoftwareCo
 
         // private SoftwareData _softwareData;
         private PluginData _pluginData;
-        // Used by Constants for version info
-
-        private static int THIRTY_SECONDS = 1000 * 30;
-        private static int ONE_MINUTE = THIRTY_SECONDS * 2;
-        private static int ZERO_SECOND = 1;
 
         private SessionSummaryManager sessionSummaryMgr;
 
@@ -55,8 +34,6 @@ namespace SoftwareCo
             return (fileName == null || fileName.IndexOf("CodeTime.txt") != -1) ? false : true;
         }
 
-       
-
         private async void InitPluginDataIfNotExists()
         {
             if (_pluginData == null)
@@ -71,7 +48,6 @@ namespace SoftwareCo
                     // set it to unnamed
                     _pluginData = new PluginData("Unnamed", "Untitled");
                 }
-                // SoftwareCoUtil.SetTimeout(ONE_MINUTE, PostData, false);
             }
         }
 
@@ -120,12 +96,16 @@ namespace SoftwareCo
             _pluginData.InitFileInfoIfNotExists(fileName);
 
             PluginDataFileInfo pdfileInfo = _pluginData.GetFileInfo(fileName);
-            string syntax = await PackageManager.GetActiveDocumentSyntax();
-
-            if (!string.IsNullOrEmpty(syntax))
+            if (string.IsNullOrEmpty(pdfileInfo.syntax))
             {
-                pdfileInfo.syntax = syntax;
+                string syntax = await PackageManager.GetActiveDocumentSyntax();
+
+                if (!string.IsNullOrEmpty(syntax))
+                {
+                    pdfileInfo.syntax = syntax;
+                }
             }
+
             if (!String.IsNullOrEmpty(Keypress))
             {
                 FileInfo fi = new FileInfo(fileName);
@@ -216,7 +196,6 @@ namespace SoftwareCo
         public async void PostData()
         {
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
-            DateTime now = DateTime.UtcNow;
 
             if (_pluginData != null && _pluginData.source.Count > 0 && _pluginData.keystrokes > 0)
             {
@@ -227,14 +206,16 @@ namespace SoftwareCo
                 Logger.Info("Code Time: storing plugin data: " + softwareDataContent);
 
                 FileManager.AppendPluginData(softwareDataContent);
+
+                // update the latestPayloadTimestampEndUtc
+                FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
+
+                // update the status bar and tree
+                WallclockManager.Instance.DispatchUpdateAsync();
+                _pluginData = null;
             }
 
-            // update the latestPayloadTimestampEndUtc
-            FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
-
-            // update the status bar and tree
-            WallclockManager.Instance.DispatchUpdateAsync();
-            _pluginData = null;
+            
         }
     }
 }

@@ -51,7 +51,7 @@ namespace SoftwareCo
         {
             try
             {
-                CodeMetricsTreeManager.Instance.OpenCodeMetricsPaneAsync();
+                PackageManager.OpenCodeMetricsPaneAsync();
             }
             catch (Exception e)
             {

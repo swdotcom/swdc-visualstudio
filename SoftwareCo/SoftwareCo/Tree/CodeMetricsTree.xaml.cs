@@ -129,6 +129,10 @@ namespace SoftwareCo
 
         private async Task UpdateNodeValue(TreeViewItem viewItem, string id, string value, string iconName = null)
         {
+            if (viewItem == null)
+            {
+                return;
+            }
             foreach (CodeMetricsTreeItem child in viewItem.Items)
             {
                 if (child.ItemId.Equals(id))
@@ -226,7 +230,7 @@ namespace SoftwareCo
             if (Linesremoved.HasItems)
             {
                 // update
-                TreeViewItem parentItem = await GetParent(Codetime, "linesremoved");
+                TreeViewItem parentItem = await GetParent(Linesremoved, "linesremoved");
                 UpdateNodeValue(parentItem, "linesremovedtodayval", linesremovedToday, "rocket.png");
                 UpdateNodeValue(parentItem, "linesremovedavgval", linesremovedAvg, linesremovedBoltIcon);
                 UpdateNodeValue(parentItem, "linesremovedglobalval", linesremovedGlobal, "global-grey.png");
@@ -354,10 +358,6 @@ namespace SoftwareCo
         public async Task RebuildContributorMetricsAsync()
         {
             string dir = await PackageManager.GetSolutionDirectory();
-            if ((dir == null || dir.Equals("")) && SoftwareCoPackage.PLUGIN_READY)
-            {
-                dir = await PackageManager.GetSolutionDirectory();
-            }
 
             RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(dir, true);
 
@@ -370,25 +370,7 @@ namespace SoftwareCo
                 ContributorsMetricsPanel.Children.Add(identifierPanel);
 
                 // build the repo contributors
-                //
             }
-
-
-
-            // < TreeView x: Name = "TopCodeTimeFiles" Background = "Transparent" BorderBrush = "Transparent" Width = "auto" Height = "auto" ScrollViewer.VerticalScrollBarVisibility = "Auto" ScrollViewer.HorizontalScrollBarVisibility = "Disabled" >
-
-            // < TreeView.Resources >
-
-            // < SolidColorBrush x: Key = "{x:Static SystemColors.HighlightBrushKey}"
-            // Color = "Transparent" />
-            // < SolidColorBrush x: Key = "{x:Static SystemColors.HighlightTextBrushKey}"
-            // Color = "Transparent" />
-            // < SolidColorBrush x: Key = "{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
-            // Color = "Transparent" />
-            // < SolidColorBrush x: Key = "{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
-            // Color = "Transparent" />
-            //  </ TreeView.Resources >
-            // </ TreeView >
         }
 
         public async Task RebuildGitMetricsAsync()

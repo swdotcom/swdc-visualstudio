@@ -84,7 +84,7 @@ namespace SoftwareCo
         {
             try
             {
-                CodeMetricsTreeManager.Instance.ToggleStatusbarMetrics();
+                PackageManager.ToggleStatusbarMetrics();
             }
             catch (Exception ex)
             {

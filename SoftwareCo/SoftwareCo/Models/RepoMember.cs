@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
-    class RepoMember
+    public class RepoMember
     {
         public string name = "";
         public string email = "";

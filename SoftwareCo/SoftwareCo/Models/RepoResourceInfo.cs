@@ -1,8 +1,5 @@
-﻿using System;
+﻿
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
@@ -12,9 +9,13 @@ namespace SoftwareCo
         public string tag { get; set; }
         public string branch { get; set; }
         public string identifier { get; set; }
-        internal List<RepoMember> Members { get => members; set => members = value; }
+        public string repoName { get; set; }
+        public string ownerId { get; set; }
+        public List<RepoMember> members { get; set; }
 
-        private List<RepoMember> members = new List<RepoMember>();
+        public RepoResourceInfo() {
+            members = new List<RepoMember>();
+        }
 
         public IDictionary<string, string> GetAsDictionary()
         {

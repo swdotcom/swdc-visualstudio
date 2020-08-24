@@ -208,7 +208,7 @@ namespace SoftwareCo
                                 }
                             }
                         }
-                        info.Members = repoMembers;
+                        info.members = repoMembers;
                     }
                 }
 
