@@ -25,7 +25,6 @@ namespace SoftwareCo
         private readonly AsyncPackage package;
 
         private static MenuCommand menuItem;
-        private static bool loggedIn = false;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SoftwareTopFortyCommand"/> class.

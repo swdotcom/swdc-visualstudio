@@ -4,15 +4,11 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
-using System.Collections.Generic;
-using System.IO;
 
 namespace SoftwareCo
 {
     class SoftwareHttpManager
     {
-        private static SpotifyToken token = null;
-
         public static bool IsOk(HttpResponseMessage response)
         {
             return (response != null && response.StatusCode == HttpStatusCode.OK);

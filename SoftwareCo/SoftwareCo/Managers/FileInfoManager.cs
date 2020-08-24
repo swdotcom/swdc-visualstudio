@@ -1,13 +1,10 @@
-﻿using EnvDTE;
-using System;
-using System.IO;
+﻿using System.IO;
 using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
     class ProjectInfoManager
     {
-        public static DTE ObjDte { set; get; }
         public static string solutionDirectory { set; get; }
 
         /**
@@ -16,7 +13,6 @@ namespace SoftwareCo
          **/
         public static async Task<FileDetails> GetFileDatails(string fileName)
         {
-            // await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             FileDetails fd = new FileDetails();
             if (!string.IsNullOrEmpty(fileName))
             {
@@ -30,7 +26,7 @@ namespace SoftwareCo
                 fd.syntax = fi.Extension;
             }
 
-            solutionDirectory = await GetSolutionDirectory();
+            solutionDirectory = await PackageManager.GetSolutionDirectory();
             if (!string.IsNullOrEmpty(solutionDirectory))
             {
                 FileInfo projInfo = new FileInfo(solutionDirectory);
@@ -43,17 +39,9 @@ namespace SoftwareCo
                     fd.project_file_name = fileName.Substring(solutionDirectory.Length);
                 }
 
-                try
+                if (string.IsNullOrEmpty(fd.syntax))
                 {
-                    ProjectItem projItem = ObjDte.Solution.FindProjectItem(fileName);
-                    if (projItem != null)
-                    {
-                        fd.syntax = projItem.Document.Language;
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logger.Info($"Unable to obtain file language: {e.Message}");
+                    fd.syntax = await PackageManager.GetActiveDocumentSyntax();
                 }
             }
             else
@@ -62,17 +50,6 @@ namespace SoftwareCo
                 fd.project_directory = "Untitled";
             }
             return fd;
-        }
-
-        public static async Task<string> GetSolutionDirectory()
-        {
-            // await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            string solutionDirectory = "";
-            if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
-            {
-                solutionDirectory = Path.GetDirectoryName(ObjDte.Solution.FileName);
-            }
-            return solutionDirectory;
         }
     }
 }

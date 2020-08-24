@@ -103,7 +103,6 @@ namespace SoftwareCo
                 // Intialize the document event handlers
                 Events2 events = (Events2)ObjDte.Events;
                 _textDocKeyEvent = events.TextDocumentKeyPressEvents;
-                
                 _docEvents = events.DocumentEvents;
 
                 TrackerEventManager.init();
@@ -229,7 +228,7 @@ namespace SoftwareCo
 
         #region Methods
 
-        protected void ProcessKeystrokePayload(Object stateInfo)
+        public void ProcessKeystrokePayload(Object stateInfo)
         {
             DocEventManager.Instance.PostData();
         }

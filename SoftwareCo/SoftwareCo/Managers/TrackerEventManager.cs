@@ -11,7 +11,11 @@ namespace SoftwareCo
         public static void init()
         {
             tracker = new TrackerManager(Constants.api_endpoint, "CodeTime", "Code Time");
-            TrackEditorActionEvent("editor", "activate");
+
+            if (tracker != null)
+            {
+                TrackEditorActionEvent("editor", "activate");
+            }
         }
 
         public static async Task TrackCodeTimeEventAsync(PluginData pluginData)

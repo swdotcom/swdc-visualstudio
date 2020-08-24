@@ -67,6 +67,10 @@ namespace SoftwareCo
 
         public void TrackCodetimeEvent(CodetimeEvent codetimeEvent)
         {
+            if (t == null)
+            {
+                return;
+            }
             CacheManager.jwt = codetimeEvent.authEntity != null ? codetimeEvent.authEntity.jwt : "";
             SelfDescribing selfDescribing = codetimeEvent.buildContexts();
             t.Track(selfDescribing);
@@ -74,6 +78,10 @@ namespace SoftwareCo
 
         public void TrackEditorActionEvent(EditorActionEvent editorActionEvent)
         {
+            if (t == null)
+            {
+                return;
+            }
             CacheManager.jwt = editorActionEvent.authEntity != null ? editorActionEvent.authEntity.jwt : "";
             SelfDescribing selfDescribing = editorActionEvent.buildContexts();
             t.Track(selfDescribing);
@@ -81,6 +89,10 @@ namespace SoftwareCo
 
         public void TrackUIInteractionEvent(UIInteractionEvent uIInteractionEvent)
         {
+            if (t == null)
+            {
+                return;
+            }
             CacheManager.jwt = uIInteractionEvent.authEntity != null ? uIInteractionEvent.authEntity.jwt : "";
             SelfDescribing selfDescribing = uIInteractionEvent.buildContexts();
             t.Track(selfDescribing);
