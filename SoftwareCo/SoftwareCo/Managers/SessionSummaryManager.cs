@@ -11,7 +11,6 @@ namespace SoftwareCo
         private static readonly Lazy<SessionSummaryManager> lazy = new Lazy<SessionSummaryManager>(() => new SessionSummaryManager());
 
         private SessionSummary _sessionSummary;
-        private SoftwareCoPackage package;
 
         public static SessionSummaryManager Instance { get { return lazy.Value; } }
 
@@ -19,11 +18,6 @@ namespace SoftwareCo
         {
             // initialize the session summary
             GetSessionSummayData();
-        }
-
-        public void InjectAsyncPackage(SoftwareCoPackage package)
-        {
-            this.package = package;
         }
         
         public void IncrementSessionSummaryData(KeystrokeAggregates aggregate, TimeGapData eTimeInfo)

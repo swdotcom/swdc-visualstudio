@@ -9,27 +9,13 @@ using System.IO;
 using System.Net.Http;
 using System.Collections.Generic;
 using EnvDTE80;
+using Microsoft.VisualStudio.Shell.Interop;
 
 namespace SoftwareCo
 {
-    /// <summary>
-    /// This is the class that implements the package exposed by this assembly.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The minimum requirement for a class to be considered a valid package for Visual Studio
-    /// is to implement the IVsPackage interface and register itself with the shell.
-    /// This package uses the helper classes defined inside the Managed Package Framework (MPF)
-    /// to do it: it derives from the Package class that provides the implementation of the
-    /// IVsPackage interface and uses the registration attributes defined in the framework to
-    /// register itself and its components with the shell. These attributes tell the pkgdef creation
-    /// utility what data to put into .pkgdef file.
-    /// </para>
-    /// <para>
-    /// To get loaded into VS, the package must be referred by &lt;Asset Type="Microsoft.VisualStudio.VsPackage" ...&gt; in .vsixmanifest file.
-    /// </para>
-    /// </remarks>
+
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
+    [ProvideAutoLoad(UIContextGuids80.SolutionExists)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
     [Guid(SoftwareCoPackage.PackageGuidString)]
     // [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
@@ -41,9 +27,7 @@ namespace SoftwareCo
     public sealed class SoftwareCoPackage : AsyncPackage
     {
         #region fields
-        /// <summary>
-        /// SoftwareCoPackage GUID string.
-        /// </summary>
+
         public const string PackageGuidString = "0ae38c4e-1ac5-4457-bdca-bb2dfc342a1c";
 
         private DocumentEvents _docEvents;
@@ -55,29 +39,15 @@ namespace SoftwareCo
 
         // Used by Constants for version info
         public static DTE ObjDte;
-
-        private SoftwareRepoManager _softwareRepoUtil;
-        private SessionSummaryManager sessionSummaryMgr;
         private DocEventManager docEventMgr;
 
         private static int ONE_MINUTE = 1000 * 60;
         public static bool PLUGIN_READY = false;
 
-        #endregion
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SoftwareCoPackage"/> class.
-        /// </summary>
         public SoftwareCoPackage()
         {
-            // Inside this method you can place any initialization code that does not require
-            // any Visual Studio service because at this point the package object is created but
-            // not sited yet inside Visual Studio environment. The place to do all the other
-            // initialization is the Initialize method.
+
         }
-
-
-        #region Package Members
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -85,6 +55,7 @@ namespace SoftwareCo
         /// </summary>
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
+            Console.WriteLine("Initializing Code Time");
             try
             {
                 await JoinableTaskFactory.SwitchToMainThreadAsync();
@@ -107,7 +78,7 @@ namespace SoftwareCo
 
                 TrackerEventManager.init();
 
-                SolutionEventOpenedAsync();
+                InitializePlugin();
             }
             catch (Exception ex)
             {
@@ -115,7 +86,7 @@ namespace SoftwareCo
             }
         }
 
-        public async void SolutionEventOpenedAsync()
+        public async void InitializePlugin()
         {
             await this.JoinableTaskFactory.SwitchToMainThreadAsync();
             if (!PLUGIN_READY)
@@ -125,16 +96,12 @@ namespace SoftwareCo
                 {
                     Task.Delay(5000).ContinueWith((task) =>
                     {
-                        SolutionEventOpenedAsync();
+                        InitializePlugin();
                     });
                     return;
                 }
                 // init the doc event mgr and inject ObjDte
                 docEventMgr = DocEventManager.Instance;
-
-                // init the session summary mgr
-                sessionSummaryMgr = SessionSummaryManager.Instance;
-                sessionSummaryMgr.InjectAsyncPackage(this);
 
                 // update the latestPayloadTimestampEndUtc
                 NowTime nowTime = SoftwareCoUtil.GetNowTime();
@@ -158,11 +125,6 @@ namespace SoftwareCo
                 await SoftwareLoginCommand.InitializeAsync(this);
                 await SoftwareToggleStatusInfoCommand.InitializeAsync(this);
                 await SoftwareOpenCodeMetricsTreeCommand.InitializeAsync(this);
-
-                if (_softwareRepoUtil == null)
-                {
-                    _softwareRepoUtil = new SoftwareRepoManager();
-                }
 
                 // Create an AutoResetEvent to signal the timeout threshold in the
                 // timer callback has been reached.

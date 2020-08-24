@@ -37,6 +37,11 @@ namespace SoftwareCo
                 _codeMetricsWindow.RebuildMenuButtons();
             }
 
+            if (package == null)
+            {
+                return;
+            }
+
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
             if ((null == _codeMetricsWindow) || (null == _codeMetricsWindow.Frame))
@@ -51,6 +56,11 @@ namespace SoftwareCo
             if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
             {
                 _codeMetricsWindow.RebuildCodeMetrics();
+            }
+
+            if (package == null)
+            {
+                return;
             }
 
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
@@ -69,6 +79,11 @@ namespace SoftwareCo
                 _codeMetricsWindow.RebuildGitMetricsAsync();
             }
 
+            if (package == null)
+            {
+                return;
+            }
+
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
             if ((null == _codeMetricsWindow) || (null == _codeMetricsWindow.Frame))
@@ -80,6 +95,11 @@ namespace SoftwareCo
 
         public static async Task OpenCodeMetricsPaneAsync()
         {
+            if (package == null)
+            {
+                return;
+            }
+
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             ToolWindowPane window = package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
             if ((null == window) || (null == window.Frame))
@@ -94,6 +114,11 @@ namespace SoftwareCo
 
         public static async Task ToggleStatusbarMetrics()
         {
+            if (package == null)
+            {
+                return;
+            }
+
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
@@ -112,6 +137,10 @@ namespace SoftwareCo
 
         public static async Task UpdateStatusBarButtonText(String text, String iconName = null)
         {
+            if (package == null)
+            {
+                return;
+            }
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             await InitializeStatusBar();
 
@@ -120,7 +149,7 @@ namespace SoftwareCo
 
         public static async Task InitializeStatusBar()
         {
-            if (_addedStatusBarButton)
+            if (package == null || _addedStatusBarButton)
             {
                 return;
             }
@@ -135,6 +164,10 @@ namespace SoftwareCo
 
         public static async Task<string> GetSolutionDirectory()
         {
+            if (package == null)
+            {
+                return "";
+            }
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
             {
@@ -144,12 +177,20 @@ namespace SoftwareCo
         }
 
         public static async Task<string> GetActiveDocumentFileName() {
+            if (package == null)
+            {
+                return "";
+            }
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             return ObjDte.ActiveWindow.Document.FullName;
         }
 
         public static async Task<string> GetActiveDocumentSyntax()
         {
+            if (package == null)
+            {
+                return "";
+            }
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             return ObjDte.ActiveWindow.Document.Language;
         }
