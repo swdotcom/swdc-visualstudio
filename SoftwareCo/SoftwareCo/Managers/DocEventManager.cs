@@ -152,17 +152,7 @@ namespace SoftwareCo
             InitPluginDataIfNotExists();
             _pluginData.InitFileInfoIfNotExists(fileName);
 
-            /**
-            try
-            {
-                _pluginData.GetFileInfo(fileName).open += 1;
-                Logger.Info("Code Time: File open incremented");
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("DocEventsOnDocumentOpened", ex);
-            }
-            **/
+            TrackerEventManager.TrackEditorFileActionEvent("file", "open", fileName);
         }
 
         public async void DocEventsOnDocumentClosedAsync(Document document)
@@ -179,17 +169,7 @@ namespace SoftwareCo
             InitPluginDataIfNotExists();
             _pluginData.InitFileInfoIfNotExists(fileName);
 
-            /**
-            try
-            {
-                _pluginData.GetFileInfo(fileName).close += 1;
-                Logger.Info("Code Time: File close incremented");
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("DocEventsOnDocumentClosed", ex);
-            }
-            **/
+            TrackerEventManager.TrackEditorFileActionEvent("file", "open", fileName);
         }
 
         
@@ -204,6 +184,8 @@ namespace SoftwareCo
                 string softwareDataContent = await _pluginData.CompletePayloadAndReturnJsonString();
 
                 Logger.Info("Code Time: storing plugin data: " + softwareDataContent);
+
+                TrackerEventManager.TrackCodeTimeEventAsync(_pluginData);
 
                 FileManager.AppendPluginData(softwareDataContent);
 

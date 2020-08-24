@@ -16,6 +16,13 @@ namespace SoftwareCo
         public long lines_deleted { get; set; }
         public string start_time { get; set; }
         public string end_time { get; set; }
+        public int single_deletes { get; set; }
+        public int multi_deletes { get; set; }
+        public int single_adds { get; set; }
+        public int multi_adds { get; set; }
+        public int auto_indents { get; set; }
+        public int replacements { get; set; }
+        public bool is_net_change { get; set; }
 
         public AuthEntity authEntity { get; set; }
         public FileEntity fileEntity { get; set; }
@@ -37,6 +44,12 @@ namespace SoftwareCo
                 .Add("lines_deleted", lines_deleted)
                 .Add("start_time", start_time)
                 .Add("end_time", end_time)
+                .Add("single_deletes", single_deletes)
+                .Add("multi_deletes", multi_deletes)
+                .Add("single_adds", single_adds)
+                .Add("multi_adds", multi_adds)
+                .Add("auto_indents", auto_indents)
+                .Add("replacements", replacements)
                 .Build();
             return context;
         }

@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
 
-    class TrackerUtilManager
+    class TrackerEventManager
     {
         private static TrackerManager tracker;
 

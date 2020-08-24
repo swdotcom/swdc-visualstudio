@@ -106,6 +106,8 @@ namespace SoftwareCo
                 
                 _docEvents = events.DocumentEvents;
 
+                TrackerEventManager.init();
+
                 SolutionEventOpenedAsync();
             }
             catch (Exception ex)
@@ -204,6 +206,8 @@ namespace SoftwareCo
 
         public void Dispose()
         {
+            TrackerEventManager.TrackEditorActionEvent("editor", "deactivate");
+
             if (offlineDataTimer != null)
             {
                 _textDocKeyEvent.AfterKeyPress -= docEventMgr.AfterKeyPressedAsync;
