@@ -15,7 +15,7 @@ namespace SoftwareCo
         public GenericContext buildContext()
         {
             GenericContext context = new GenericContext()
-                .SetSchema("iglu:com.software/editor_action/jsonschema/1-0-1")
+                .SetSchema("iglu:com.software/editor_action/jsonschema/1-0-0")
                 .Add("interaction_type", interaction_type.ToString())
                 .Build();
             return context;

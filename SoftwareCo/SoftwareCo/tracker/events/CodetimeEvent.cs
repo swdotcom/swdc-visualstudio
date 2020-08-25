@@ -33,7 +33,7 @@ namespace SoftwareCo
         public GenericContext buildContext()
         {
             GenericContext context = new GenericContext()
-                .SetSchema("iglu:com.software/codetime/jsonschema/1-0-1")
+                .SetSchema("iglu:com.software/codetime/jsonschema/1-0-2")
                 .Add("keystrokes", keystrokes)
                 .Add("keystrokes", keystrokes)
                 .Add("chars_added", chars_added)
