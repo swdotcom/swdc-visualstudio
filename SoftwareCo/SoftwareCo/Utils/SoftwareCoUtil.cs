@@ -277,18 +277,37 @@ namespace SoftwareCo
             {
                 string jwt = FileManager.getItemAsString("jwt");
                 string url = "";
+                string element_name = "ct_sign_up_google_btn";
+                string icon_name = "google";
+                string cta_text = "Sign up with Google";
                 if (loginType.Equals("google"))
                 {
                     url = Constants.api_endpoint + "/auth/google?token=" + jwt + "&plugin=codetime&redirect=" + Constants.url_endpoint;
-                } else if (loginType.Equals("github"))
+                }
+                else if (loginType.Equals("github"))
                 {
+                    element_name = "ct_sign_up_github_btn";
+                    icon_name = "github";
+                    cta_text = "Sign up with GitHub";
                     url = Constants.api_endpoint + "/auth/github?token=" + jwt + "&plugin=codetime&redirect=" + Constants.url_endpoint;
-                } else
+                }
+                else
                 {
+                    element_name = "ct_sign_up_email_btn";
+                    icon_name = "evelope";
+                    cta_text = "Sign up with email";
                     url = Constants.url_endpoint + "/email-signup?token=" + jwt + "&plugin=codetime&ath=software";
                 }
 
                 Process.Start(url);
+
+                UIElementEntity entity = new UIElementEntity();
+                entity.color = null;
+                entity.element_location = "ct_menu_tree";
+                entity.element_name = element_name;
+                entity.cta_text = cta_text;
+                entity.icon_name = icon_name;
+                TrackerEventManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
 
                 if (!SoftwareUserManager.checkingLoginState)
                 {

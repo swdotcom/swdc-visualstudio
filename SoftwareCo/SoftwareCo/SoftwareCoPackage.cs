@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Collections.Generic;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.PlatformUI;
 
 namespace SoftwareCo
 {
@@ -31,8 +32,9 @@ namespace SoftwareCo
         public const string PackageGuidString = "0ae38c4e-1ac5-4457-bdca-bb2dfc342a1c";
 
         private DocumentEvents _docEvents;
+        private SelectionEvents _selectionEvents;
+        private TextEditorEvents _textEditorEvents;
         private TextDocumentKeyPressEvents _textDocKeyEvent;
-
 
         private Timer offlineDataTimer;
         private Timer processPayloadTimer;
@@ -73,7 +75,9 @@ namespace SoftwareCo
 
                 // Intialize the document event handlers
                 Events2 events = (Events2)ObjDte.Events;
+                _textEditorEvents = events.TextEditorEvents;
                 _textDocKeyEvent = events.TextDocumentKeyPressEvents;
+                _selectionEvents = events.SelectionEvents;
                 _docEvents = events.DocumentEvents;
 
                 TrackerEventManager.init();
@@ -117,6 +121,8 @@ namespace SoftwareCo
                 _docEvents.DocumentClosing += docEventMgr.DocEventsOnDocumentClosedAsync;
                 _docEvents.DocumentSaved += docEventMgr.DocEventsOnDocumentSaved;
                 _docEvents.DocumentOpening += docEventMgr.DocEventsOnDocumentOpeningAsync;
+                _selectionEvents.OnChange += docEventMgr.SelectionEventAsync;
+                _textEditorEvents.LineChanged += docEventMgr.LineChangedAsync;
 
                 // initialize the menu commands
                 await SoftwareLaunchCommand.InitializeAsync(this);
@@ -176,6 +182,8 @@ namespace SoftwareCo
                 _docEvents.DocumentClosing -= docEventMgr.DocEventsOnDocumentClosedAsync;
                 _docEvents.DocumentSaved -= docEventMgr.DocEventsOnDocumentSaved;
                 _docEvents.DocumentOpening -= docEventMgr.DocEventsOnDocumentOpeningAsync;
+                _selectionEvents.OnChange -= docEventMgr.SelectionEventAsync;
+                _textEditorEvents.LineChanged -= docEventMgr.LineChangedAsync;
 
                 offlineDataTimer.Dispose();
                 offlineDataTimer = null;

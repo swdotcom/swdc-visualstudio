@@ -164,20 +164,30 @@ namespace SoftwareCo
 
         public static async Task<string> GetSolutionDirectory()
         {
-            if (package == null)
+            if (package == null || ObjDte == null || ObjDte.Solution == null)
             {
                 return "";
             }
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
+            if (ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
             {
                 _solutionDirectory = Path.GetDirectoryName(ObjDte.Solution.FileName);
             }
             return _solutionDirectory;
         }
 
+        public static async Task<Document> GetActiveDocument()
+        {
+            if (package == null || ObjDte == null || ObjDte.ActiveWindow == null)
+            {
+                return null;
+            }
+            await package.JoinableTaskFactory.SwitchToMainThreadAsync();
+            return ObjDte.ActiveWindow.Document;
+        }
+
         public static async Task<string> GetActiveDocumentFileName() {
-            if (package == null)
+            if (package == null || ObjDte == null || ObjDte.ActiveWindow == null)
             {
                 return "";
             }
@@ -187,7 +197,7 @@ namespace SoftwareCo
 
         public static async Task<string> GetActiveDocumentSyntax()
         {
-            if (package == null)
+            if (package == null || ObjDte == null || ObjDte.ActiveWindow == null)
             {
                 return "";
             }

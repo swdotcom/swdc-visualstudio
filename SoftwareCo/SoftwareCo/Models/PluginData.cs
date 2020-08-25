@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 
 namespace SoftwareCo
 {
@@ -289,7 +290,9 @@ namespace SoftwareCo
         {
             if (GetFileInfo(file) == null)
             {
-                source.Add(new PluginDataFileInfo(file));
+                PluginDataFileInfo fileInfo = new PluginDataFileInfo(file);
+                fileInfo.lines = DocEventManager.CountLinesLINQ(file);
+                source.Add(fileInfo);
             }
         }
 

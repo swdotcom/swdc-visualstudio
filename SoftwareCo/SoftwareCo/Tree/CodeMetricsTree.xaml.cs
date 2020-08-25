@@ -472,11 +472,25 @@ namespace SoftwareCo
         private void LaunchWebDashboard(object sender, MouseButtonEventArgs args)
         {
             SoftwareCoUtil.launchWebDashboard();
+            UIElementEntity entity = new UIElementEntity();
+            entity.color = "blue";
+            entity.element_location = "ct_menu_tree";
+            entity.element_name = "ct_web_metrics_btn";
+            entity.cta_text = "See rich data visualizations in the web app";
+            entity.icon_name = "paw";
+            TrackerEventManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
         }
 
         private void DashboardClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
             DashboardManager.Instance.LaunchCodeTimeDashboardAsync();
+            UIElementEntity entity = new UIElementEntity();
+            entity.color = "white";
+            entity.element_location = "ct_menu_tree";
+            entity.element_name = "ct_summary_btn";
+            entity.cta_text = "View your summary report";
+            entity.icon_name = "guage";
+            TrackerEventManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
         }
 
         private void RepoIdentifierClickHandler(object sender, MouseButtonEventArgs args)
@@ -494,11 +508,25 @@ namespace SoftwareCo
         private void LearnMoreClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
             DashboardManager.Instance.LaunchReadmeFileAsync();
+            UIElementEntity entity = new UIElementEntity();
+            entity.color = "yellow";
+            entity.element_location = "ct_menu_tree";
+            entity.element_name = "ct_learn_more_btn";
+            entity.cta_text = "View the Code Time Readme to learn more";
+            entity.icon_name = "document";
+            TrackerEventManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
         }
 
         private void FeedbackClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
             SoftwareCoUtil.launchMailToCody();
+            UIElementEntity entity = new UIElementEntity();
+            entity.color = null;
+            entity.element_location = "ct_menu_tree";
+            entity.element_name = "ct_submit_feedback_btn";
+            entity.cta_text = "Send us an email";
+            entity.icon_name = "envelop";
+            TrackerEventManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
         }
 
         private TreeViewItem BuildMetricNode(string id, string label, string iconName = null)
