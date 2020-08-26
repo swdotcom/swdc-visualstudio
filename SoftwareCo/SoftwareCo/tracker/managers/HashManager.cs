@@ -1,24 +1,27 @@
 ﻿using Newtonsoft.Json;
-using Sodium;
 using System;
 using System.Collections.Generic;
-using System.IO;
+using Konscious.Security.Cryptography;
+using System.Text;
 
 namespace SoftwareCo
 {
     class HashManager
     {
-        private static bool initializedSodium = false;
+        private static HMACBlake2B blake2b = null;
 
-        private static void initializeSodium()
+        public static string ByteArrayToHexString(byte[] Bytes)
         {
-            if (!initializedSodium)
+            StringBuilder Result = new StringBuilder(Bytes.Length * 2 + 1);
+            string HexAlphabet = "0123456789ABCDEF";
+
+            foreach (byte B in Bytes)
             {
-                string path = Environment.GetEnvironmentVariable("PATH");
-                string binDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Bin");
-                Environment.SetEnvironmentVariable("PATH", path + ";" + binDir);
-                initializedSodium = true;
+                Result.Append(HexAlphabet[(int)(B >> 4)]);
+                Result.Append(HexAlphabet[(int)(B & 0xF)]);
             }
+
+            return Result.ToString();
         }
 
         public static String HashValue(string value, string dataType)
@@ -28,12 +31,17 @@ namespace SoftwareCo
                 return "";
             }
 
-            initializeSodium();
+            if (blake2b == null)
+            {
+                blake2b = new HMACBlake2B(512);
+                blake2b.Initialize();
+            }
 
             try
             {
-                byte[] key = GenericHash.GenerateKey(); // 64 byte key
-                string hashedValue = Utilities.BinaryToHex(GenericHash.Hash(value, key, 128));
+                byte[] hashedBytes = blake2b.ComputeHash(Encoding.UTF8.GetBytes(value));
+                string hashedValue = ByteArrayToHexString(hashedBytes).ToLower();
+
                 if (CacheManager.HasCachedValue(dataType, hashedValue))
                 {
                     // doesn't exist yet, encrypt it

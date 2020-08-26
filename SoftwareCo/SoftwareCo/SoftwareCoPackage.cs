@@ -9,6 +9,9 @@ using System.IO;
 using System.Net.Http;
 using System.Collections.Generic;
 using EnvDTE80;
+using System.Reflection;
+using Microsoft.VisualStudio.Language.Intellisense;
+using System.Linq.Expressions;
 
 namespace SoftwareCo
 {
@@ -255,7 +258,6 @@ namespace SoftwareCo
                 // delete the file
                 File.Delete(FileManager.getSoftwareDataStoreFile());
             }
-
             
         }
 
