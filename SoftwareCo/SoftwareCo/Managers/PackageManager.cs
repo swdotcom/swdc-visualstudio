@@ -30,6 +30,11 @@ namespace SoftwareCo
             InitializeStatusBar();
         }
 
+        public static SoftwareCoPackage GetAsyncPackage()
+        {
+            return package;
+        }
+
         public static async Task RebuildMenuButtonsAsync()
         {
             if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
@@ -178,31 +183,44 @@ namespace SoftwareCo
 
         public static async Task<Document> GetActiveDocument()
         {
-            if (package == null || ObjDte == null || ObjDte.ActiveWindow == null)
+            if (package == null)
             {
                 return null;
             }
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            return ObjDte.ActiveWindow.Document;
+            if (ObjDte != null && ObjDte.ActiveWindow != null)
+            {
+                return ObjDte.ActiveWindow.Document;
+            }
+            return null;
         }
 
         public static async Task<string> GetActiveDocumentFileName() {
-            if (package == null || ObjDte == null || ObjDte.ActiveWindow == null)
+            
+            if (package == null)
             {
                 return "";
             }
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            return ObjDte.ActiveWindow.Document.FullName;
+            if (ObjDte != null && ObjDte.ActiveWindow != null && ObjDte.ActiveWindow.Document != null)
+            {
+                return ObjDte.ActiveWindow.Document.FullName;
+            }
+            return "";
         }
 
         public static async Task<string> GetActiveDocumentSyntax()
         {
-            if (package == null || ObjDte == null || ObjDte.ActiveWindow == null)
+            if (package == null)
             {
                 return "";
             }
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            return ObjDte.ActiveWindow.Document.Language;
+            if (ObjDte != null && ObjDte.ActiveWindow != null && ObjDte.ActiveWindow.Document != null)
+            {
+                return ObjDte.ActiveWindow.Document.Language;
+            }
+            return "";
         }
 
         public static T FindChildControl<T>(DependencyObject parent, string childName)

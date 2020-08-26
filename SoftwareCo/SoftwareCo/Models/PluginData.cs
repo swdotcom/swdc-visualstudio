@@ -292,6 +292,7 @@ namespace SoftwareCo
             {
                 PluginDataFileInfo fileInfo = new PluginDataFileInfo(file);
                 fileInfo.lines = DocEventManager.CountLinesLINQ(file);
+                fileInfo.length = new FileInfo(file).Length;
                 source.Add(fileInfo);
             }
         }

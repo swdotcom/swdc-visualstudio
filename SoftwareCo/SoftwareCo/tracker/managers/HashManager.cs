@@ -2,17 +2,33 @@
 using Sodium;
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace SoftwareCo
 {
     class HashManager
     {
+        private static bool initializedSodium = false;
+
+        private static void initializeSodium()
+        {
+            if (!initializedSodium)
+            {
+                string path = Environment.GetEnvironmentVariable("PATH");
+                string binDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Bin");
+                Environment.SetEnvironmentVariable("PATH", path + ";" + binDir);
+                initializedSodium = true;
+            }
+        }
+
         public static String HashValue(string value, string dataType)
         {
             if (!CacheManager.HasJwt() || string.IsNullOrEmpty(value))
             {
                 return "";
             }
+
+            initializeSodium();
 
             try
             {

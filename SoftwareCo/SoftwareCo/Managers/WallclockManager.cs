@@ -136,7 +136,7 @@ namespace SoftwareCo
             if (jwt != null)
             {
                 string api = "/sessions/summary?refresh=true";
-                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, jwt.ToString());
+                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api);
                 if (SoftwareHttpManager.IsOk(response))
                 {
                     SessionSummary summary = SessionSummaryManager.Instance.GetSessionSummayData();

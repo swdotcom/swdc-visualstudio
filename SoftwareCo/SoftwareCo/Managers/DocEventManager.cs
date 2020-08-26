@@ -3,6 +3,8 @@ using System;
 using EnvDTE;
 using System.IO;
 using System.Linq;
+using EnvDTE80;
+using Newtonsoft.Json;
 
 namespace SoftwareCo
 {
@@ -48,39 +50,6 @@ namespace SoftwareCo
             }
         }
 
-        public void DocEventsOnDocumentSaved(Document document)
-        {
-            if (document == null || document.FullName == null)
-            {
-                return;
-            }
-            String fileName = document.FullName;
-            if (!IsTrueEventFile(fileName))
-            {
-                return;
-            }
-            InitPluginDataIfNotExists();
-            _pluginData.InitFileInfoIfNotExists(fileName);
-
-
-            // wrapper for a file path
-            FileInfo fi = new FileInfo(fileName);
-            _pluginData.GetFileInfo(fileName).length = fi.Length;
-        }
-
-        public async void DocEventsOnDocumentOpeningAsync(String docPath, Boolean readOnly)
-        {
-            // wrapper for a file path
-            FileInfo fi = new FileInfo(docPath);
-            String fileName = fi.FullName;
-            if (!IsTrueEventFile(fileName))
-            {
-                return;
-            }
-            InitPluginDataIfNotExists();
-            _pluginData.InitFileInfoIfNotExists(fileName);
-        }
-
         public static int CountLinesLINQ(string fileName)
         {
             FileInfo fi = new FileInfo(fileName);
@@ -96,53 +65,62 @@ namespace SoftwareCo
             pdfileInfo.lines = CountLinesLINQ(pdfileInfo.file);
         }
 
-        public async void SelectionEventAsync()
+        public async void OnChangeAsync()
         {
             doc = await PackageManager.GetActiveDocument();
         }
 
         public async void LineChangedAsync(TextPoint start, TextPoint end, int hint)
         {
-            if (doc == null)
+            // only allow single line or bulk paste. visual sudio marks up the document
+            // when opening the file so we need to prevent these change events from coming through
+            bool isSameLinePaste = start.Line == end.Line && start.LineCharOffset < start.LineLength && end.LineCharOffset > start.LineCharOffset;
+            bool isBulkPaste = start.AtStartOfLine && end.AtEndOfLine && !end.AtStartOfLine && start.Line < end.Line;
+            if (isSameLinePaste || isBulkPaste)
             {
-                doc = (start.DTE != null && start.DTE.ActiveDocument != null) ? start.DTE.ActiveDocument : await PackageManager.GetActiveDocument();
+                SoftwareCoPackage package = PackageManager.GetAsyncPackage();
+                if (package != null)
+                {
+                    await package.JoinableTaskFactory.SwitchToMainThreadAsync();
+                }
+
+                if (doc == null)
+                {
+                    doc = (start.DTE != null && start.DTE.ActiveDocument != null) ? start.DTE.ActiveDocument : await PackageManager.GetActiveDocument();
+                }
+
+                if (doc == null)
+                {
+                    return;
+                }
+
+                string fileName = doc.FullName;
+                if (!IsTrueEventFile(fileName))
+                {
+                    return;
+                }
+
+                InitPluginDataIfNotExists();
+                _pluginData.InitFileInfoIfNotExists(fileName);
+
+                PluginDataFileInfo pdfileInfo = _pluginData.GetFileInfo(fileName);
+
+                if (pdfileInfo == null)
+                {
+                    return;
+                }
+
+                UpdateFileInfoMetrics(pdfileInfo, start, end, null, null);
             }
-
-            if (doc == null)
-            {
-                return;
-            }
-
-            string fileName = doc.FullName;
-            if (!IsTrueEventFile(fileName))
-            {
-                return;
-            }
-
-            InitPluginDataIfNotExists();
-            _pluginData.InitFileInfoIfNotExists(fileName);
-
-            PluginDataFileInfo pdfileInfo = _pluginData.GetFileInfo(fileName);
-
-            if (pdfileInfo == null)
-            {
-                return;
-            }
-
-            int line_count = CountLinesLINQ(pdfileInfo.file);
-
-            if (start.DisplayColumn == end.DisplayColumn && line_count == pdfileInfo.lines)
-            {
-                return;
-            }
-
-            UpdateFileInfoMetrics(pdfileInfo, start, end, null, line_count);
-            
         }
 
-        public async void AfterKeyPressedAsync(
-            string Keypress, TextSelection Selection, bool InStatementCompletion)
+        public async void BeforeKeyPressAsync(string Keypress, TextSelection Selection, bool InStatementCompletion, bool CancelKeypress)
         {
+            SoftwareCoPackage package = PackageManager.GetAsyncPackage();
+            if (package != null)
+            {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
+            }
 
             if (doc == null)
             {
@@ -153,7 +131,6 @@ namespace SoftwareCo
             {
                 return;
             }
-
 
             String fileName = doc.FullName;
             if (!IsTrueEventFile(fileName))
@@ -180,18 +157,19 @@ namespace SoftwareCo
                 }
             }
 
-            int line_count = CountLinesLINQ(pdfileInfo.file);
-
-            UpdateFileInfoMetrics(pdfileInfo, null, null, Keypress, line_count);
+            UpdateFileInfoMetrics(pdfileInfo, null, null, Keypress, Selection);
         }
 
-        public async void DocEventsOnDocumentOpenedAsync(Document document)
+        public async void DocEventsOnDocumentOpeningAsync(String docPath, Boolean readOnly)
         {
-            if (document == null || document.FullName == null)
+            SoftwareCoPackage package = PackageManager.GetAsyncPackage();
+            if (package != null)
             {
-                return;
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             }
-            String fileName = document.FullName;
+            // wrapper for a file path
+            FileInfo fi = new FileInfo(docPath);
+            String fileName = fi.FullName;
             if (!IsTrueEventFile(fileName))
             {
                 return;
@@ -204,10 +182,14 @@ namespace SoftwareCo
 
             TrackerEventManager.TrackEditorFileActionEvent("file", "open", fileName);
         }
-
     
         public async void DocEventsOnDocumentClosedAsync(Document document)
         {
+            SoftwareCoPackage package = PackageManager.GetAsyncPackage();
+            if (package != null)
+            {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
+            }
             if (document == null || document.FullName == null)
             {
                 return;
@@ -223,35 +205,10 @@ namespace SoftwareCo
             TrackerEventManager.TrackEditorFileActionEvent("file", "open", fileName);
         }
 
-        
-        public async void PostData()
-        {
-            NowTime nowTime = SoftwareCoUtil.GetNowTime();
-
-            if (_pluginData != null && _pluginData.source.Count > 0 && _pluginData.keystrokes > 0)
-            {
-
-                // create the aggregates, end the file times, gather the cumulatives
-                string softwareDataContent = await _pluginData.CompletePayloadAndReturnJsonString();
-
-                Logger.Info("Code Time: storing plugin data: " + softwareDataContent);
-
-                TrackerEventManager.TrackCodeTimeEventAsync(_pluginData);
-
-                FileManager.AppendPluginData(softwareDataContent);
-
-                // update the latestPayloadTimestampEndUtc
-                FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
-
-                // update the status bar and tree
-                WallclockManager.Instance.DispatchUpdateAsync();
-                _pluginData = null;
-            }
-        }
-
-        private void UpdateFileInfoMetrics(PluginDataFileInfo fileInfo, TextPoint start, TextPoint end, string Keypress, int line_count)
+        private void UpdateFileInfoMetrics(PluginDataFileInfo fileInfo, TextPoint start, TextPoint end, string Keypress, TextSelection textSelection)
         {
 
+            int tabSize = doc != null ? doc.TabSize : 4;
             bool hasAutoIndent = false;
             bool newLineAutoIndent = false;
 
@@ -261,31 +218,37 @@ namespace SoftwareCo
             int linesRemoved = 0;
             int linesAdded = 0;
 
-            if (fileInfo.lines > line_count)
-            {
-                linesRemoved = fileInfo.lines - line_count;
-            }
-            else if (fileInfo.lines < line_count)
-            {
-                linesAdded = line_count - fileInfo.lines;
-            }
-
             if (start != null && end != null)
             {
-                numKeystrokes = end.DisplayColumn - start.DisplayColumn;
-            }
-
-            if (Keypress != null)
+                // this is a line change event
+                linesAdded = end.Line - start.Line;
+                numKeystrokes = end.AbsoluteCharOffset - start.AbsoluteCharOffset;
+            } else if (Keypress != null)
             {
-                if (Keypress == "\b")
+                if (textSelection != null)
+                {
+                    linesRemoved = textSelection.BottomLine > textSelection.TopLine ? textSelection.BottomLine - textSelection.TopLine : 0;
+                    linesAdded = textSelection.TopLine > textSelection.BottomLine ? textSelection.TopLine - textSelection.BottomLine : 0;
+
+                    if (linesRemoved > 0)
+                    {
+                        numDeleteKeystrokes = textSelection.BottomPoint.AbsoluteCharOffset - textSelection.TopPoint.AbsoluteCharOffset;
+                    }
+                }
+
+                if (Keypress == "\b" && numDeleteKeystrokes == 0)
                 {
                     // it's a single delete
                     numDeleteKeystrokes = 1;
-                } else if (Keypress == "\r")
+                }
+                else if (Keypress == "\r" && linesAdded == 0)
                 {
                     // it's a single carriage return
                     linesAdded = 1;
-                } else
+                } else if (Keypress == "\t")
+                {
+                    hasAutoIndent = true;
+                } else if (numDeleteKeystrokes == 0)
                 {
                     // it's a single character
                     numKeystrokes = 1;
@@ -294,6 +257,8 @@ namespace SoftwareCo
 
             // update the deletion keystrokes if there are lines removed
             numDeleteKeystrokes = numDeleteKeystrokes >= linesRemoved ? numDeleteKeystrokes - linesRemoved : numDeleteKeystrokes;
+
+            Logger.Info("{la: " + linesAdded + ", lr: " + linesRemoved + ", dk: " + numDeleteKeystrokes + ", k: " + numKeystrokes + ", indent: " + hasAutoIndent + "}");
 
             // event updates
             if (newLineAutoIndent)
@@ -374,9 +339,41 @@ namespace SoftwareCo
                 fileInfo.characters_deleted += numDeleteKeystrokes;
             }
 
-            fileInfo.lines = line_count;
+            if (linesAdded > 0)
+            {
+                fileInfo.lines += linesAdded;
+            } else if (linesRemoved > 0)
+            {
+                fileInfo.lines -= linesRemoved;
+            }
+
             fileInfo.keystrokes += 1;
             _pluginData.keystrokes += 1;
+        }
+
+        public async void PostData()
+        {
+            NowTime nowTime = SoftwareCoUtil.GetNowTime();
+
+            if (_pluginData != null && _pluginData.source.Count > 0 && _pluginData.keystrokes > 0)
+            {
+
+                // create the aggregates, end the file times, gather the cumulatives
+                string softwareDataContent = await _pluginData.CompletePayloadAndReturnJsonString();
+
+                Logger.Info("Code Time: storing plugin data: " + softwareDataContent);
+
+                TrackerEventManager.TrackCodeTimeEventAsync(_pluginData);
+
+                FileManager.AppendPluginData(softwareDataContent);
+
+                // update the latestPayloadTimestampEndUtc
+                FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
+
+                // update the status bar and tree
+                WallclockManager.Instance.DispatchUpdateAsync();
+                _pluginData = null;
+            }
         }
     }
 }

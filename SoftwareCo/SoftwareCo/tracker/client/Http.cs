@@ -22,7 +22,7 @@ namespace SoftwareCo
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    client.Timeout = TimeSpan.FromSeconds(15);
+                    client.Timeout = TimeSpan.FromSeconds(5);
                     if (CacheManager.HasJwt())
                     {
                         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Authorization", CacheManager.jwt);

@@ -9,14 +9,12 @@ using System.IO;
 using System.Net.Http;
 using System.Collections.Generic;
 using EnvDTE80;
-using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.PlatformUI;
 
 namespace SoftwareCo
 {
 
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-    [ProvideAutoLoad(UIContextGuids80.SolutionExists)]
+    // [ProvideAutoLoad(UIContextGuids80.SolutionExists)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
     [Guid(SoftwareCoPackage.PackageGuidString)]
     // [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
@@ -34,7 +32,7 @@ namespace SoftwareCo
         private DocumentEvents _docEvents;
         private SelectionEvents _selectionEvents;
         private TextEditorEvents _textEditorEvents;
-        private TextDocumentKeyPressEvents _textDocKeyEvent;
+        private TextDocumentKeyPressEvents _textDocKeyEvents;
 
         private Timer offlineDataTimer;
         private Timer processPayloadTimer;
@@ -46,10 +44,7 @@ namespace SoftwareCo
         private static int ONE_MINUTE = 1000 * 60;
         public static bool PLUGIN_READY = false;
 
-        public SoftwareCoPackage()
-        {
-
-        }
+        public SoftwareCoPackage() {}
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -76,11 +71,9 @@ namespace SoftwareCo
                 // Intialize the document event handlers
                 Events2 events = (Events2)ObjDte.Events;
                 _textEditorEvents = events.TextEditorEvents;
-                _textDocKeyEvent = events.TextDocumentKeyPressEvents;
+                _textDocKeyEvents = events.TextDocumentKeyPressEvents;
                 _selectionEvents = events.SelectionEvents;
                 _docEvents = events.DocumentEvents;
-
-                TrackerEventManager.init();
 
                 InitializePlugin();
             }
@@ -98,12 +91,15 @@ namespace SoftwareCo
                 string solutionDir = await PackageManager.GetSolutionDirectory();
                 if (string.IsNullOrEmpty(solutionDir))
                 {
-                    Task.Delay(5000).ContinueWith((task) =>
+                    Task.Delay(3000).ContinueWith((task) =>
                     {
                         InitializePlugin();
                     });
                     return;
                 }
+                // initialize the tracker event manager
+                TrackerEventManager.init();
+
                 // init the doc event mgr and inject ObjDte
                 docEventMgr = DocEventManager.Instance;
 
@@ -115,14 +111,12 @@ namespace SoftwareCo
                 WallclockManager wallclockMgr = WallclockManager.Instance;
 
                 // setup event handlers
-                _textDocKeyEvent.AfterKeyPress += docEventMgr.AfterKeyPressedAsync;
-
-                _docEvents.DocumentOpened += docEventMgr.DocEventsOnDocumentOpenedAsync;
+                _textDocKeyEvents.BeforeKeyPress += new _dispTextDocumentKeyPressEvents_BeforeKeyPressEventHandler(BeforeKeyPress);
                 _docEvents.DocumentClosing += docEventMgr.DocEventsOnDocumentClosedAsync;
-                _docEvents.DocumentSaved += docEventMgr.DocEventsOnDocumentSaved;
                 _docEvents.DocumentOpening += docEventMgr.DocEventsOnDocumentOpeningAsync;
-                _selectionEvents.OnChange += docEventMgr.SelectionEventAsync;
+                _selectionEvents.OnChange += docEventMgr.OnChangeAsync;
                 _textEditorEvents.LineChanged += docEventMgr.LineChangedAsync;
+
 
                 // initialize the menu commands
                 await SoftwareLaunchCommand.InitializeAsync(this);
@@ -171,18 +165,21 @@ namespace SoftwareCo
             }
         }
 
+        void BeforeKeyPress(string Keypress, EnvDTE.TextSelection Selection, bool InStatementCompletion, ref bool CancelKeypress)
+        {
+            docEventMgr.BeforeKeyPressAsync(Keypress, Selection, InStatementCompletion, CancelKeypress);
+        }
+
         public void Dispose()
         {
             TrackerEventManager.TrackEditorActionEvent("editor", "deactivate");
 
             if (offlineDataTimer != null)
             {
-                _textDocKeyEvent.AfterKeyPress -= docEventMgr.AfterKeyPressedAsync;
-                _docEvents.DocumentOpened -= docEventMgr.DocEventsOnDocumentOpenedAsync;
+                _textDocKeyEvents.BeforeKeyPress -= new _dispTextDocumentKeyPressEvents_BeforeKeyPressEventHandler(BeforeKeyPress);
                 _docEvents.DocumentClosing -= docEventMgr.DocEventsOnDocumentClosedAsync;
-                _docEvents.DocumentSaved -= docEventMgr.DocEventsOnDocumentSaved;
                 _docEvents.DocumentOpening -= docEventMgr.DocEventsOnDocumentOpeningAsync;
-                _selectionEvents.OnChange -= docEventMgr.SelectionEventAsync;
+                _selectionEvents.OnChange -= docEventMgr.OnChangeAsync;
                 _textEditorEvents.LineChanged -= docEventMgr.LineChangedAsync;
 
                 offlineDataTimer.Dispose();

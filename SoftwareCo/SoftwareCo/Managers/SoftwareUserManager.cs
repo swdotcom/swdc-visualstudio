@@ -30,7 +30,7 @@ namespace SoftwareCo
             long thresholdSeconds = nowInSec - lastOnlineCheck;
             if (thresholdSeconds > 60) {
                 // 3 second timeout
-                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/ping", null, 3, null, true /*isOnlineCheck*/);
+                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/ping", null, null, false);
                 isOnline = SoftwareHttpManager.IsOk(response);
                 lastOnlineCheck = nowInSec;
             }
@@ -101,7 +101,7 @@ namespace SoftwareCo
                 {
                     long seconds = SoftwareCoUtil.GetNowInSeconds();
                     HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
-                            HttpMethod.Get, "/data/apptoken?token=" + seconds, null);
+                            HttpMethod.Get, "/data/apptoken?token=" + seconds);
 
                     if (SoftwareHttpManager.IsOk(response))
                     {
@@ -130,7 +130,7 @@ namespace SoftwareCo
                 if (jwt != null && online)
                 {
                     string api = "/users/me";
-                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, jwt);
+                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api);
                     if (SoftwareHttpManager.IsOk(response))
                     {
                         string responseBody = await response.Content.ReadAsStringAsync();
@@ -184,7 +184,7 @@ namespace SoftwareCo
                     }
 
                     string api = "/users/plugin/state";
-                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, jwt);
+                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api);
                     if (SoftwareHttpManager.IsOk(response))
                     {
                         string responseBody = await response.Content.ReadAsStringAsync();

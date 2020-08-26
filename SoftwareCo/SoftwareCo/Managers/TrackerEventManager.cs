@@ -8,21 +8,37 @@ namespace SoftwareCo
     {
         private static TrackerManager tracker;
 
-        public static void init()
+        public async static void init()
         {
-            tracker = new TrackerManager(Constants.api_endpoint, "CodeTime", "Code Time");
-
-            if (tracker != null)
+            try
             {
-                TrackEditorActionEvent("editor", "activate");
+                tracker = new TrackerManager(Constants.api_endpoint, "CodeTime", "swdc-visualstudio");
+                await tracker.initializeTracker();
+
+                if (tracker.initialized)
+                {
+                    TrackEditorActionEvent("editor", "activate");
+                }
+            } catch (Exception e)
+            {
+                Logger.Warning("Error initializing tracker: " + e.ToString());
             }
         }
 
         public static async Task TrackCodeTimeEventAsync(PluginData pluginData)
         {
-            if (tracker == null)
+            if (pluginData == null)
             {
                 return;
+            }
+
+            if (tracker == null || !tracker.initialized)
+            {
+                init();
+                if (!tracker.initialized)
+                {
+                    return;
+                }
             }
 
             AuthEntity authEntity = GetAuthEntity();
@@ -67,9 +83,13 @@ namespace SoftwareCo
 
         public static async Task TrackEditorFileActionEvent(string entity, string type, string fileName)
         {
-            if (tracker == null)
+            if (tracker == null || !tracker.initialized)
             {
-                return;
+                init();
+                if (!tracker.initialized)
+                {
+                    return;
+                }
             }
 
             EditorActionEvent editorActionEvent = new EditorActionEvent();
@@ -90,7 +110,7 @@ namespace SoftwareCo
 
         public static async Task TrackUIInteractionEvent(UIInteractionType interaction_type, UIElementEntity uIElementEntity)
         {
-            if (tracker == null)
+            if (tracker == null || !tracker.initialized)
             {
                 return;
             }
