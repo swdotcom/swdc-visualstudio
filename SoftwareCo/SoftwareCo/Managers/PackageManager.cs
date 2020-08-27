@@ -140,7 +140,7 @@ namespace SoftwareCo
             _codeMetricsWindow.ToggleClickHandler();
         }
 
-        public static async Task UpdateStatusBarButtonText(String text, String iconName = null)
+        public static async Task UpdateStatusBarButtonText(string text, string iconName = null)
         {
             if (package == null)
             {

@@ -24,7 +24,7 @@ namespace SoftwareCo
             return Result.ToString();
         }
 
-        public static String HashValue(string value, string dataType)
+        public static string HashValue(string value, string dataType)
         {
             if (!CacheManager.HasJwt() || string.IsNullOrEmpty(value))
             {

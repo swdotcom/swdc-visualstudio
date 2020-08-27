@@ -20,7 +20,7 @@ namespace SoftwareCo
             //
         }
 
-        public static String GetTimeDataFileData()
+        public static string GetTimeDataFileData()
         {
             // make sure it's created
 
@@ -38,7 +38,7 @@ namespace SoftwareCo
             return null;
         }
 
-        public static String GetTimeDataFile()
+        public static string GetTimeDataFile()
         {
 
             try

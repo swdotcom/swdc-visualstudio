@@ -233,7 +233,7 @@ namespace SoftwareCo
                 {
                     tryCountUntilFoundUser -= 1;
 
-                    Task.Delay(1000 * 10).ContinueWith((task) => { RefetchUserStatusLazily(tryCountUntilFoundUser); });
+                    Task.Delay(1000 * 8).ContinueWith((task) => { RefetchUserStatusLazily(tryCountUntilFoundUser); });
                 }
                 else
                 {

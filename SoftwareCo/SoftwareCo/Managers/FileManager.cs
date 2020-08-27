@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.IO;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace SoftwareCo
 {
@@ -18,45 +18,24 @@ namespace SoftwareCo
             lastSavedKeystrokeStats = null;
         }
 
-        public static async Task<PluginData> GetLastSavedKeystrokeStats()
-        {
-            List<string> offlinePluginData = GetOfflinePayloadList();
-            if (offlinePluginData != null && offlinePluginData.Count > 0)
-            {
-                string jsonData = "[" + string.Join(",", offlinePluginData) + "]";
-                JsonArray jsonArrayObj = (JsonArray)SimpleJson.DeserializeObject(jsonData, new JsonArray());
-                long latestStart = 0;
-                foreach (JsonObject jsonObj in jsonArrayObj)
-                {
-                    PluginData td = PluginData.BuildFromDictionary(jsonObj);
-                    if (td.start > latestStart)
-                    {
-                        lastSavedKeystrokeStats = td;
-                    }
-                }
-            }
-
-            return lastSavedKeystrokeStats;
-        }
-
-        public static String getDashboardFile()
+        public static string getDashboardFile()
         {
             return getSoftwareDataDir(true) + "\\CodeTime.txt";
         }
 
-        public static String GetContributorDashboardFile()
+        public static string GetContributorDashboardFile()
         {
             return getSoftwareDataDir(true) + "\\ProjectContributorCodeSummary.txt";
         }
 
-        public static String getVSReadmeFile()
+        public static string getVSReadmeFile()
         {
             return getSoftwareDataDir(true) + "\\VS_README.txt";
         }
 
-        public static String getSoftwareDataDir(bool autoCreate)
+        public static string getSoftwareDataDir(bool autoCreate)
         {
-            String userHomeDir = Environment.ExpandEnvironmentVariables("%HOMEPATH%");
+            string userHomeDir = Environment.ExpandEnvironmentVariables("%HOMEPATH%");
             string softwareDataDir = userHomeDir + "\\.software";
             if (autoCreate && !Directory.Exists(softwareDataDir))
             {
@@ -65,7 +44,7 @@ namespace SoftwareCo
                     // create it
                     Directory.CreateDirectory(softwareDataDir);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // 
                 }
@@ -85,12 +64,12 @@ namespace SoftwareCo
             string file = getSoftwareDataDir(false) + "\\sessionSummary.json";
             return File.Exists(file);
         }
-        public static String getSessionSummaryFile()
+        public static string getSessionSummaryFile()
         {
             return getSoftwareDataDir(true) + "\\sessionSummary.json";
         }
 
-        public static String getSessionSummaryFileData()
+        public static string getSessionSummaryFileData()
         {
             try
             {
@@ -102,7 +81,7 @@ namespace SoftwareCo
             }
         }
 
-        public static String getSoftwareSessionFile()
+        public static string getSoftwareSessionFile()
         {
             return getSoftwareDataDir(true) + "\\session.json";
         }
@@ -112,7 +91,7 @@ namespace SoftwareCo
             string file = getSoftwareDataDir(false) + "\\fileChangeSummary.json";
             return File.Exists(file);
         }
-        public static String getFileChangeInfoSummaryData()
+        public static string getFileChangeInfoSummaryData()
         {
             try
             {
@@ -124,16 +103,16 @@ namespace SoftwareCo
             }
         }
 
-        public static String getFileChangeInfoSummaryFile()
+        public static string getFileChangeInfoSummaryFile()
         {
             return getSoftwareDataDir(true) + "\\fileChangeSummary.json";
         }
 
-        public static String getSessionSummaryInfoFile()
+        public static string getSessionSummaryInfoFile()
         {
             return getSoftwareDataDir(true) + "\\SummaryInfo.txt";
         }
-        public static String getSessionSummaryInfoFileData()
+        public static string getSessionSummaryInfoFileData()
         {
             return File.ReadAllText(getSoftwareDataDir(false) + "\\SummaryInfo.txt", System.Text.Encoding.UTF8);
         }
@@ -143,7 +122,7 @@ namespace SoftwareCo
             return File.Exists(file);
         }
 
-        public static String getCodeTimeEventsFile()
+        public static string getCodeTimeEventsFile()
         {
             return getSoftwareDataDir(true) + "\\events.json";
         }
@@ -154,7 +133,7 @@ namespace SoftwareCo
             return File.Exists(file);
         }
 
-        public static String getCodeTimeEventsData()
+        public static string getCodeTimeEventsData()
         {
             try
             {
@@ -166,7 +145,7 @@ namespace SoftwareCo
             }
         }
 
-        public static String getSoftwareDataStoreFile()
+        public static string getSoftwareDataStoreFile()
         {
             return getSoftwareDataDir(true) + "\\data.json";
         }
@@ -175,7 +154,7 @@ namespace SoftwareCo
             string file = getSoftwareDataDir(true) + "\\Log.txt";
             return File.Exists(file);
         }
-        public static String getLogFile()
+        public static string getLogFile()
         {
             return getSoftwareDataDir(true) + "\\Log.txt";
         }
@@ -183,7 +162,7 @@ namespace SoftwareCo
         public static List<string> GetOfflinePayloadList()
         {
 
-            List<String> jsonLines = new List<string>();
+            List<string> jsonLines = new List<string>();
             string datastoreFile = getSoftwareDataStoreFile();
             if (File.Exists(datastoreFile))
             {
@@ -204,7 +183,6 @@ namespace SoftwareCo
                             jsonLines.Add(line);
                         }
                     }
-                    // jsonData = "[" + string.Join(",", jsonLines) + "]";
                 }
             }
             return jsonLines;
@@ -256,7 +234,7 @@ namespace SoftwareCo
                 {
                     return Convert.ToBoolean(val);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     return false;
                 }
@@ -267,29 +245,27 @@ namespace SoftwareCo
         public static object getItem(string key)
         {
             // read the session json file
-            string sessionFile = FileManager.getSoftwareSessionFile();
-            lock (sessionFileLock)
+            string sessionFile = getSoftwareSessionFile();
+            try
             {
-                try
+                if (File.Exists(sessionFile))
                 {
-                    if (File.Exists(sessionFile))
-                    {
-                        string content = File.ReadAllText(sessionFile, System.Text.Encoding.UTF8);
+                    string content = File.ReadAllText(sessionFile, System.Text.Encoding.UTF8);
 
-                        if (content != null)
+                    if (content != null)
+                    {
+
+                        object jsonVal = SimpleJson.GetValue(content, key);
+                        if (jsonVal != null)
                         {
-                            object jsonVal = SimpleJson.GetValue(content, key);
-                            if (jsonVal != null)
-                            {
-                                return jsonVal;
-                            }
+                            return jsonVal;
                         }
                     }
                 }
-                catch (Exception e)
-                {
-                    //
-                }
+            }
+            catch (Exception)
+            {
+                //
             }
             return null;
         }
@@ -304,14 +280,14 @@ namespace SoftwareCo
             SaveSessionItem(key, val);
         }
 
-        public static void setItem(String key, string val)
+        public static void setItem(string key, string val)
         {
             SaveSessionItem(key, val);
         }
 
         public static void SaveSessionItem(string key, object val)
         {
-            string sessionFile = FileManager.getSoftwareSessionFile();
+            string sessionFile = getSoftwareSessionFile();
 
             lock (sessionFileLock)
             {
@@ -323,15 +299,10 @@ namespace SoftwareCo
                     {
 
                         content = File.ReadAllText(sessionFile, System.Text.Encoding.UTF8);
-
-                        // convert to dictionary
-                        dict = (IDictionary<string, object>)SimpleJson.DeserializeObject(content, new Dictionary<string, object>());
-                        dict.Remove(key);
+                        dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
                     }
-                    dict.Add(key, val);
-                    content = SimpleJson.SerializeObject(dict);
-                    // write it back to the file
-                    content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
+                    dict[key] = val;
+                    content = JsonConvert.SerializeObject(dict);
 
                     File.WriteAllText(sessionFile, content, System.Text.Encoding.UTF8);
                 }

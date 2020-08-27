@@ -20,9 +20,9 @@ namespace SoftwareCo
         public static int DASHBOARD_VALUE_WIDTH = 25;
         public static long DAY_IN_SEC = 60 * 60 * 24;
 
-        public static String workspace_name = Guid.NewGuid().ToString();
+        public static string workspace_name = Guid.NewGuid().ToString();
 
-        public static string RunCommand(String cmd, String dir)
+        public static string RunCommand(string cmd, string dir)
         {
             try
             {
@@ -323,7 +323,7 @@ namespace SoftwareCo
 
         }
 
-        public static String GetFormattedDay(long seconds)
+        public static string GetFormattedDay(long seconds)
         {
             DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(seconds);
             return dateTimeOffset.ToString(@"yyyy-MM-dd");
@@ -331,7 +331,7 @@ namespace SoftwareCo
 
         public static bool IsNewDay()
         {
-            NowTime nowTime = SoftwareCoUtil.GetNowTime();
+            NowTime nowTime = GetNowTime();
             string currentDay = FileManager.getItemAsString("currentDay");
             return (!nowTime.day.Equals(currentDay)) ? true : false;
         }
@@ -547,7 +547,17 @@ namespace SoftwareCo
         {
             // create Image
             Image image = new Image();
-            image.Source = new BitmapImage(new Uri("Resources/" + iconName, UriKind.Relative));
+            image.Width = 16;
+            image.Height = 16;
+
+            BitmapImage bi = new BitmapImage();
+            // BitmapImage.UriSource must be in a BeginInit/EndInit block.
+            bi.BeginInit();
+            bi.UriSource = new Uri(@"../Resources/" + iconName, UriKind.RelativeOrAbsolute);
+            bi.EndInit();
+            // Set the image source.
+            image.Source = bi;
+
             return image;
         }
 

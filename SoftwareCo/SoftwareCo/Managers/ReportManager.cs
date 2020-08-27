@@ -51,7 +51,7 @@ namespace SoftwareCo
             sb.Append("\n\n Project: ").Append(identifier).Append("\n\n");
 
             // TODAY
-            String projectDate = DateTime.Now.ToString("MMM d, yyyy");
+            string projectDate = DateTime.Now.ToString("MMM d, yyyy");
             sb.Append(getRightAlignedTableHeader("Today (" + projectDate + ")"));
             sb.Append(getColumnHeaders(new List<string>() { "Metric", "You", "All Contributors" }));
             sb.Append(getRowNumberData("Commits", usersTodaysCommits.commitCount, contribTodaysCommits.commitCount));
@@ -61,7 +61,7 @@ namespace SoftwareCo
             sb.Append("\n");
 
             // YESTERDAY
-            String yesterday = nowTime.start_of_yesterday_dt.ToString("MMM d, yyyy");
+            string yesterday = nowTime.start_of_yesterday_dt.ToString("MMM d, yyyy");
             sb.Append(getRightAlignedTableHeader("Yesterday (" + yesterday + ")"));
             sb.Append(getColumnHeaders(new List<string>() { "Metric", "You", "All Contributors" }));
             sb.Append(getRowNumberData("Commits", usersYesterdaysCommits.commitCount, contribYesterdaysCommits.commitCount));
@@ -71,7 +71,7 @@ namespace SoftwareCo
             sb.Append("\n");
 
             // THIS WEEK
-            String startOfWeek = nowTime.start_of_week_dt.ToString("MMM d, yyyy");
+            string startOfWeek = nowTime.start_of_week_dt.ToString("MMM d, yyyy");
             sb.Append(getRightAlignedTableHeader("This week (" + startOfWeek + " to " + projectDate + ")"));
             sb.Append(getColumnHeaders(new List<string>() { "Metric", "You", "All Contributors" }));
             sb.Append(getRowNumberData("Commits", usersThisWeeksCommits.commitCount, contribThisWeeksCommits.commitCount));

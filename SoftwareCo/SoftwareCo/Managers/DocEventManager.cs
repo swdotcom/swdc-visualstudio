@@ -132,7 +132,7 @@ namespace SoftwareCo
                 return;
             }
 
-            String fileName = doc.FullName;
+            string fileName = doc.FullName;
             if (!IsTrueEventFile(fileName))
             {
                 return;
@@ -160,7 +160,7 @@ namespace SoftwareCo
             UpdateFileInfoMetrics(pdfileInfo, null, null, Keypress, Selection);
         }
 
-        public async void DocEventsOnDocumentOpeningAsync(String docPath, Boolean readOnly)
+        public async void DocEventsOnDocumentOpeningAsync(string docPath, Boolean readOnly)
         {
             SoftwareCoPackage package = PackageManager.GetAsyncPackage();
             if (package != null)
@@ -169,7 +169,7 @@ namespace SoftwareCo
             }
             // wrapper for a file path
             FileInfo fi = new FileInfo(docPath);
-            String fileName = fi.FullName;
+            string fileName = fi.FullName;
             if (!IsTrueEventFile(fileName))
             {
                 return;
@@ -194,7 +194,7 @@ namespace SoftwareCo
             {
                 return;
             }
-            String fileName = document.FullName;
+            string fileName = document.FullName;
             if (!IsTrueEventFile(fileName))
             {
                 return;
@@ -207,8 +207,6 @@ namespace SoftwareCo
 
         private void UpdateFileInfoMetrics(PluginDataFileInfo fileInfo, TextPoint start, TextPoint end, string Keypress, TextSelection textSelection)
         {
-
-            int tabSize = doc != null ? doc.TabSize : 4;
             bool hasAutoIndent = false;
             bool newLineAutoIndent = false;
 

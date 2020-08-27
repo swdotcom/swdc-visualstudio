@@ -157,7 +157,6 @@ namespace SoftwareCo
                 Logger.Info(string.Format("Initialized Code Time v{0}", PluginVersion));
 
                 Task.Delay(5000).ContinueWith((task) => { ProcessKeystrokePayload(null); });
-                Task.Delay(8000).ContinueWith((task) => { FileManager.GetLastSavedKeystrokeStats(); });
 
                 PLUGIN_READY = true;
             }
