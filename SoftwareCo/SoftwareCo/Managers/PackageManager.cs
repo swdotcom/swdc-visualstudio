@@ -176,7 +176,11 @@ namespace SoftwareCo
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             if (ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
             {
-                _solutionDirectory = Path.GetDirectoryName(ObjDte.Solution.FileName);
+                _solutionDirectory = ObjDte.Solution.FullName;
+                if (_solutionDirectory.LastIndexOf(".sln") == _solutionDirectory.Length - ".sln".Length)
+                {
+                    _solutionDirectory = _solutionDirectory.Substring(0, _solutionDirectory.LastIndexOf("\\"));
+                }
             }
             return _solutionDirectory;
         }

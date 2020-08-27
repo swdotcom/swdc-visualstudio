@@ -32,14 +32,14 @@ namespace SoftwareCo
         {
             // fetch the current day from the sessions.json
             this._currentDay = FileManager.getItemAsString("currentDay");
-            timer = new System.Threading.Timer(
+            timer = new Timer(
                       WallclcockTimerHandlerAsync,
                       null,
                       1000,
                       THIRTY_SECONDS_IN_MILLIS);
             sessionSummaryMgr = SessionSummaryManager.Instance;
 
-            newDayTimer = new System.Threading.Timer(
+            newDayTimer = new Timer(
                     GetNewDayChecker,
                     null,
                     1000,

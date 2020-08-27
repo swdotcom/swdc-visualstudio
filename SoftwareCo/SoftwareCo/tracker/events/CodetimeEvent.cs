@@ -35,11 +35,8 @@ namespace SoftwareCo
             GenericContext context = new GenericContext()
                 .SetSchema("iglu:com.software/codetime/jsonschema/1-0-2")
                 .Add("keystrokes", keystrokes)
-                .Add("keystrokes", keystrokes)
-                .Add("chars_added", chars_added)
-                .Add("chars_deleted", chars_deleted)
-                .Add("chars_pasted", chars_pasted)
-                .Add("pastes", pastes)
+                .Add("characters_added", chars_added)
+                .Add("characters_deleted", chars_deleted)
                 .Add("lines_added", lines_added)
                 .Add("lines_deleted", lines_deleted)
                 .Add("start_time", start_time)
@@ -50,6 +47,7 @@ namespace SoftwareCo
                 .Add("multi_adds", multi_adds)
                 .Add("auto_indents", auto_indents)
                 .Add("replacements", replacements)
+                .Add("is_net_change", is_net_change)
                 .Build();
             return context;
         }

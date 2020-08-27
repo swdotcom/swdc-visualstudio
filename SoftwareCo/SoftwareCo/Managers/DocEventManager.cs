@@ -202,7 +202,7 @@ namespace SoftwareCo
             InitPluginDataIfNotExists();
             _pluginData.InitFileInfoIfNotExists(fileName);
 
-            TrackerEventManager.TrackEditorFileActionEvent("file", "open", fileName);
+            TrackerEventManager.TrackEditorFileActionEvent("file", "close", fileName);
         }
 
         private void UpdateFileInfoMetrics(PluginDataFileInfo fileInfo, TextPoint start, TextPoint end, string Keypress, TextSelection textSelection)

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
@@ -17,7 +18,7 @@ namespace SoftwareCo
             lastSavedKeystrokeStats = null;
         }
 
-        public static PluginData GetLastSavedKeystrokeStats()
+        public static async Task<PluginData> GetLastSavedKeystrokeStats()
         {
             List<string> offlinePluginData = GetOfflinePayloadList();
             if (offlinePluginData != null && offlinePluginData.Count > 0)

@@ -145,7 +145,7 @@ namespace SoftwareCo
 
         public static async Task<ProjectEntity> GetProjectEntity(string fileName)
         {
-            FileDetails fd = await ProjectInfoManager.GetFileDatails(fileName);
+            FileDetails fd = await FileInfoManager.GetFileDatails(fileName);
             ProjectEntity projectEntity = new ProjectEntity();
             projectEntity.project_directory = fd.project_directory;
             projectEntity.project_name = fd.project_name;
@@ -166,9 +166,11 @@ namespace SoftwareCo
 
         public static async Task<FileEntity> GetFileEntity(string fileName)
         {
-            FileDetails fd = await ProjectInfoManager.GetFileDatails(fileName);
+            FileDetails fd = await FileInfoManager.GetFileDatails(fileName);
             FileEntity fileEntity = new FileEntity();
-            fileEntity.file_name = fd.project_file_name;
+            // standardize the project file name
+            string projectFileName = fd.project_file_name.Replace(@"\", @"/");
+            fileEntity.file_name = projectFileName;
             fileEntity.file_path = fd.full_file_name;
             fileEntity.character_count = fd.character_count;
             fileEntity.line_count = fd.line_count;

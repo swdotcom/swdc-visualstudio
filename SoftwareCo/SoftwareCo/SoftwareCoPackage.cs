@@ -9,22 +9,20 @@ using System.IO;
 using System.Net.Http;
 using System.Collections.Generic;
 using EnvDTE80;
-using System.Reflection;
-using Microsoft.VisualStudio.Language.Intellisense;
-using System.Linq.Expressions;
+using Microsoft.VisualStudio.Shell.Interop;
 
 namespace SoftwareCo
 {
 
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-    // [ProvideAutoLoad(UIContextGuids80.SolutionExists)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
-    [Guid(SoftwareCoPackage.PackageGuidString)]
+    [Guid(PackageGuidString)]
+    [ProvideAutoLoad(UIContextGuids.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
     // [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideToolWindow(typeof(CodeMetricsToolPane),
-        Window = Microsoft.VisualStudio.Shell.Interop.ToolWindowGuids.SolutionExplorer,
+        Window = ToolWindowGuids.SolutionExplorer,
         MultiInstances=false)]
     public sealed class SoftwareCoPackage : AsyncPackage
     {
@@ -55,7 +53,6 @@ namespace SoftwareCo
         /// </summary>
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
-            Console.WriteLine("Initializing Code Time");
             try
             {
                 await JoinableTaskFactory.SwitchToMainThreadAsync();
@@ -68,8 +65,6 @@ namespace SoftwareCo
 
                 // init the package manager that will use the AsyncPackage to run main thread requests
                 PackageManager.initialize(this, ObjDte);
-
-                await this.InitializeUserInfoAsync();
 
                 // Intialize the document event handlers
                 Events2 events = (Events2)ObjDte.Events;
@@ -100,11 +95,10 @@ namespace SoftwareCo
                     });
                     return;
                 }
+                await this.InitializeUserInfoAsync();
+
                 // initialize the tracker event manager
                 TrackerEventManager.init();
-
-                // init the doc event mgr and inject ObjDte
-                docEventMgr = DocEventManager.Instance;
 
                 // update the latestPayloadTimestampEndUtc
                 NowTime nowTime = SoftwareCoUtil.GetNowTime();
@@ -112,6 +106,9 @@ namespace SoftwareCo
 
                 // init the wallclock
                 WallclockManager wallclockMgr = WallclockManager.Instance;
+
+                // init the doc event mgr and inject ObjDte
+                docEventMgr = DocEventManager.Instance;
 
                 // setup event handlers
                 _textDocKeyEvents.BeforeKeyPress += new _dispTextDocumentKeyPressEvents_BeforeKeyPressEventHandler(BeforeKeyPress);
@@ -122,12 +119,12 @@ namespace SoftwareCo
 
 
                 // initialize the menu commands
-                await SoftwareLaunchCommand.InitializeAsync(this);
-                await SoftwareDashboardLaunchCommand.InitializeAsync(this);
-                await SoftwareTopFortyCommand.InitializeAsync(this);
-                await SoftwareLoginCommand.InitializeAsync(this);
-                await SoftwareToggleStatusInfoCommand.InitializeAsync(this);
-                await SoftwareOpenCodeMetricsTreeCommand.InitializeAsync(this);
+                SoftwareLaunchCommand.InitializeAsync(this);
+                SoftwareDashboardLaunchCommand.InitializeAsync(this);
+                SoftwareTopFortyCommand.InitializeAsync(this);
+                SoftwareLoginCommand.InitializeAsync(this);
+                SoftwareToggleStatusInfoCommand.InitializeAsync(this);
+                SoftwareOpenCodeMetricsTreeCommand.InitializeAsync(this);
 
                 // Create an AutoResetEvent to signal the timeout threshold in the
                 // timer callback has been reached.
@@ -145,9 +142,6 @@ namespace SoftwareCo
                     ONE_MINUTE,
                     ONE_MINUTE);
 
-                // make sure the last payload is in memory
-                FileManager.GetLastSavedKeystrokeStats();
-
                 // check if we've shown the readme or not
                 bool initializedVisualStudioPlugin = FileManager.getItemAsBool("visualstudio_CtInit");
                 if (!initializedVisualStudioPlugin)
@@ -162,7 +156,8 @@ namespace SoftwareCo
                 string PluginVersion = EnvUtil.GetVersion();
                 Logger.Info(string.Format("Initialized Code Time v{0}", PluginVersion));
 
-                ProcessKeystrokePayload(null);
+                Task.Delay(5000).ContinueWith((task) => { ProcessKeystrokePayload(null); });
+                Task.Delay(8000).ContinueWith((task) => { FileManager.GetLastSavedKeystrokeStats(); });
 
                 PLUGIN_READY = true;
             }

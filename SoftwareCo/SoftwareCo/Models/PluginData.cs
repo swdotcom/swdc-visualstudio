@@ -226,7 +226,7 @@ namespace SoftwareCo
             TimeData td = await TimeDataManager.Instance.UpdateSessionAndFileSecondsAsync(this.project, session_seconds);
 
             // get the current payloads so we can compare our last cumulative seconds
-            PluginData lastKpm = FileManager.GetLastSavedKeystrokeStats();
+            PluginData lastKpm = await FileManager.GetLastSavedKeystrokeStats();
             if (SoftwareCoUtil.IsNewDay())
             {
                 // the days don't match. don't use the editor or session seconds for a different day

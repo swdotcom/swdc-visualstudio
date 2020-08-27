@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
-    class ProjectInfoManager
+    class FileInfoManager
     {
         public static string solutionDirectory { set; get; }
 
@@ -14,17 +14,28 @@ namespace SoftwareCo
         public static async Task<FileDetails> GetFileDatails(string fileName)
         {
             FileDetails fd = new FileDetails();
-            if (!string.IsNullOrEmpty(fileName))
+            if (string.IsNullOrEmpty(fileName))
             {
-                fd.full_file_name = fileName;
-
-                FileInfo fi = new FileInfo(fileName);
-                fd.file_name = fi.Name;
-
-                fd.character_count = fi.Length;
-                // in case the ObjDte has issues obtaining the syntax
-                fd.syntax = fi.Extension;
+                return fd;
             }
+
+            FileInfo fi = new FileInfo(fileName);
+
+            fd.full_file_name = fileName;
+            fd.file_name = fi.Name;
+
+            fd.character_count = fi.Length;
+            // in case the ObjDte has issues obtaining the syntax
+            string ext = fi.Extension;
+            if (ext.IndexOf(".") != -1)
+            {
+                fd.syntax = ext.Substring(ext.IndexOf(".") + 1);
+            } else
+            {
+                fd.syntax = ext;
+            }
+
+            fd.line_count = DocEventManager.CountLinesLINQ(fileName);
 
             solutionDirectory = await PackageManager.GetSolutionDirectory();
             if (!string.IsNullOrEmpty(solutionDirectory))
@@ -35,7 +46,6 @@ namespace SoftwareCo
 
                 if (!string.IsNullOrEmpty(fileName))
                 {
-                    // get the project file name
                     fd.project_file_name = fileName.Substring(solutionDirectory.Length);
                 }
 
@@ -48,6 +58,7 @@ namespace SoftwareCo
             {
                 fd.project_name = "Unnamed";
                 fd.project_directory = "Untitled";
+                fd.project_file_name = fi.Name;
             }
             return fd;
         }

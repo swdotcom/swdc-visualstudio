@@ -43,7 +43,6 @@ namespace SoftwareCo
             // if (resp.ok && resp.responseData != null)
             if (SoftwareHttpManager.IsOk(resp))
             {
-
                 // get the json data
                 string json = await resp.Content.ReadAsStringAsync();
                 // string json = JsonConvert.SerializeObject(resp.responseData);
@@ -65,8 +64,10 @@ namespace SoftwareCo
                 Subject subject = new Subject().SetPlatform(Platform.Iot).SetLang("EN");
 
                 t = Tracker.Instance;
-
-                t.Start(emitter, subject, null, trackerNamespace, appId, false /*encodeBase64*/, false /*synchronous*/);
+                if (!t.Started)
+                {
+                    t.Start(emitter, subject, null, trackerNamespace, appId, false /*encodeBase64*/, false /*synchronous*/);
+                }
                 initialized = true;
             }
         }
