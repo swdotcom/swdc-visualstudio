@@ -134,7 +134,7 @@ namespace SoftwareCo
                       SendOfflineData,
                       null,
                       ONE_MINUTE / 2,
-                      ONE_MINUTE * 15);
+                      ONE_MINUTE * 5);
 
                 processPayloadTimer = new Timer(
                     ProcessKeystrokePayload,
@@ -170,6 +170,8 @@ namespace SoftwareCo
         public void Dispose()
         {
             TrackerEventManager.TrackEditorActionEvent("editor", "deactivate");
+
+            WallclockManager.Instance.Dispose();
 
             if (offlineDataTimer != null)
             {

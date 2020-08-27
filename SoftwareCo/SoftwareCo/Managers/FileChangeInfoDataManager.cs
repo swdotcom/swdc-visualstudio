@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace SoftwareCo
@@ -31,8 +31,8 @@ namespace SoftwareCo
 
             try
             {
-                string content = new JsonObject().ToString();
-                content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
+                string content = JsonConvert.SerializeObject(new JsonObject());
+                
                 File.WriteAllText(file, content, System.Text.Encoding.UTF8);
             }
             catch (Exception e)
@@ -49,7 +49,7 @@ namespace SoftwareCo
             bool foundExisting = false;
             foreach (FileChangeInfo changeInfo in changeInfos)
             {
-                if (changeInfo.fsPath.Equals(data.fsPath))
+                if (!string.IsNullOrEmpty(changeInfo.fsPath) && changeInfo.fsPath.Equals(data.fsPath))
                 {
                     changeInfo.Clone(data);
                     foundExisting = true;
@@ -67,13 +67,11 @@ namespace SoftwareCo
                 File.SetAttributes(file, FileAttributes.Normal);
             }
 
-            JsonObject jsonToSave = BuildJsonObjectFromList(changeInfos);
-
             try
             {
-                string content = jsonToSave.ToString();
-                content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
-                File.WriteAllText(file, content, System.Text.Encoding.UTF8);
+                JsonObject jsonToSave = BuildJsonObjectFromList(changeInfos);
+                string json = JsonConvert.SerializeObject(jsonToSave);
+                File.WriteAllText(file, json, System.Text.Encoding.UTF8);
             }
             catch (Exception e)
             {
@@ -159,29 +157,39 @@ namespace SoftwareCo
             }
 
             string fileChangeInfoSummary = FileManager.getFileChangeInfoSummaryData();
-
-            // it'll be a map of file to FileChangeInfo objects
-            IDictionary<string, object> jsonObj =
-                (IDictionary<string, object>)SimpleJson.DeserializeObject(fileChangeInfoSummary, new Dictionary<string,object>());
-            foreach (string key in jsonObj.Keys)
+            try
             {
-                FileChangeInfo info = new FileChangeInfo();
-
-                jsonObj.TryGetValue(key, out object infoObj);
-                try
+                if (fileChangeInfoSummary.StartsWith("["))
                 {
-                    JsonObject infoObjJson = (infoObj == null) ? null : (JsonObject)infoObj;
-                    if (infoObjJson != null)
-                    {
-                        info.CloneFromDictionary(infoObjJson);
-                    }
-                } catch (Exception e)
-                {
-                    //
+                    _fileChangeInfos = JsonConvert.DeserializeObject<List<FileChangeInfo>>(fileChangeInfoSummary);
                 }
+                else
+                {
+                    // it'll be a map of file to FileChangeInfo objects
+                    IDictionary<string, object> jsonObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(fileChangeInfoSummary);
+                    foreach (string key in jsonObj.Keys)
+                    {
+                        FileChangeInfo info = new FileChangeInfo();
 
-                _fileChangeInfos.Add(info);
+                        jsonObj.TryGetValue(key, out object infoObj);
+                        try
+                        {
+                            JsonObject infoObjJson = (infoObj == null) ? null : (JsonObject)infoObj;
+                            if (infoObjJson != null)
+                            {
+                                info.CloneFromDictionary(infoObjJson);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            //
+                        }
+
+                        _fileChangeInfos.Add(info);
+                    }
+                }
             }
+            catch (Exception) { }
 
             return _fileChangeInfos;
         }

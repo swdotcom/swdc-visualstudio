@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -72,7 +73,8 @@ namespace SoftwareCo
                     if (SoftwareHttpManager.IsOk(response))
                     {
                         string responseBody = await response.Content.ReadAsStringAsync();
-                        IDictionary<string, object> respObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody, new Dictionary<string, object>());
+                        
+                        IDictionary<string, object> respObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(responseBody);
                         respObj.TryGetValue("jwt", out object jwtObj);
                         string jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
                         if (jwt != null)

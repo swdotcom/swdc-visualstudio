@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace SoftwareCo
 {
@@ -28,8 +29,6 @@ namespace SoftwareCo
             {
                 _sessionSummary.currentDayMinutes += (eTimeInfo.session_seconds / 60);
             }
-
-            long sessionSeconds = _sessionSummary.currentDayMinutes * 60;
 
             _sessionSummary.currentDayKeystrokes += aggregate.keystrokes;
             _sessionSummary.currentDayLinesAdded += aggregate.linesAdded;
@@ -76,10 +75,14 @@ namespace SoftwareCo
             }
 
             string sessionSummary = FileManager.getSessionSummaryFileData();
-
-            IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(sessionSummary, new Dictionary<string, object>());
             _sessionSummary = new SessionSummary();
-            _sessionSummary = _sessionSummary.GetSessionSummaryFromDictionary(jsonObj);
+            try
+            {
+                IDictionary<string, object> jsonObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(sessionSummary);
+
+                _sessionSummary = _sessionSummary.GetSessionSummaryFromDictionary(jsonObj);
+            }
+            catch (Exception) { }
             return _sessionSummary;
         }
 
@@ -103,11 +106,10 @@ namespace SoftwareCo
 
             try
             {
-                string content = SimpleJson.SerializeObject(sessionSummary.GetSessionSummaryDict());
-                content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
+                string content = JsonConvert.SerializeObject(sessionSummary.GetSessionSummaryDict());
                 File.WriteAllText(sessionSummaryFile, content, System.Text.Encoding.UTF8);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 //
             }

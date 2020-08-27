@@ -48,13 +48,20 @@ namespace SoftwareCo
             foreach (PluginDataFileInfo fileInfo in pluginData.source)
             {
                 CodetimeEvent codetimeEvent = new CodetimeEvent();
-                codetimeEvent.chars_added = fileInfo.add;
-                codetimeEvent.chars_deleted = fileInfo.delete;
-                codetimeEvent.chars_pasted = fileInfo.charsPasted;
                 codetimeEvent.keystrokes = fileInfo.keystrokes;
-                codetimeEvent.end_time = fileInfo.end.ToString();
-                codetimeEvent.start_time = fileInfo.start.ToString();
-                codetimeEvent.pastes = fileInfo.paste;
+                codetimeEvent.lines_added = fileInfo.linesAdded;
+                codetimeEvent.lines_deleted = fileInfo.linesRemoved;
+                codetimeEvent.end_time = SoftwareCoUtil.ToRfc3339String(fileInfo.end);
+                codetimeEvent.start_time = SoftwareCoUtil.ToRfc3339String(fileInfo.start);
+                codetimeEvent.characters_added = fileInfo.characters_added;
+                codetimeEvent.characters_deleted = fileInfo.characters_deleted;
+                codetimeEvent.single_adds = fileInfo.single_adds;
+                codetimeEvent.multi_adds = fileInfo.multi_adds;
+                codetimeEvent.single_deletes = fileInfo.single_deletes;
+                codetimeEvent.multi_deletes = fileInfo.multi_deletes;
+                codetimeEvent.auto_indents = fileInfo.auto_indents;
+                codetimeEvent.replacements = fileInfo.replacements;
+                codetimeEvent.is_net_change = fileInfo.is_net_change;
 
                 // entities
                 codetimeEvent.pluginEntity = pluginEntity;
@@ -62,6 +69,7 @@ namespace SoftwareCo
 
                 codetimeEvent.fileEntity = await GetFileEntity(fileInfo.file);
                 codetimeEvent.projectEntity = await GetProjectEntity(fileInfo.file);
+                
 
                 if (repoEntity == null)
                 {

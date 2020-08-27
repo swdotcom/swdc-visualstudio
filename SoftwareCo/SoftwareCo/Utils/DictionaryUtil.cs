@@ -49,7 +49,7 @@ namespace SoftwareCo
         {
             try
             {
-                PluginDataProject proj = (PluginDataProject)JsonConvert.DeserializeObject(dict["project"].ToString());
+                PluginDataProject proj = JsonConvert.DeserializeObject<PluginDataProject>(dict["project"].ToString());
                 return proj;
             }
             catch (Exception) { }

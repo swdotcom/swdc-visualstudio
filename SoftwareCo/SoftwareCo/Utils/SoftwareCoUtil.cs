@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -327,6 +328,12 @@ namespace SoftwareCo
         {
             DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(seconds);
             return dateTimeOffset.ToString(@"yyyy-MM-dd");
+        }
+
+        public static string ToRfc3339String(long seconds)
+        {
+            DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(seconds);
+            return dateTimeOffset.ToString(@"yyyy-MM-dd'T'HH:mm:ssZ", DateTimeFormatInfo.InvariantInfo);
         }
 
         public static bool IsNewDay()

@@ -45,10 +45,7 @@ namespace SoftwareCo
                     Directory.CreateDirectory(softwareDataDir);
                 }
                 catch (Exception)
-                {
-                    // 
-                }
-
+                {}
             }
             return softwareDataDir;
         }
@@ -306,9 +303,8 @@ namespace SoftwareCo
 
                     File.WriteAllText(sessionFile, content, System.Text.Encoding.UTF8);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
-                    //
                 }
             }
         }

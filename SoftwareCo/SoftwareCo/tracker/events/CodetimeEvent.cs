@@ -8,10 +8,8 @@ namespace SoftwareCo
     class CodetimeEvent
     {
         public long keystrokes { get; set; }
-        public long chars_added { get; set; }
-        public long chars_deleted { get; set; }
-        public long chars_pasted { get; set; }
-        public long pastes { get; set; }
+        public long characters_added { get; set; }
+        public long characters_deleted { get; set; }
         public long lines_added { get; set; }
         public long lines_deleted { get; set; }
         public string start_time { get; set; }
@@ -35,8 +33,8 @@ namespace SoftwareCo
             GenericContext context = new GenericContext()
                 .SetSchema("iglu:com.software/codetime/jsonschema/1-0-2")
                 .Add("keystrokes", keystrokes)
-                .Add("characters_added", chars_added)
-                .Add("characters_deleted", chars_deleted)
+                .Add("characters_added", characters_added)
+                .Add("characters_deleted", characters_deleted)
                 .Add("lines_added", lines_added)
                 .Add("lines_deleted", lines_deleted)
                 .Add("start_time", start_time)

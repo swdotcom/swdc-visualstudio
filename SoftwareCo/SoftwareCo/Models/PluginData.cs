@@ -149,8 +149,10 @@ namespace SoftwareCo
             this.end = nowTime.now;
             this.local_end = nowTime.local_now;
 
+            long payloadTimInSeconds = this.end - this.start;
+
             // get the TimeData for this project dir
-            await ValidateAndUpdateCumulativeDataAsync(eTimeInfo.session_seconds);
+            await ValidateAndUpdateCumulativeDataAsync(eTimeInfo.session_seconds, payloadTimInSeconds);
             this.elapsed_seconds = eTimeInfo.elapsed_seconds;
 
             // make sure all of the end times are set
@@ -220,7 +222,7 @@ namespace SoftwareCo
             return jsonObj.ToString();
         }
 
-        private async Task ValidateAndUpdateCumulativeDataAsync(long session_seconds)
+        private async Task ValidateAndUpdateCumulativeDataAsync(long session_seconds, long payloadTimInSeconds)
         {
 
             TimeData td = await TimeDataManager.Instance.UpdateSessionAndFileSecondsAsync(this.project, session_seconds);
@@ -239,8 +241,8 @@ namespace SoftwareCo
 
             this.workspace_name = SoftwareCoUtil.workspace_name;
             this.hostname = SoftwareCoUtil.getHostname();
-            this.cumulative_session_seconds = 60;
-            this.cumulative_editor_seconds = 60;
+            this.cumulative_session_seconds = payloadTimInSeconds;
+            this.cumulative_editor_seconds = payloadTimInSeconds;
 
             if (td != null)
             {

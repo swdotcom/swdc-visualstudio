@@ -2,10 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace SoftwareCo
 {
@@ -28,7 +28,7 @@ namespace SoftwareCo
             {
                 string fileData = File.ReadAllText(GetTimeDataFile(), System.Text.Encoding.UTF8);
                 return fileData;
-            } catch (Exception e)
+            } catch (Exception)
             {
                 //
             } finally
@@ -48,17 +48,17 @@ namespace SoftwareCo
                 {
                     try
                     {
-                        string content = new JsonArray().ToString();
+                        string content = JsonConvert.SerializeObject(new JsonArray());
                         File.WriteAllText(file, content, Encoding.UTF8);
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                         //
                     }
                 }
                 return file;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return null;
             } finally
@@ -73,11 +73,10 @@ namespace SoftwareCo
 
             try
             {
-                string content = new JsonArray().ToString();
-                content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
+                string content = JsonConvert.SerializeObject(new JsonArray());
                 File.WriteAllText(file, content, Encoding.UTF8);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 //
             } finally
@@ -152,16 +151,13 @@ namespace SoftwareCo
             }
             list.Add(timeData);
 
-            JsonArray jsonToSave = BuildJsonObjectFromList(list);
-
             string file = GetTimeDataFile();
             File.SetAttributes(file, FileAttributes.Normal);
 
             try
             {
-                string content = jsonToSave.ToString();
-                content = content.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
-                File.WriteAllText(file, content, System.Text.Encoding.UTF8);
+                string json = JsonConvert.SerializeObject(list);
+                File.WriteAllText(file, json, Encoding.UTF8);
             }
             catch (Exception e)
             {
@@ -220,21 +216,11 @@ namespace SoftwareCo
             string timeDataJson = GetTimeDataFileData();
             if (timeDataJson != null)
             {
-                JsonArray jsonArrayObj = (JsonArray)SimpleJson.DeserializeObject(timeDataJson, new JsonArray());
-                foreach (JsonObject jsonObj in jsonArrayObj)
+                try
                 {
-                    TimeData td = new TimeData();
-                    try
-                    {
-                        td.CloneFromDictionary(jsonObj);
-                    }
-                    catch (Exception e)
-                    {
-                        //
-                    }
-
-                    existingList.Add(td);
+                    existingList = JsonConvert.DeserializeObject<List<TimeData>>(timeDataJson);
                 }
+                catch (Exception) { }
             }
 
             return existingList;

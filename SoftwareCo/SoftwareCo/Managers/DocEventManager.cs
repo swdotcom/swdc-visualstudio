@@ -3,8 +3,7 @@ using System;
 using EnvDTE;
 using System.IO;
 using System.Linq;
-using EnvDTE80;
-using Newtonsoft.Json;
+using System.Threading;
 
 namespace SoftwareCo
 {
@@ -16,8 +15,9 @@ namespace SoftwareCo
         private PluginData _pluginData;
 
         private Document doc = null;
+        private Scheduler scheduler = null;
+        private long lastKeystrokeTime = 0;
         public static DocEventManager Instance { get { return lazy.Value; } }
-
 
         public bool hasData()
         {
@@ -347,10 +347,41 @@ namespace SoftwareCo
 
             fileInfo.keystrokes += 1;
             _pluginData.keystrokes += 1;
+
+            lastKeystrokeTime = DateTimeOffset.Now.ToUnixTimeSeconds();
+
+            // process this payload in 10 seconds if no activity
+            if (scheduler == null)
+            {
+                scheduler = new Scheduler();
+                scheduler.Execute(() => CheckToProcessPayload(), 10000);
+            }
+        }
+
+        private void CheckToProcessPayload()
+        {
+            long nowInSec = DateTimeOffset.Now.ToUnixTimeSeconds();
+            if (nowInSec - lastKeystrokeTime >= 10)
+            {
+                if (scheduler != null)
+                {
+                    PostData();
+                }
+            } else
+            {
+                // create a new one
+                scheduler = new Scheduler();
+                scheduler.Execute(() => CheckToProcessPayload(), 10000);
+            }
         }
 
         public async void PostData()
         {
+            if (scheduler != null)
+            {
+                scheduler.CancelAll();
+                scheduler = null;
+            }
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
 
             if (_pluginData != null && _pluginData.source.Count > 0 && _pluginData.keystrokes > 0)

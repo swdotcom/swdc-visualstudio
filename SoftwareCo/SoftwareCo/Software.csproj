@@ -115,6 +115,8 @@
     <Compile Include="Commands\SoftwareLoginCommand.cs" />
     <Compile Include="Utils\Logger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utils\ScheduledTask.cs" />
+    <Compile Include="Utils\Scheduler.cs" />
     <Compile Include="Utils\SimpleJson.cs" />
     <Compile Include="SoftwareCoPackage.cs" />
     <Compile Include="Utils\SoftwareCoUtil.cs" />

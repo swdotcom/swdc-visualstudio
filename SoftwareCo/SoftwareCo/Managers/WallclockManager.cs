@@ -46,14 +46,28 @@ namespace SoftwareCo
                     ONE_MINUTE * 10);
         }
 
+        public void Dispose()
+        {
+            if (newDayTimer != null)
+            {
+                newDayTimer.Dispose();
+                newDayTimer = null;
+            }
+
+            if (timer != null)
+            {
+                timer.Dispose();
+                timer = null;
+            }
+        }
+
         private void WallclcockTimerHandlerAsync(object stateinfo)
         {
-            bool hasPluginData = DocEventManager.Instance.hasData();
-            if (IsVisualStudioAppInForeground() || hasPluginData)
+            if (IsVisualStudioAppInForeground() || DocEventManager.Instance.hasData())
             {
-                this._wctime = FileManager.getItemAsLong("wctime");
-                this._wctime += SECONDS_TO_INCREMENT;
-                FileManager.setNumericItem("wctime", this._wctime);
+                _wctime = FileManager.getItemAsLong("wctime");
+                _wctime += SECONDS_TO_INCREMENT;
+                FileManager.setNumericItem("wctime", _wctime);
 
                 // update the file info file (async is fine)
                 TimeDataManager.Instance.UpdateEditorSeconds(SECONDS_TO_INCREMENT);
