@@ -1,18 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
     public class PluginDataProject
     {
-        public String name;
-        public String directory;
-        public String identifier;
+        public string name;
+        public string directory;
+        public string identifier;
 
-        public PluginDataProject(String nameVal, String directoryVal)
+        public PluginDataProject(string nameVal, string directoryVal)
         {
             name = nameVal;
             directory = directoryVal;

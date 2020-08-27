@@ -16,21 +16,11 @@ namespace SoftwareCo
 
         public static async Task<HttpResponseMessage> SendDashboardRequestAsync(HttpMethod httpMethod, string uri)
         {
-            return await SendRequestAsync(httpMethod, uri, null, 60);
-        }
-
-        public static async Task<HttpResponseMessage> SendRequestAsync(HttpMethod httpMethod, string uri, string optionalPayload)
-        {
-            return await SendRequestAsync(httpMethod, uri, optionalPayload, 10);
+            return await SendRequestAsync(httpMethod, uri, null);
         }
 
         public static async Task<HttpResponseMessage> SendRequestAsync
-            (HttpMethod httpMethod, string uri, string optionalPayload, string jwt)
-        {
-            return await SendRequestAsync(httpMethod, uri, optionalPayload, 10, jwt);
-        }
-
-        public static async Task<HttpResponseMessage> SendRequestAsync(HttpMethod httpMethod, string uri, string optionalPayload, int timeout, string jwt = null, bool isOnlineCheck = false)
+            (HttpMethod httpMethod, string uri, string optionalPayload = null, string jwt = null, bool useJwt = true)
         {
 
             if (!SoftwareCoUtil.isTelemetryOn())
@@ -38,18 +28,18 @@ namespace SoftwareCo
                 return null;
             }
 
-            if (!isOnlineCheck && !SoftwareUserManager.isOnline)
+            if (!SoftwareUserManager.isOnline)
             {
                 return null;
             }
 
             HttpClient client = new HttpClient
             {
-                Timeout = TimeSpan.FromSeconds(timeout)
+                Timeout = TimeSpan.FromSeconds(10)
             };
             var cts = new CancellationTokenSource();
             HttpResponseMessage response = null;
-            if (jwt == null)
+            if (jwt == null && useJwt)
             {
                 jwt = FileManager.getItemAsString("jwt");
             }

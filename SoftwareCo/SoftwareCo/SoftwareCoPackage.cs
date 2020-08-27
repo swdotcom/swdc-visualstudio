@@ -15,14 +15,14 @@ namespace SoftwareCo
 {
 
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-    [ProvideAutoLoad(UIContextGuids80.SolutionExists)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
-    [Guid(SoftwareCoPackage.PackageGuidString)]
+    [Guid(PackageGuidString)]
+    [ProvideAutoLoad(UIContextGuids.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
     // [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideToolWindow(typeof(CodeMetricsToolPane),
-        Window = Microsoft.VisualStudio.Shell.Interop.ToolWindowGuids.SolutionExplorer,
+        Window = ToolWindowGuids.SolutionExplorer,
         MultiInstances=false)]
     public sealed class SoftwareCoPackage : AsyncPackage
     {
@@ -31,8 +31,9 @@ namespace SoftwareCo
         public const string PackageGuidString = "0ae38c4e-1ac5-4457-bdca-bb2dfc342a1c";
 
         private DocumentEvents _docEvents;
-        private TextDocumentKeyPressEvents _textDocKeyEvent;
-
+        private SelectionEvents _selectionEvents;
+        private TextEditorEvents _textEditorEvents;
+        private TextDocumentKeyPressEvents _textDocKeyEvents;
 
         private Timer offlineDataTimer;
         private Timer processPayloadTimer;
@@ -44,10 +45,7 @@ namespace SoftwareCo
         private static int ONE_MINUTE = 1000 * 60;
         public static bool PLUGIN_READY = false;
 
-        public SoftwareCoPackage()
-        {
-
-        }
+        public SoftwareCoPackage() {}
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -55,7 +53,6 @@ namespace SoftwareCo
         /// </summary>
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
-            Console.WriteLine("Initializing Code Time");
             try
             {
                 await JoinableTaskFactory.SwitchToMainThreadAsync();
@@ -69,14 +66,12 @@ namespace SoftwareCo
                 // init the package manager that will use the AsyncPackage to run main thread requests
                 PackageManager.initialize(this, ObjDte);
 
-                await this.InitializeUserInfoAsync();
-
                 // Intialize the document event handlers
                 Events2 events = (Events2)ObjDte.Events;
-                _textDocKeyEvent = events.TextDocumentKeyPressEvents;
+                _textEditorEvents = events.TextEditorEvents;
+                _textDocKeyEvents = events.TextDocumentKeyPressEvents;
+                _selectionEvents = events.SelectionEvents;
                 _docEvents = events.DocumentEvents;
-
-                TrackerEventManager.init();
 
                 InitializePlugin();
             }
@@ -94,14 +89,16 @@ namespace SoftwareCo
                 string solutionDir = await PackageManager.GetSolutionDirectory();
                 if (string.IsNullOrEmpty(solutionDir))
                 {
-                    Task.Delay(5000).ContinueWith((task) =>
+                    Task.Delay(3000).ContinueWith((task) =>
                     {
                         InitializePlugin();
                     });
                     return;
                 }
-                // init the doc event mgr and inject ObjDte
-                docEventMgr = DocEventManager.Instance;
+                await this.InitializeUserInfoAsync();
+
+                // initialize the tracker event manager
+                TrackerEventManager.init();
 
                 // update the latestPayloadTimestampEndUtc
                 NowTime nowTime = SoftwareCoUtil.GetNowTime();
@@ -110,21 +107,24 @@ namespace SoftwareCo
                 // init the wallclock
                 WallclockManager wallclockMgr = WallclockManager.Instance;
 
-                // setup event handlers
-                _textDocKeyEvent.AfterKeyPress += docEventMgr.AfterKeyPressedAsync;
+                // init the doc event mgr and inject ObjDte
+                docEventMgr = DocEventManager.Instance;
 
-                _docEvents.DocumentOpened += docEventMgr.DocEventsOnDocumentOpenedAsync;
+                // setup event handlers
+                _textDocKeyEvents.BeforeKeyPress += new _dispTextDocumentKeyPressEvents_BeforeKeyPressEventHandler(BeforeKeyPress);
                 _docEvents.DocumentClosing += docEventMgr.DocEventsOnDocumentClosedAsync;
-                _docEvents.DocumentSaved += docEventMgr.DocEventsOnDocumentSaved;
                 _docEvents.DocumentOpening += docEventMgr.DocEventsOnDocumentOpeningAsync;
+                _selectionEvents.OnChange += docEventMgr.OnChangeAsync;
+                _textEditorEvents.LineChanged += docEventMgr.LineChangedAsync;
+
 
                 // initialize the menu commands
-                await SoftwareLaunchCommand.InitializeAsync(this);
-                await SoftwareDashboardLaunchCommand.InitializeAsync(this);
-                await SoftwareTopFortyCommand.InitializeAsync(this);
-                await SoftwareLoginCommand.InitializeAsync(this);
-                await SoftwareToggleStatusInfoCommand.InitializeAsync(this);
-                await SoftwareOpenCodeMetricsTreeCommand.InitializeAsync(this);
+                SoftwareLaunchCommand.InitializeAsync(this);
+                SoftwareDashboardLaunchCommand.InitializeAsync(this);
+                SoftwareTopFortyCommand.InitializeAsync(this);
+                SoftwareLoginCommand.InitializeAsync(this);
+                SoftwareToggleStatusInfoCommand.InitializeAsync(this);
+                SoftwareOpenCodeMetricsTreeCommand.InitializeAsync(this);
 
                 // Create an AutoResetEvent to signal the timeout threshold in the
                 // timer callback has been reached.
@@ -142,9 +142,6 @@ namespace SoftwareCo
                     ONE_MINUTE,
                     ONE_MINUTE);
 
-                // make sure the last payload is in memory
-                FileManager.GetLastSavedKeystrokeStats();
-
                 // check if we've shown the readme or not
                 bool initializedVisualStudioPlugin = FileManager.getItemAsBool("visualstudio_CtInit");
                 if (!initializedVisualStudioPlugin)
@@ -159,10 +156,15 @@ namespace SoftwareCo
                 string PluginVersion = EnvUtil.GetVersion();
                 Logger.Info(string.Format("Initialized Code Time v{0}", PluginVersion));
 
-                ProcessKeystrokePayload(null);
+                Task.Delay(5000).ContinueWith((task) => { ProcessKeystrokePayload(null); });
 
                 PLUGIN_READY = true;
             }
+        }
+
+        void BeforeKeyPress(string Keypress, EnvDTE.TextSelection Selection, bool InStatementCompletion, ref bool CancelKeypress)
+        {
+            docEventMgr.BeforeKeyPressAsync(Keypress, Selection, InStatementCompletion, CancelKeypress);
         }
 
         public void Dispose()
@@ -171,11 +173,11 @@ namespace SoftwareCo
 
             if (offlineDataTimer != null)
             {
-                _textDocKeyEvent.AfterKeyPress -= docEventMgr.AfterKeyPressedAsync;
-                _docEvents.DocumentOpened -= docEventMgr.DocEventsOnDocumentOpenedAsync;
+                _textDocKeyEvents.BeforeKeyPress -= new _dispTextDocumentKeyPressEvents_BeforeKeyPressEventHandler(BeforeKeyPress);
                 _docEvents.DocumentClosing -= docEventMgr.DocEventsOnDocumentClosedAsync;
-                _docEvents.DocumentSaved -= docEventMgr.DocEventsOnDocumentSaved;
                 _docEvents.DocumentOpening -= docEventMgr.DocEventsOnDocumentOpeningAsync;
+                _selectionEvents.OnChange -= docEventMgr.OnChangeAsync;
+                _textEditorEvents.LineChanged -= docEventMgr.LineChangedAsync;
 
                 offlineDataTimer.Dispose();
                 offlineDataTimer = null;
@@ -250,7 +252,6 @@ namespace SoftwareCo
                 // delete the file
                 File.Delete(FileManager.getSoftwareDataStoreFile());
             }
-
             
         }
 

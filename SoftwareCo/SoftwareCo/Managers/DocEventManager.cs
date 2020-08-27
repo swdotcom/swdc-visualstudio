@@ -2,6 +2,9 @@
 using System;
 using EnvDTE;
 using System.IO;
+using System.Linq;
+using EnvDTE80;
+using Newtonsoft.Json;
 
 namespace SoftwareCo
 {
@@ -12,14 +15,9 @@ namespace SoftwareCo
         // private SoftwareData _softwareData;
         private PluginData _pluginData;
 
-        private SessionSummaryManager sessionSummaryMgr;
-
+        private Document doc = null;
         public static DocEventManager Instance { get { return lazy.Value; } }
 
-        private DocEventManager()
-        {
-            sessionSummaryMgr = SessionSummaryManager.Instance;
-        }
 
         public bool hasData()
         {
@@ -52,43 +50,126 @@ namespace SoftwareCo
             }
         }
 
-        public void DocEventsOnDocumentSaved(Document document)
+        public static int CountLinesLINQ(string fileName)
         {
-            if (document == null || document.FullName == null)
+            FileInfo fi = new FileInfo(fileName);
+            if (fi != null && fi.Exists)
+            {
+                return File.ReadLines(fi.FullName).Count();
+            }
+            return 0;
+        }
+
+        private void UpdateLineCount(PluginDataFileInfo pdfileInfo)
+        {
+            pdfileInfo.lines = CountLinesLINQ(pdfileInfo.file);
+        }
+
+        public async void OnChangeAsync()
+        {
+            doc = await PackageManager.GetActiveDocument();
+        }
+
+        public async void LineChangedAsync(TextPoint start, TextPoint end, int hint)
+        {
+            // only allow single line or bulk paste. visual sudio marks up the document
+            // when opening the file so we need to prevent these change events from coming through
+            bool isSameLinePaste = start.Line == end.Line && start.LineCharOffset < start.LineLength && end.LineCharOffset > start.LineCharOffset;
+            bool isBulkPaste = start.AtStartOfLine && end.AtEndOfLine && !end.AtStartOfLine && start.Line < end.Line;
+            if (isSameLinePaste || isBulkPaste)
+            {
+                SoftwareCoPackage package = PackageManager.GetAsyncPackage();
+                if (package != null)
+                {
+                    await package.JoinableTaskFactory.SwitchToMainThreadAsync();
+                }
+
+                if (doc == null)
+                {
+                    doc = (start.DTE != null && start.DTE.ActiveDocument != null) ? start.DTE.ActiveDocument : await PackageManager.GetActiveDocument();
+                }
+
+                if (doc == null)
+                {
+                    return;
+                }
+
+                string fileName = doc.FullName;
+                if (!IsTrueEventFile(fileName))
+                {
+                    return;
+                }
+
+                InitPluginDataIfNotExists();
+                _pluginData.InitFileInfoIfNotExists(fileName);
+
+                PluginDataFileInfo pdfileInfo = _pluginData.GetFileInfo(fileName);
+
+                if (pdfileInfo == null)
+                {
+                    return;
+                }
+
+                UpdateFileInfoMetrics(pdfileInfo, start, end, null, null);
+            }
+        }
+
+        public async void BeforeKeyPressAsync(string Keypress, TextSelection Selection, bool InStatementCompletion, bool CancelKeypress)
+        {
+            SoftwareCoPackage package = PackageManager.GetAsyncPackage();
+            if (package != null)
+            {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
+            }
+
+            if (doc == null)
+            {
+                doc = (Selection.DTE != null && Selection.DTE.ActiveDocument != null) ? Selection.DTE.ActiveDocument : await PackageManager.GetActiveDocument();
+            }
+
+            if (doc == null)
             {
                 return;
             }
-            String fileName = document.FullName;
+
+            string fileName = doc.FullName;
             if (!IsTrueEventFile(fileName))
             {
                 return;
             }
+
             InitPluginDataIfNotExists();
             _pluginData.InitFileInfoIfNotExists(fileName);
 
+            PluginDataFileInfo pdfileInfo = _pluginData.GetFileInfo(fileName);
+            if (pdfileInfo == null)
+            {
+                return;
+            }
 
-            // wrapper for a file path
-            FileInfo fi = new FileInfo(fileName);
-            _pluginData.GetFileInfo(fileName).length = fi.Length;
+            if (string.IsNullOrEmpty(pdfileInfo.syntax))
+            {
+                string syntax = doc.Language;
+
+                if (!string.IsNullOrEmpty(syntax))
+                {
+                    pdfileInfo.syntax = syntax;
+                }
+            }
+
+            UpdateFileInfoMetrics(pdfileInfo, null, null, Keypress, Selection);
         }
 
-        public async void DocEventsOnDocumentOpeningAsync(String docPath, Boolean readOnly)
+        public async void DocEventsOnDocumentOpeningAsync(string docPath, Boolean readOnly)
         {
+            SoftwareCoPackage package = PackageManager.GetAsyncPackage();
+            if (package != null)
+            {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
+            }
             // wrapper for a file path
             FileInfo fi = new FileInfo(docPath);
-            String fileName = fi.FullName;
-            if (!IsTrueEventFile(fileName))
-            {
-                return;
-            }
-            InitPluginDataIfNotExists();
-            _pluginData.InitFileInfoIfNotExists(fileName);
-        }
-
-        public async void AfterKeyPressedAsync(
-            string Keypress, TextSelection Selection, bool InStatementCompletion)
-        {
-            String fileName = await PackageManager.GetActiveDocumentFileName();
+            string fileName = fi.FullName;
             if (!IsTrueEventFile(fileName))
             {
                 return;
@@ -97,72 +178,23 @@ namespace SoftwareCo
             _pluginData.InitFileInfoIfNotExists(fileName);
 
             PluginDataFileInfo pdfileInfo = _pluginData.GetFileInfo(fileName);
-            if (string.IsNullOrEmpty(pdfileInfo.syntax))
-            {
-                string syntax = await PackageManager.GetActiveDocumentSyntax();
-
-                if (!string.IsNullOrEmpty(syntax))
-                {
-                    pdfileInfo.syntax = syntax;
-                }
-            }
-
-            if (!String.IsNullOrEmpty(Keypress))
-            {
-                FileInfo fi = new FileInfo(fileName);
-
-                bool isNewLine = false;
-                if (Keypress == "\b")
-                {
-                    // register a delete event
-                    pdfileInfo.delete += 1;
-                    Logger.Info("Code Time: Delete character incremented");
-                }
-                else if (Keypress == "\r")
-                {
-                    isNewLine = true;
-                }
-                else
-                {
-                    pdfileInfo.add += 1;
-                    Logger.Info("Code Time: KPM incremented");
-                }
-
-                if (isNewLine)
-                {
-                    pdfileInfo.linesAdded += 1;
-                }
-                // file level keystrokes counter
-                pdfileInfo.keystrokes += 1;
-                // top level keystrokes counter
-                _pluginData.keystrokes += 1;
-            }
-        }
-
-        public async void DocEventsOnDocumentOpenedAsync(Document document)
-        {
-            if (document == null || document.FullName == null)
-            {
-                return;
-            }
-            String fileName = document.FullName;
-            if (!IsTrueEventFile(fileName))
-            {
-                return;
-            }
-            InitPluginDataIfNotExists();
-            _pluginData.InitFileInfoIfNotExists(fileName);
+            UpdateLineCount(pdfileInfo);
 
             TrackerEventManager.TrackEditorFileActionEvent("file", "open", fileName);
         }
-
+    
         public async void DocEventsOnDocumentClosedAsync(Document document)
         {
+            SoftwareCoPackage package = PackageManager.GetAsyncPackage();
+            if (package != null)
+            {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
+            }
             if (document == null || document.FullName == null)
             {
                 return;
             }
-            String fileName = document.FullName;
+            string fileName = document.FullName;
             if (!IsTrueEventFile(fileName))
             {
                 return;
@@ -170,10 +202,153 @@ namespace SoftwareCo
             InitPluginDataIfNotExists();
             _pluginData.InitFileInfoIfNotExists(fileName);
 
-            TrackerEventManager.TrackEditorFileActionEvent("file", "open", fileName);
+            TrackerEventManager.TrackEditorFileActionEvent("file", "close", fileName);
         }
 
-        
+        private void UpdateFileInfoMetrics(PluginDataFileInfo fileInfo, TextPoint start, TextPoint end, string Keypress, TextSelection textSelection)
+        {
+            bool hasAutoIndent = false;
+            bool newLineAutoIndent = false;
+
+            int numKeystrokes = 0;
+            int numDeleteKeystrokes = 0;
+
+            int linesRemoved = 0;
+            int linesAdded = 0;
+
+            if (start != null && end != null)
+            {
+                // this is a line change event
+                linesAdded = end.Line - start.Line;
+                numKeystrokes = end.AbsoluteCharOffset - start.AbsoluteCharOffset;
+            } else if (Keypress != null)
+            {
+                if (textSelection != null)
+                {
+                    linesRemoved = textSelection.BottomLine > textSelection.TopLine ? textSelection.BottomLine - textSelection.TopLine : 0;
+                    linesAdded = textSelection.TopLine > textSelection.BottomLine ? textSelection.TopLine - textSelection.BottomLine : 0;
+
+                    if (linesRemoved > 0)
+                    {
+                        numDeleteKeystrokes = textSelection.BottomPoint.AbsoluteCharOffset - textSelection.TopPoint.AbsoluteCharOffset;
+                    }
+                }
+
+                if (Keypress == "\b" && numDeleteKeystrokes == 0)
+                {
+                    // it's a single delete
+                    numDeleteKeystrokes = 1;
+                }
+                else if (Keypress == "\r" && linesAdded == 0)
+                {
+                    // it's a single carriage return
+                    linesAdded = 1;
+                } else if (Keypress == "\t")
+                {
+                    hasAutoIndent = true;
+                } else if (numDeleteKeystrokes == 0)
+                {
+                    // it's a single character
+                    numKeystrokes = 1;
+                }
+            }
+
+            // update the deletion keystrokes if there are lines removed
+            numDeleteKeystrokes = numDeleteKeystrokes >= linesRemoved ? numDeleteKeystrokes - linesRemoved : numDeleteKeystrokes;
+
+            Logger.Info("{la: " + linesAdded + ", lr: " + linesRemoved + ", dk: " + numDeleteKeystrokes + ", k: " + numKeystrokes + ", indent: " + hasAutoIndent + "}");
+
+            // event updates
+            if (newLineAutoIndent)
+            {
+                // it's a new line with auto-indent
+                fileInfo.auto_indents += 1;
+                fileInfo.linesAdded += 1;
+            }
+            else if (hasAutoIndent)
+            {
+                // it's an auto indent action
+                fileInfo.auto_indents += 1;
+            }
+            else if (linesAdded == 1)
+            {
+                // it's a single new line action (single_adds)
+                fileInfo.single_adds += 1;
+                fileInfo.linesAdded += 1;
+            }
+            else if (linesAdded > 1)
+            {
+                // it's a multi line paste action (multi_adds)
+                fileInfo.linesAdded += linesAdded;
+                fileInfo.paste += 1;
+                fileInfo.multi_adds += 1;
+                fileInfo.is_net_change = true;
+                fileInfo.characters_added += Math.Abs(numKeystrokes - linesAdded);
+            }
+            else if (numDeleteKeystrokes > 0 && numKeystrokes > 0)
+            {
+                // it's a replacement
+                fileInfo.replacements += 1;
+                fileInfo.characters_added += numKeystrokes;
+                fileInfo.characters_deleted += numDeleteKeystrokes;
+            }
+            else if (numKeystrokes > 1)
+            {
+                // pasted characters (multi_adds)
+                fileInfo.paste += 1;
+                fileInfo.multi_adds += 1;
+                fileInfo.is_net_change = true;
+                fileInfo.characters_added += numKeystrokes;
+            }
+            else if (numKeystrokes == 1)
+            {
+                // it's a single keystroke action (single_adds)
+                fileInfo.add += 1;
+                fileInfo.single_adds += 1;
+                fileInfo.characters_added += 1;
+            }
+            else if (linesRemoved == 1)
+            {
+                // it's a single line deletion
+                fileInfo.linesRemoved += 1;
+                fileInfo.single_deletes += 1;
+                fileInfo.characters_deleted += numDeleteKeystrokes;
+            }
+            else if (linesRemoved > 1)
+            {
+                // it's a multi line deletion and may contain characters
+                fileInfo.characters_deleted += numDeleteKeystrokes;
+                fileInfo.multi_deletes += 1;
+                fileInfo.is_net_change = true;
+                fileInfo.linesRemoved += linesRemoved;
+            }
+            else if (numDeleteKeystrokes == 1)
+            {
+                // it's a single character deletion action
+                fileInfo.delete += 1;
+                fileInfo.single_deletes += 1;
+                fileInfo.characters_deleted += 1;
+            }
+            else if (numDeleteKeystrokes > 1)
+            {
+                // it's a multi character deletion action
+                fileInfo.multi_deletes += 1;
+                fileInfo.is_net_change = true;
+                fileInfo.characters_deleted += numDeleteKeystrokes;
+            }
+
+            if (linesAdded > 0)
+            {
+                fileInfo.lines += linesAdded;
+            } else if (linesRemoved > 0)
+            {
+                fileInfo.lines -= linesRemoved;
+            }
+
+            fileInfo.keystrokes += 1;
+            _pluginData.keystrokes += 1;
+        }
+
         public async void PostData()
         {
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
@@ -197,8 +372,6 @@ namespace SoftwareCo
                 WallclockManager.Instance.DispatchUpdateAsync();
                 _pluginData = null;
             }
-
-            
         }
     }
 }

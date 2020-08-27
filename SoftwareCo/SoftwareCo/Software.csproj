@@ -44,6 +44,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -317,8 +318,8 @@
     <PackageReference Include="Commons.Json">
       <Version>0.4.0.1347</Version>
     </PackageReference>
-    <PackageReference Include="libsodium-net">
-      <Version>0.10.0</Version>
+    <PackageReference Include="Konscious.Security.Cryptography.Blake2">
+      <Version>1.0.9</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Net.Http">
       <Version>2.2.29</Version>

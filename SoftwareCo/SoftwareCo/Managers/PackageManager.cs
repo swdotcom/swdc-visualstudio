@@ -30,6 +30,11 @@ namespace SoftwareCo
             InitializeStatusBar();
         }
 
+        public static SoftwareCoPackage GetAsyncPackage()
+        {
+            return package;
+        }
+
         public static async Task RebuildMenuButtonsAsync()
         {
             if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
@@ -135,7 +140,7 @@ namespace SoftwareCo
             _codeMetricsWindow.ToggleClickHandler();
         }
 
-        public static async Task UpdateStatusBarButtonText(String text, String iconName = null)
+        public static async Task UpdateStatusBarButtonText(string text, string iconName = null)
         {
             if (package == null)
             {
@@ -164,25 +169,48 @@ namespace SoftwareCo
 
         public static async Task<string> GetSolutionDirectory()
         {
-            if (package == null)
+            if (package == null || ObjDte == null || ObjDte.Solution == null)
             {
                 return "";
             }
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
+            if (ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
             {
-                _solutionDirectory = Path.GetDirectoryName(ObjDte.Solution.FileName);
+                _solutionDirectory = ObjDte.Solution.FullName;
+                if (_solutionDirectory.LastIndexOf(".sln") == _solutionDirectory.Length - ".sln".Length)
+                {
+                    _solutionDirectory = _solutionDirectory.Substring(0, _solutionDirectory.LastIndexOf("\\"));
+                }
             }
             return _solutionDirectory;
         }
 
+        public static async Task<Document> GetActiveDocument()
+        {
+            if (package == null)
+            {
+                return null;
+            }
+            await package.JoinableTaskFactory.SwitchToMainThreadAsync();
+            if (ObjDte != null && ObjDte.ActiveWindow != null)
+            {
+                return ObjDte.ActiveWindow.Document;
+            }
+            return null;
+        }
+
         public static async Task<string> GetActiveDocumentFileName() {
+            
             if (package == null)
             {
                 return "";
             }
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            return ObjDte.ActiveWindow.Document.FullName;
+            if (ObjDte != null && ObjDte.ActiveWindow != null && ObjDte.ActiveWindow.Document != null)
+            {
+                return ObjDte.ActiveWindow.Document.FullName;
+            }
+            return "";
         }
 
         public static async Task<string> GetActiveDocumentSyntax()
@@ -192,7 +220,11 @@ namespace SoftwareCo
                 return "";
             }
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            return ObjDte.ActiveWindow.Document.Language;
+            if (ObjDte != null && ObjDte.ActiveWindow != null && ObjDte.ActiveWindow.Document != null)
+            {
+                return ObjDte.ActiveWindow.Document.Language;
+            }
+            return "";
         }
 
         public static T FindChildControl<T>(DependencyObject parent, string childName)

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -19,9 +20,9 @@ namespace SoftwareCo
         public static int DASHBOARD_VALUE_WIDTH = 25;
         public static long DAY_IN_SEC = 60 * 60 * 24;
 
-        public static String workspace_name = Guid.NewGuid().ToString();
+        public static string workspace_name = Guid.NewGuid().ToString();
 
-        public static string RunCommand(String cmd, String dir)
+        public static string RunCommand(string cmd, string dir)
         {
             try
             {
@@ -277,18 +278,37 @@ namespace SoftwareCo
             {
                 string jwt = FileManager.getItemAsString("jwt");
                 string url = "";
+                string element_name = "ct_sign_up_google_btn";
+                string icon_name = "google";
+                string cta_text = "Sign up with Google";
                 if (loginType.Equals("google"))
                 {
                     url = Constants.api_endpoint + "/auth/google?token=" + jwt + "&plugin=codetime&redirect=" + Constants.url_endpoint;
-                } else if (loginType.Equals("github"))
+                }
+                else if (loginType.Equals("github"))
                 {
+                    element_name = "ct_sign_up_github_btn";
+                    icon_name = "github";
+                    cta_text = "Sign up with GitHub";
                     url = Constants.api_endpoint + "/auth/github?token=" + jwt + "&plugin=codetime&redirect=" + Constants.url_endpoint;
-                } else
+                }
+                else
                 {
+                    element_name = "ct_sign_up_email_btn";
+                    icon_name = "evelope";
+                    cta_text = "Sign up with email";
                     url = Constants.url_endpoint + "/email-signup?token=" + jwt + "&plugin=codetime&ath=software";
                 }
 
                 Process.Start(url);
+
+                UIElementEntity entity = new UIElementEntity();
+                entity.color = null;
+                entity.element_location = "ct_menu_tree";
+                entity.element_name = element_name;
+                entity.cta_text = cta_text;
+                entity.icon_name = icon_name;
+                TrackerEventManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
 
                 if (!SoftwareUserManager.checkingLoginState)
                 {
@@ -303,7 +323,7 @@ namespace SoftwareCo
 
         }
 
-        public static String GetFormattedDay(long seconds)
+        public static string GetFormattedDay(long seconds)
         {
             DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(seconds);
             return dateTimeOffset.ToString(@"yyyy-MM-dd");
@@ -311,7 +331,7 @@ namespace SoftwareCo
 
         public static bool IsNewDay()
         {
-            NowTime nowTime = SoftwareCoUtil.GetNowTime();
+            NowTime nowTime = GetNowTime();
             string currentDay = FileManager.getItemAsString("currentDay");
             return (!nowTime.day.Equals(currentDay)) ? true : false;
         }
@@ -527,7 +547,17 @@ namespace SoftwareCo
         {
             // create Image
             Image image = new Image();
-            image.Source = new BitmapImage(new Uri("Resources/" + iconName, UriKind.Relative));
+            image.Width = 16;
+            image.Height = 16;
+
+            BitmapImage bi = new BitmapImage();
+            // BitmapImage.UriSource must be in a BeginInit/EndInit block.
+            bi.BeginInit();
+            bi.UriSource = new Uri(@"../Resources/" + iconName, UriKind.RelativeOrAbsolute);
+            bi.EndInit();
+            // Set the image source.
+            image.Source = bi;
+
             return image;
         }
 
@@ -555,8 +585,8 @@ namespace SoftwareCo
         {
             return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(milliseconds).ToLocalTime();
         }
-
     }
+
     public class NowTime
     {
         public long now { get; set; }

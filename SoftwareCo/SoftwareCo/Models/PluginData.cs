@@ -4,16 +4,17 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 
 namespace SoftwareCo
 {
     public class PluginData
     {
-        public String type { get; set; }
+        public string type { get; set; }
         // sublime = 1, vs code = 2, eclipse = 3, intellij = 4, visualstudio = 6, atom = 7
         public int pluginId { get; set; }
-        public String version { get; set; }
-        public String os { get; set; }
+        public string version { get; set; }
+        public string os { get; set; }
 
         // a unique list of file infos (each info represents a file and its metadata)
         public List<PluginDataFileInfo> source;
@@ -24,14 +25,14 @@ namespace SoftwareCo
         public long local_start { get; set; }
         public long end { get; set; }
         public long local_end { get; set; }
-        public String timezone { get; set; }
+        public string timezone { get; set; }
         public double offset { get; set; }
         public long cumulative_editor_seconds { get; set; }
         public long elapsed_seconds { get; set; }
         public long cumulative_session_seconds { get; set; }
-        public String project_null_error { get; set; }
-        public String workspace_name { get; set; }
-        public String hostname { get; set; }
+        public string project_null_error { get; set; }
+        public string workspace_name { get; set; }
+        public string hostname { get; set; }
         public PluginDataProject project { get; set; }
 
         public PluginData(string projectName, string projectDirectory)
@@ -225,11 +226,9 @@ namespace SoftwareCo
             TimeData td = await TimeDataManager.Instance.UpdateSessionAndFileSecondsAsync(this.project, session_seconds);
 
             // get the current payloads so we can compare our last cumulative seconds
-            PluginData lastKpm = FileManager.GetLastSavedKeystrokeStats();
             if (SoftwareCoUtil.IsNewDay())
             {
                 // the days don't match. don't use the editor or session seconds for a different day
-                lastKpm = null;
                 // clear out data from the previous day
                 await WallclockManager.Instance.GetNewDayCheckerAsync();
                 if (td != null) {
@@ -247,13 +246,6 @@ namespace SoftwareCo
             {
                 this.cumulative_editor_seconds = td.editor_seconds;
                 this.cumulative_session_seconds = td.session_seconds;
-            }
-            else if (lastKpm != null)
-            {
-                // no time data found, project null error
-                this.project_null_error = "TimeData not found using " + this.project.directory + " for editor and session seconds";
-                this.cumulative_editor_seconds = lastKpm.cumulative_editor_seconds + 60;
-                this.cumulative_session_seconds = lastKpm.cumulative_session_seconds + 60;
             }
 
             if (this.cumulative_editor_seconds < this.cumulative_session_seconds)
@@ -289,7 +281,10 @@ namespace SoftwareCo
         {
             if (GetFileInfo(file) == null)
             {
-                source.Add(new PluginDataFileInfo(file));
+                PluginDataFileInfo fileInfo = new PluginDataFileInfo(file);
+                fileInfo.lines = DocEventManager.CountLinesLINQ(file);
+                fileInfo.length = new FileInfo(file).Length;
+                source.Add(fileInfo);
             }
         }
 

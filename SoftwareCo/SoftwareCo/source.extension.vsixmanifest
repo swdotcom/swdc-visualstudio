@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="Software.569c24af-f7e5-4df6-b40a-157caa132d9c" Version="2.2.1" Language="en-US" Publisher="Software.com" />
+        <Identity Id="Software.569c24af-f7e5-4df6-b40a-157caa132d9c" Version="2.2.3" Language="en-US" Publisher="Software.com" />
         <DisplayName>Code Time</DisplayName>
         <Description xml:space="preserve">Code Time provides insights into how you code</Description>
         <License>LICENSE.txt</License>

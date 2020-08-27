@@ -8,21 +8,37 @@ namespace SoftwareCo
     {
         private static TrackerManager tracker;
 
-        public static void init()
+        public async static void init()
         {
-            tracker = new TrackerManager(Constants.api_endpoint, "CodeTime", "Code Time");
-
-            if (tracker != null)
+            try
             {
-                TrackEditorActionEvent("editor", "activate");
+                tracker = new TrackerManager(Constants.api_endpoint, "CodeTime", "swdc-visualstudio");
+                await tracker.initializeTracker();
+
+                if (tracker.initialized)
+                {
+                    TrackEditorActionEvent("editor", "activate");
+                }
+            } catch (Exception e)
+            {
+                Logger.Warning("Error initializing tracker: " + e.ToString());
             }
         }
 
         public static async Task TrackCodeTimeEventAsync(PluginData pluginData)
         {
-            if (tracker == null)
+            if (pluginData == null)
             {
                 return;
+            }
+
+            if (tracker == null || !tracker.initialized)
+            {
+                init();
+                if (!tracker.initialized)
+                {
+                    return;
+                }
             }
 
             AuthEntity authEntity = GetAuthEntity();
@@ -67,9 +83,13 @@ namespace SoftwareCo
 
         public static async Task TrackEditorFileActionEvent(string entity, string type, string fileName)
         {
-            if (tracker == null)
+            if (tracker == null || !tracker.initialized)
             {
-                return;
+                init();
+                if (!tracker.initialized)
+                {
+                    return;
+                }
             }
 
             EditorActionEvent editorActionEvent = new EditorActionEvent();
@@ -90,7 +110,7 @@ namespace SoftwareCo
 
         public static async Task TrackUIInteractionEvent(UIInteractionType interaction_type, UIElementEntity uIElementEntity)
         {
-            if (tracker == null)
+            if (tracker == null || !tracker.initialized)
             {
                 return;
             }
@@ -125,7 +145,7 @@ namespace SoftwareCo
 
         public static async Task<ProjectEntity> GetProjectEntity(string fileName)
         {
-            FileDetails fd = await ProjectInfoManager.GetFileDatails(fileName);
+            FileDetails fd = await FileInfoManager.GetFileDatails(fileName);
             ProjectEntity projectEntity = new ProjectEntity();
             projectEntity.project_directory = fd.project_directory;
             projectEntity.project_name = fd.project_name;
@@ -146,9 +166,11 @@ namespace SoftwareCo
 
         public static async Task<FileEntity> GetFileEntity(string fileName)
         {
-            FileDetails fd = await ProjectInfoManager.GetFileDatails(fileName);
+            FileDetails fd = await FileInfoManager.GetFileDatails(fileName);
             FileEntity fileEntity = new FileEntity();
-            fileEntity.file_name = fd.project_file_name;
+            // standardize the project file name
+            string projectFileName = fd.project_file_name.Replace(@"\", @"/");
+            fileEntity.file_name = projectFileName;
             fileEntity.file_path = fd.full_file_name;
             fileEntity.character_count = fd.character_count;
             fileEntity.line_count = fd.line_count;

@@ -1,23 +1,47 @@
 ﻿using Newtonsoft.Json;
-using Sodium;
 using System;
 using System.Collections.Generic;
+using Konscious.Security.Cryptography;
+using System.Text;
 
 namespace SoftwareCo
 {
     class HashManager
     {
-        public static String HashValue(string value, string dataType)
+        private static HMACBlake2B blake2b = null;
+
+        public static string ByteArrayToHexString(byte[] Bytes)
+        {
+            StringBuilder Result = new StringBuilder(Bytes.Length * 2 + 1);
+            string HexAlphabet = "0123456789ABCDEF";
+
+            foreach (byte B in Bytes)
+            {
+                Result.Append(HexAlphabet[(int)(B >> 4)]);
+                Result.Append(HexAlphabet[(int)(B & 0xF)]);
+            }
+
+            return Result.ToString();
+        }
+
+        public static string HashValue(string value, string dataType)
         {
             if (!CacheManager.HasJwt() || string.IsNullOrEmpty(value))
             {
                 return "";
             }
 
+            if (blake2b == null)
+            {
+                blake2b = new HMACBlake2B(512);
+                blake2b.Initialize();
+            }
+
             try
             {
-                byte[] key = GenericHash.GenerateKey(); // 64 byte key
-                string hashedValue = Utilities.BinaryToHex(GenericHash.Hash(value, key, 128));
+                byte[] hashedBytes = blake2b.ComputeHash(Encoding.UTF8.GetBytes(value));
+                string hashedValue = ByteArrayToHexString(hashedBytes).ToLower();
+
                 if (CacheManager.HasCachedValue(dataType, hashedValue))
                 {
                     // doesn't exist yet, encrypt it

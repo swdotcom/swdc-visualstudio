@@ -11,8 +11,8 @@ namespace SoftwareCo
         {
             GenericContext context = new GenericContext()
                 .SetSchema("iglu:com.software/project/jsonschema/1-0-0")
-                .Add("project_name", HashManager.HashValue(this.project_name, "project_name"))
-                .Add("project_directory", HashManager.HashValue(this.project_name, "project_directory"))
+                .Add("project_name", HashManager.HashValue(project_name, "project_name"))
+                .Add("project_directory", HashManager.HashValue(project_directory, "project_directory"))
                 .Build();
             return context;
         }

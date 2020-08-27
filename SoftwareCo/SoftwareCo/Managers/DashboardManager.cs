@@ -91,8 +91,7 @@ namespace SoftwareCo
             {
 
                 string averageTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.averageDailyMinutes);
-                
-                String liveshareTime = "";
+
                 //if (_sessionSummary.liveshareMinutes != 0)
                 //{
                 //    liveshareTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.liveshareMinutes);

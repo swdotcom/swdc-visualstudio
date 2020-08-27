@@ -11,5 +11,17 @@ namespace SoftwareCo
         public string syntax { get; set; }
         public int line_count { get; set; }
         public long character_count { get; set; }
+
+        public FileDetails()
+        {
+            full_file_name = "";
+            file_name = "";
+            project_name = "";
+            project_file_name = "";
+            project_directory = "";
+            syntax = "";
+            line_count = 0;
+            character_count = 0;
+        }
     }
 }

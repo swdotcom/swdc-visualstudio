@@ -163,7 +163,7 @@ namespace SoftwareCo
                         qryString += "&branch=" + branch;
 
                         HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
-                                HttpMethod.Get, "/commits/latest?" + qryString, null);
+                                HttpMethod.Get, "/commits/latest?" + qryString);
 
                         if (SoftwareHttpManager.IsOk(response))
                         {
