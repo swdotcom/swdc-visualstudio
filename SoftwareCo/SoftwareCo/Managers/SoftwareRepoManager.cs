@@ -186,7 +186,7 @@ namespace SoftwareCo
                         }
                     }
                 }
-               
+
             }
             catch (Exception ex)
             {
@@ -396,9 +396,9 @@ namespace SoftwareCo
             catch (Exception ex)
             {
                 Logger.Error("GetHistoricalCommitsAsync ,error: " + ex.Message, ex);
-            
+
             }
-           
+
         }
     }
 }

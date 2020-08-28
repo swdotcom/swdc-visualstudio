@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
+using System;
 using System.ComponentModel.Design;
-using Microsoft.VisualStudio.Shell;
 
 namespace SoftwareCo
 {
@@ -17,7 +17,7 @@ namespace SoftwareCo
         /// <summary>
         /// Command menu group (command set GUID).
         /// </summary>
-        
+
         public static readonly Guid CommandSet = new Guid("76eda5aa-cf64-4fb5-9d52-06c48a00adbd");
         /// <summary>
         /// VS Package that provides this command, not null.

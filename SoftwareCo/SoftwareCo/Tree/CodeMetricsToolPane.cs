@@ -39,7 +39,7 @@
 
         public void ToggleClickHandler()
         {
-            StatusBarButton.showingStatusbarMetrics = false;
+            StatusBarButton.showingStatusbarMetrics = !StatusBarButton.showingStatusbarMetrics;
             if (this.Content != null)
             {
                 ((CodeMetricsTree)this.Content).RebuildCodeMetricsAsync();

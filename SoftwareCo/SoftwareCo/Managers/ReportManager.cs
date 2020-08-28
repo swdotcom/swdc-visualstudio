@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using System.IO;
 
 namespace SoftwareCo
 {
@@ -96,7 +95,7 @@ namespace SoftwareCo
 
             try
             {
-                
+
                 if (File.Exists(file))
                 {
                     SoftwareCoPackage.ObjDte.ItemOperations.OpenFile(file);
@@ -214,7 +213,7 @@ namespace SoftwareCo
             Int32 spacesRequired = 0;
             for (int i = 0; i < labels.Count; i++)
             {
-                string label = labels[i] ;
+                string label = labels[i];
                 if (i == 0)
                 {
                     sb.Append(label);

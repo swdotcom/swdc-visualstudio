@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SoftwareCo
+﻿namespace SoftwareCo
 {
     public class KeystrokeAggregates
     {
@@ -28,7 +22,7 @@ namespace SoftwareCo
             this.open += fileInfo.open;
             this.paste += fileInfo.paste;
             this.keystrokes += fileInfo.keystrokes;
-            
+
         }
     }
 }

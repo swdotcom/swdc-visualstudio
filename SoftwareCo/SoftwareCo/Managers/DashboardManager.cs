@@ -1,22 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
-using System.Threading;
-using Task = System.Threading.Tasks.Task;
-using EnvDTE;
-using EnvDTE80;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
+﻿using Microsoft.VisualStudio.Shell;
+using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Reflection;
-using Microsoft.VisualStudio;
-using System.Windows.Forms;
-using static SoftwareCo.SoftwareCoPackage;
+using Task = System.Threading.Tasks.Task;
 
 namespace SoftwareCo
 {
@@ -96,7 +84,7 @@ namespace SoftwareCo
                 //{
                 //    liveshareTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.liveshareMinutes);
                 //}
-                
+
                 dashboardContent += SoftwareCoUtil.getDashboardRow("90-day avg", averageTime);
                 //if (liveshareTime != "0")
                 //{

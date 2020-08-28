@@ -1,15 +1,16 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
-using System.Threading;
-using Task = System.Threading.Tasks.Task;
-using EnvDTE;
+﻿using EnvDTE;
+using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net.Http;
-using System.Collections.Generic;
-using EnvDTE80;
-using Microsoft.VisualStudio.Shell.Interop;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
+using Task = System.Threading.Tasks.Task;
 
 namespace SoftwareCo
 {
@@ -22,7 +23,7 @@ namespace SoftwareCo
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideToolWindow(typeof(CodeMetricsToolPane),
         Window = ToolWindowGuids.SolutionExplorer,
-        MultiInstances=false)]
+        MultiInstances = false)]
     public sealed class SoftwareCoPackage : AsyncPackage
     {
         #region fields
@@ -45,7 +46,7 @@ namespace SoftwareCo
         private static int ONE_MINUTE = 1000 * 60;
         public static bool INITIALIZED = false;
 
-        public SoftwareCoPackage() {}
+        public SoftwareCoPackage() { }
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -60,7 +61,7 @@ namespace SoftwareCo
 
                 ObjDte = await GetServiceAsync(typeof(DTE)) as DTE;
                 events = (Events2)ObjDte.Events;
-                
+
                 // Intialize the document event handlers
                 _textEditorEvents = events.TextEditorEvents;
                 _textDocKeyEvents = events.TextDocumentKeyPressEvents;
@@ -85,7 +86,7 @@ namespace SoftwareCo
 
                 // initialize the rest of the plugin lazily as it takes time to
                 // select a new or existing project to open
-                new Scheduler().Execute(() => InitializePlugin(), 15000);
+                new Scheduler().Execute(() => InitializePlugin(), 10000);
             }
             catch (Exception ex)
             {
@@ -134,23 +135,29 @@ namespace SoftwareCo
                     ONE_MINUTE,
                     ONE_MINUTE);
 
-                // check if we've shown the readme or not
-                bool initializedVisualStudioPlugin = FileManager.getItemAsBool("visualstudio_CtInit");
-                if (!initializedVisualStudioPlugin)
-                {
-                    DashboardManager.Instance.LaunchReadmeFileAsync();
-                    FileManager.setBoolItem("visualstudio_CtInit", true);
-
-                    // launch the tree view
-                    PackageManager.OpenCodeMetricsPaneAsync();
-                }
-
                 string PluginVersion = EnvUtil.GetVersion();
                 Logger.Info(string.Format("Initialized Code Time v{0}", PluginVersion));
 
-                new Scheduler().Execute(() => ProcessKeystrokePayload(null), 10000);
+                new Scheduler().Execute(() => SendOfflinePluginBatchData(), 10000);
+
+                new Scheduler().Execute(() => InitializeReadme(), 1000);
 
                 INITIALIZED = true;
+            }
+        }
+
+        private async void InitializeReadme()
+        {
+            await this.JoinableTaskFactory.SwitchToMainThreadAsync();
+            // check if we've shown the readme or not
+            bool initializedVisualStudioPlugin = FileManager.getItemAsBool("visualstudio_CtInit");
+            if (!initializedVisualStudioPlugin)
+            {
+                DashboardManager.Instance.LaunchReadmeFileAsync();
+                FileManager.setBoolItem("visualstudio_CtInit", true);
+
+                // launch the tree view
+                PackageManager.OpenCodeMetricsPaneAsync();
             }
         }
 
@@ -200,7 +207,8 @@ namespace SoftwareCo
             SendOfflinePluginBatchData();
         }
 
-        public static async void SendOfflinePluginBatchData() {
+        public static async void SendOfflinePluginBatchData()
+        {
 
             Logger.Info(DateTime.Now.ToString());
             bool online = await SoftwareUserManager.IsOnlineAsync();
@@ -210,47 +218,63 @@ namespace SoftwareCo
                 return;
             }
 
-            int batch_limit = 5;
-            HttpResponseMessage response = null;
-            string jsonData = "";
+            int batch_limit = 25;
+            bool succeeded = false;
             List<string> offlinePluginData = FileManager.GetOfflinePayloadList();
             List<string> batchList = new List<string>();
             if (offlinePluginData != null && offlinePluginData.Count > 0)
             {
-                
+
                 for (int i = 0; i < offlinePluginData.Count; i++)
                 {
                     string line = offlinePluginData[i];
                     if (i >= batch_limit)
                     {
                         // send this batch off
-                        jsonData = "[" + string.Join(",", batchList) + "]";
-                        response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonData);
-                        if (!SoftwareHttpManager.IsOk(response))
+                        succeeded = await SendBatchData(batchList);
+                        if (!succeeded)
                         {
-                            // there was an error, don't delete the offline data
+                            if (offlinePluginData.Count > 1000)
+                            {
+                                // delete anyway, there's an issue and the data is gathering
+                                File.Delete(FileManager.getSoftwareDataStoreFile());
+                            }
                             return;
                         }
-                        batchList.Clear();
                     }
                     batchList.Add(line);
                 }
 
                 if (batchList.Count > 0)
                 {
-                    jsonData = "[" + string.Join(",", batchList) + "]";
-                    response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonData);
-                    if (!SoftwareHttpManager.IsOk(response))
-                    {
-                        // there was an error, don't delete the offline data
-                        return;
-                    }
+                    succeeded = await SendBatchData(batchList);
                 }
 
                 // delete the file
-                File.Delete(FileManager.getSoftwareDataStoreFile());
+                if (succeeded)
+                {
+                    File.Delete(FileManager.getSoftwareDataStoreFile());
+                }
+                else if (offlinePluginData.Count > 1000)
+                {
+                    File.Delete(FileManager.getSoftwareDataStoreFile());
+                }
             }
-            
+
+        }
+
+        private static async Task<bool> SendBatchData(List<string> batchList)
+        {
+            // send this batch off
+            string jsonData = "[" + string.Join(",", batchList) + "]";
+            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonData);
+            if (!SoftwareHttpManager.IsOk(response) && response.StatusCode != System.Net.HttpStatusCode.Unauthorized)
+            {
+                // there was an error, don't delete the offline data
+                return false;
+            }
+            batchList.Clear();
+            return true;
         }
 
         private async Task InitializeUserInfoAsync()
@@ -290,7 +314,7 @@ namespace SoftwareCo
                 Logger.Error("Error Initializing UserInfo", ex);
 
             }
-            
+
         }
 
         #endregion

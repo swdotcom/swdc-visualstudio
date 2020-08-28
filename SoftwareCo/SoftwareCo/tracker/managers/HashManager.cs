@@ -1,7 +1,7 @@
-﻿using Newtonsoft.Json;
+﻿using Konscious.Security.Cryptography;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using Konscious.Security.Cryptography;
 using System.Text;
 
 namespace SoftwareCo
@@ -94,7 +94,7 @@ namespace SoftwareCo
                             }
                         }
                     }
-                    
+
                 }
                 catch (Exception e)
                 {

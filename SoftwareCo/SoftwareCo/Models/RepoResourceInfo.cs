@@ -13,7 +13,8 @@ namespace SoftwareCo
         public string ownerId { get; set; }
         public List<RepoMember> members { get; set; }
 
-        public RepoResourceInfo() {
+        public RepoResourceInfo()
+        {
             members = new List<RepoMember>();
         }
 

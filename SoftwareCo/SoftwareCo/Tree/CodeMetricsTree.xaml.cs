@@ -1,18 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace SoftwareCo
 {
@@ -45,7 +38,7 @@ namespace SoftwareCo
         public async Task RebuildMenuButtonsAsync()
         {
             SignupPanel.Children.Clear();
-            List < StackPanel > signupPanels = BuildSignupPanels();
+            List<StackPanel> signupPanels = BuildSignupPanels();
             if (signupPanels.Count > 0)
             {
                 foreach (StackPanel panel in signupPanels)
@@ -64,11 +57,11 @@ namespace SoftwareCo
             // Toggle status label
             if (!StatusBarButton.showingStatusbarMetrics)
             {
-                ToggleStatusLabel.Content = "Hide status bar metrics";
-            } else
-            {
                 ToggleStatusLabel.Content = "Show status bar metrics";
+            } else {
+                ToggleStatusLabel.Content = "Hide status bar metrics";
             }
+
             ToggleStatusImage.Source = SoftwareCoUtil.CreateImage("visible.png").Source;
 
             // Learn more label
@@ -84,7 +77,8 @@ namespace SoftwareCo
         {
             List<StackPanel> panels = new List<StackPanel>();
             string email = FileManager.getItemAsString("name");
-            if (email == null || email.Equals("")) {
+            if (email == null || email.Equals(""))
+            {
                 panels.Add(BuildClickLabel("GoogleSignupPanel", "google.png", "Sign up with Google", GoogleConnectClickHandler));
                 panels.Add(BuildClickLabel("GitHubSignupPanel", "github.png", "Sign up with GitHub", GitHubConnectClickHandler));
                 panels.Add(BuildClickLabel("EmailSignupPanel", "icons8-envelope-16.png", "Sign up using email", EmailConnectClickHandler));
@@ -98,7 +92,7 @@ namespace SoftwareCo
             panel.Name = panelName;
             panel.Orientation = Orientation.Horizontal;
             panel.Margin = new Thickness(5, 0, 0, 0);
-            
+
             Image img = new Image();
             img.Width = 15;
             img.Height = 15;
@@ -138,13 +132,14 @@ namespace SoftwareCo
                 if (child.ItemId.Equals(id))
                 {
                     StackPanel stack = (StackPanel)child.Header;
-                    
+
                     foreach (object obj in stack.Children)
                     {
                         if (obj is Label)
                         {
                             ((Label)obj).Content = value;
-                        } else if (iconName != null && obj is Image)
+                        }
+                        else if (iconName != null && obj is Image)
                         {
                             Image img = SoftwareCoUtil.CreateImage(iconName);
                             ((Image)obj).Source = img.Source;
@@ -272,7 +267,8 @@ namespace SoftwareCo
             if (topKeystrokeFiles.Count == 0)
             {
                 TopKeystrokeFiles.Visibility = Visibility.Hidden;
-            } else
+            }
+            else
             {
                 TopKeystrokeFiles.Visibility = Visibility.Visible;
                 // add or update
@@ -300,7 +296,8 @@ namespace SoftwareCo
                 {
                     topKeystrokesParent = BuildMetricNodes("topkeystrokesfiles", "Top files by keystrokes", topKeystrokeChildren);
                     TopKeystrokeFiles.Items.Add(topKeystrokesParent);
-                } else
+                }
+                else
                 {
                     topKeystrokesParent.Items.Clear();
                     foreach (TreeViewItem item in topKeystrokeChildren)
@@ -308,13 +305,14 @@ namespace SoftwareCo
                         topKeystrokesParent.Items.Add(item);
                     }
                 }
-                
+
             }
             List<FileChangeInfo> topCodetimeFiles = FileChangeInfoDataManager.Instance.GetTopCodeTimeFiles();
             if (topCodetimeFiles.Count == 0)
             {
                 TopCodeTimeFiles.Visibility = Visibility.Hidden;
-            } else
+            }
+            else
             {
                 TopCodeTimeFiles.Visibility = Visibility.Visible;
                 // add or update
@@ -383,7 +381,8 @@ namespace SoftwareCo
             {
                 FileInfo fi = new FileInfo(dir);
                 name = fi.Name;
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 //
             }
@@ -485,7 +484,7 @@ namespace SoftwareCo
 
         public void ToggleClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
-            StatusBarButton.showingStatusbarMetrics = false;
+            StatusBarButton.showingStatusbarMetrics = !StatusBarButton.showingStatusbarMetrics;
             RebuildMenuButtonsAsync();
             SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
         }

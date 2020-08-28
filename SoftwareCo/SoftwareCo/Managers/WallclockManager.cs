@@ -98,7 +98,8 @@ namespace SoftwareCo
             Task.Delay(2000).ContinueWith((task) => { DispatchUpdatesProcessorAsync(); });
         }
 
-        private async Task DispatchUpdatesProcessorAsync() {
+        private async Task DispatchUpdatesProcessorAsync()
+        {
             SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
             PackageManager.RebuildCodeMetricsAsync();
             PackageManager.RebuildGitMetricsAsync();
@@ -109,16 +110,14 @@ namespace SoftwareCo
             GetNewDayCheckerAsync();
         }
 
-        public async Task GetNewDayCheckerAsync() {
+        public async Task GetNewDayCheckerAsync()
+        {
             if (SoftwareCoUtil.IsNewDay())
             {
                 SessionSummaryManager.Instance.ÇlearSessionSummaryData();
 
                 // send the offline data
                 SoftwareCoPackage.SendOfflinePluginBatchData();
-
-                // clear the last payload in memory
-                FileManager.ClearLastSavedKeystrokeStats();
 
                 // send the offline TimeData payloads
                 // this will clear the time data summary as well
@@ -165,7 +164,8 @@ namespace SoftwareCo
                             SessionSummaryManager.Instance.SaveSessionSummaryToDisk(summary);
 
                             DispatchUpdatesProcessorAsync();
-                        } catch (Exception e)
+                        }
+                        catch (Exception e)
                         {
                             Logger.Error("failed to read json: " + e.Message);
                         }

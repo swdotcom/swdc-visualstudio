@@ -13,11 +13,12 @@ namespace SoftwareCo
             try
             {
                 parent = VisualTreeHelper.GetParent(treeItem);
-                while(!(parent is CodeMetricsTreeItem))
+                while (!(parent is CodeMetricsTreeItem))
                 {
                     parent = VisualTreeHelper.GetParent(parent);
                 }
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 //
             }

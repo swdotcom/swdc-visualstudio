@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Media;
 
 namespace SoftwareCo
 {
@@ -102,7 +99,8 @@ namespace SoftwareCo
             return GetPluginProjectUsingDir(projectDir);
         }
 
-        public static PluginDataProject GetPluginProjectUsingDir(string projectDir) {
+        public static PluginDataProject GetPluginProjectUsingDir(string projectDir)
+        {
             string name = "Unnamed";
             PluginDataProject project;
             if (projectDir != null && !projectDir.Equals(""))
@@ -133,7 +131,8 @@ namespace SoftwareCo
                     project = new PluginDataProject(fi.Name, projectDir);
                     resourceInfo = GitUtilManager.GetResourceInfo(projectDir, false);
                 }
-            } else
+            }
+            else
             {
                 resourceInfo = GitUtilManager.GetResourceInfo(this.project.directory, false);
             }
@@ -233,7 +232,8 @@ namespace SoftwareCo
                 // the days don't match. don't use the editor or session seconds for a different day
                 // clear out data from the previous day
                 await WallclockManager.Instance.GetNewDayCheckerAsync();
-                if (td != null) {
+                if (td != null)
+                {
                     td = null;
                     this.project_null_error = "TimeData should be null as its a new day";
                 }

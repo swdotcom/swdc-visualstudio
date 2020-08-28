@@ -79,7 +79,8 @@ namespace SoftwareCo
                 try
                 {
                     storage.Dispose();
-                } catch (Exception) { }
+                }
+                catch (Exception) { }
             }
         }
 

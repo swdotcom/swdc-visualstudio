@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
@@ -31,7 +31,8 @@ namespace SoftwareCo
                 iconName = "cpaw.png";
             }
 
-            await Dispatcher.BeginInvoke(new Action(() => {
+            await Dispatcher.BeginInvoke(new Action(() =>
+            {
                 string tooltip = "Active code time today. Click to see more from Code Time.";
                 string email = FileManager.getItemAsString("name");
                 if (email != null)
@@ -65,7 +66,7 @@ namespace SoftwareCo
             {
                 Logger.Error("Error launching the code metrics view", e);
             }
-            
+
         }
     }
 }

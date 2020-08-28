@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Text;
-using System.Threading.Tasks;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
@@ -55,7 +55,8 @@ namespace SoftwareCo
                 {
                     contentPost = new StringContent(optionalPayload, Encoding.UTF8, "application/json");
                 }
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 NotifyPostException(e);
             }

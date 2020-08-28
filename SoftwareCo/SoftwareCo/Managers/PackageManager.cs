@@ -2,7 +2,6 @@
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -199,8 +198,9 @@ namespace SoftwareCo
             return null;
         }
 
-        public static async Task<string> GetActiveDocumentFileName() {
-            
+        public static async Task<string> GetActiveDocumentFileName()
+        {
+
             if (package == null)
             {
                 return "";

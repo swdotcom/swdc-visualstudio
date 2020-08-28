@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
-using System.IO;
-using Newtonsoft.Json;
 
 namespace SoftwareCo
 {
@@ -20,7 +20,7 @@ namespace SoftwareCo
             // initialize the session summary
             GetSessionSummayData();
         }
-        
+
         public void IncrementSessionSummaryData(KeystrokeAggregates aggregate, TimeGapData eTimeInfo)
         {
             _sessionSummary = GetSessionSummayData();

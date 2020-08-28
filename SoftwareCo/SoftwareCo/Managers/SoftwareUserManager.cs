@@ -29,7 +29,8 @@ namespace SoftwareCo
         {
             long nowInSec = SoftwareCoUtil.GetNowInSeconds();
             long thresholdSeconds = nowInSec - lastOnlineCheck;
-            if (thresholdSeconds > 60) {
+            if (thresholdSeconds > 60)
+            {
                 // 3 second timeout
                 HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/ping", null, null, false);
                 isOnline = SoftwareHttpManager.IsOk(response);
@@ -73,7 +74,7 @@ namespace SoftwareCo
                     if (SoftwareHttpManager.IsOk(response))
                     {
                         string responseBody = await response.Content.ReadAsStringAsync();
-                        
+
                         IDictionary<string, object> respObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(responseBody);
                         respObj.TryGetValue("jwt", out object jwtObj);
                         string jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
@@ -88,9 +89,9 @@ namespace SoftwareCo
             catch (Exception ex)
             {
 
-                Logger.Error("CreateAnonymousUserAsync, error: " + ex.Message,ex);
+                Logger.Error("CreateAnonymousUserAsync, error: " + ex.Message, ex);
             }
-           
+
 
             return null;
         }
@@ -120,7 +121,7 @@ namespace SoftwareCo
 
                 Logger.Error("GetAppJwtAsync, error: " + ex.Message, ex);
             }
-          
+
             return null;
         }
 
@@ -166,7 +167,7 @@ namespace SoftwareCo
                 Logger.Error("GetUserAsync, error: " + ex.Message, ex);
 
             }
-           
+
             return null;
         }
 
@@ -220,8 +221,8 @@ namespace SoftwareCo
             catch (Exception ex)
             {
                 //
-            }  
-          
+            }
+
             return false;
         }
 
@@ -231,7 +232,7 @@ namespace SoftwareCo
             {
                 bool loggedIn = await IsLoggedOn(true);
 
-                if ( !loggedIn && tryCountUntilFoundUser > 0)
+                if (!loggedIn && tryCountUntilFoundUser > 0)
                 {
                     tryCountUntilFoundUser -= 1;
 
@@ -253,16 +254,16 @@ namespace SoftwareCo
                         WallclockManager.Instance.UpdateSessionSummaryFromServerAsync();
 
                         SoftwareCoPackage.SendOfflinePluginBatchData();
-                        
+
                     }
                 }
             }
             catch (Exception ex)
             {
                 Logger.Error("RefetchUserStatusLazily ,error : " + ex.Message, ex);
-              
+
             }
-            
+
         }
     }
 }

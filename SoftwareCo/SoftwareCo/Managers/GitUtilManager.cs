@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace SoftwareCo
 {
@@ -48,7 +46,8 @@ namespace SoftwareCo
             return GetCommitsForRange("thisWeek", projectDir, email);
         }
 
-        public static CommitChangeStats GetCommitsForRange(string rangeType, string projectDir, string email) {
+        public static CommitChangeStats GetCommitsForRange(string rangeType, string projectDir, string email)
+        {
             if (!SoftwareCoUtil.IsGitProject(projectDir))
             {
                 return new CommitChangeStats();
@@ -60,7 +59,8 @@ namespace SoftwareCo
             {
                 sinceTime = nowTime.start_of_yesterday_dt.ToString("yyyy-MM-ddTHH:mm:sszzz");
                 untilTime = nowTime.start_of_today.ToString("yyyy-MM-ddTHH:mm:sszzz");
-            } else if (rangeType == "thisWeek")
+            }
+            else if (rangeType == "thisWeek")
             {
                 sinceTime = nowTime.start_of_week_dt.ToString("yyyy-MM-ddTHH:mm:sszzz");
             }
@@ -132,7 +132,8 @@ namespace SoftwareCo
                             {
                                 int insertions = int.Parse(parts[x - 1]);
                                 stats.insertions += insertions;
-                            } else if (part.IndexOf("deletion") != -1)
+                            }
+                            else if (part.IndexOf("deletion") != -1)
                             {
                                 int deletions = int.Parse(parts[x - 1]);
                                 stats.deletions += deletions;
