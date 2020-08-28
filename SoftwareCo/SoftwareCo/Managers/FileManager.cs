@@ -1,22 +1,14 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace SoftwareCo
 {
     class FileManager
     {
-
-        private static PluginData lastSavedKeystrokeStats = null;
-        private static Object sessionFileLock = new object();
         private static Object dataFileLock = new object();
 
-        public static void ClearLastSavedKeystrokeStats()
-        {
-            lastSavedKeystrokeStats = null;
-        }
 
         public static string getDashboardFile()
         {
@@ -45,9 +37,15 @@ namespace SoftwareCo
                     Directory.CreateDirectory(softwareDataDir);
                 }
                 catch (Exception)
-                {}
+                { }
             }
             return softwareDataDir;
+        }
+
+        public static string GetSnowplowStorageFile()
+        {
+            string file = getSoftwareDataDir(true) + "\\events.db";
+            return file;
         }
 
         public static bool softwareSessionFileExists()
@@ -164,20 +162,17 @@ namespace SoftwareCo
             if (File.Exists(datastoreFile))
             {
                 // get the content
-                string[] lines = null;
-                lock (dataFileLock)
-                {
-                    lines = File.ReadAllLines(datastoreFile, System.Text.Encoding.UTF8);
-                }
+                string[] lines = File.ReadAllLines(datastoreFile, System.Text.Encoding.UTF8);
 
                 if (lines != null && lines.Length > 0)
                 {
-                    
+
                     foreach (string line in lines)
                     {
                         if (line != null && line.Trim().Length > 0)
                         {
-                            jsonLines.Add(line);
+                            string cleanedLine = SoftwareCoUtil.CleanJsonString(line);
+                            jsonLines.Add(cleanedLine);
                         }
                     }
                 }
@@ -286,29 +281,26 @@ namespace SoftwareCo
         {
             string sessionFile = getSoftwareSessionFile();
 
-            lock (sessionFileLock)
+            try
             {
-                try
+                string content = "";
+                IDictionary<string, object> dict = new Dictionary<string, object>();
+                if (File.Exists(sessionFile))
                 {
-                    string content = "";
-                    IDictionary<string, object> dict = new Dictionary<string, object>();
-                    if (File.Exists(sessionFile))
-                    {
 
-                        content = File.ReadAllText(sessionFile, System.Text.Encoding.UTF8);
-                        dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
-                    }
-                    dict[key] = val;
-                    content = JsonConvert.SerializeObject(dict);
+                    content = File.ReadAllText(sessionFile, System.Text.Encoding.UTF8);
+                    dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
+                }
+                dict[key] = val;
+                content = JsonConvert.SerializeObject(dict);
 
-                    File.WriteAllText(sessionFile, content, System.Text.Encoding.UTF8);
-                }
-                catch (Exception)
-                {
-                }
+                File.WriteAllText(sessionFile, content, System.Text.Encoding.UTF8);
+            }
+            catch (Exception)
+            {
             }
         }
     }
 
-    
+
 }

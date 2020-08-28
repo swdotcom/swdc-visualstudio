@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -94,7 +94,8 @@ namespace SoftwareCo
             {
                 IDictionary<string, object> sourceData = (sourceJson == null) ? null : (IDictionary<string, object>)sourceJson;
                 return sourceData;
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 //
             }
@@ -145,7 +146,8 @@ namespace SoftwareCo
             try
             {
                 return Convert.ToInt64(dict[key]);
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 //
             }
@@ -241,19 +243,19 @@ namespace SoftwareCo
             }
         }
 
-        public static string getSectionHeader( string  label)
+        public static string getSectionHeader(string label)
         {
             string result = "";
             string content = label + "\n";
             string dash = "";
-          
+
             int dashLen = DASHBOARD_LABEL_WIDTH + DASHBOARD_VALUE_WIDTH + 15;
             for (int i = 0; i < dashLen; i++)
             {
                 dash += "-";
             }
-            
-            return result = content + dash +"\n";
+
+            return result = content + dash + "\n";
         }
         public static void launchSoftwareTopForty()
         {
@@ -412,7 +414,8 @@ namespace SoftwareCo
             {
                 // subtract 7
                 now = now.AddDays(-7);
-            } else
+            }
+            else
             {
                 // subtract until it equals sunday
                 while (now.DayOfWeek != DayOfWeek.Sunday)
@@ -480,20 +483,20 @@ namespace SoftwareCo
         public static string getDashboardRow(string label, string value)
         {
             string result = "";
-            result =  getDashboardLabel(label) +":"+  getDashboardValue(value)+ "\n";
+            result = getDashboardLabel(label) + ":" + getDashboardValue(value) + "\n";
             return result;
 
         }
 
         private static string getDashboardLabel(string label)
         {
-           return  getDashboardDataDisplay(DASHBOARD_VALUE_WIDTH, label);
+            return getDashboardDataDisplay(DASHBOARD_VALUE_WIDTH, label);
         }
 
         private static string getDashboardValue(string value)
         {
             string valueContent = getDashboardDataDisplay(DASHBOARD_VALUE_WIDTH, value);
-            string  paddedContent = "";
+            string paddedContent = "";
             for (int i = 0; i < 11; i++)
             {
                 paddedContent += " ";
@@ -503,7 +506,7 @@ namespace SoftwareCo
         }
         private static string getDashboardDataDisplay(int dASHBOARD_VALUE_WIDTH, string data)
         {
-            int len = dASHBOARD_VALUE_WIDTH - data.Length;        
+            int len = dASHBOARD_VALUE_WIDTH - data.Length;
             string content = "";
             for (int i = 0; i < len; i++)
             {
@@ -515,26 +518,26 @@ namespace SoftwareCo
 
         internal static string CreateDateSuffix(DateTime date)
         {
-           
-                // Get day...
-                var day = date.Day;
 
-                // Get day modulo...
-                var dayModulo = day % 10;
+            // Get day...
+            var day = date.Day;
 
-                // Convert day to string...
-                var suffix = day.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            // Get day modulo...
+            var dayModulo = day % 10;
 
-                // Combine day with correct suffix...
-                suffix += (day == 11 || day == 12 || day == 13) ? "th" :
-                    (dayModulo == 1) ? "st" :
-                    (dayModulo == 2) ? "nd" :
-                    (dayModulo == 3) ? "rd" :
-                    "th";
+            // Convert day to string...
+            var suffix = day.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-                // Return result...
-                return suffix;
-            
+            // Combine day with correct suffix...
+            suffix += (day == 11 || day == 12 || day == 13) ? "th" :
+                (dayModulo == 1) ? "st" :
+                (dayModulo == 2) ? "nd" :
+                (dayModulo == 3) ? "rd" :
+                "th";
+
+            // Return result...
+            return suffix;
+
         }
         /// <summary>
         /// Function Equibalent to setTimeout 
@@ -579,8 +582,35 @@ namespace SoftwareCo
 
             return true;
         }
+
+        public static string CleanJsonString(string data)
+        {
+            // byte order mark clean up
+            string BOMMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
+            if (data.StartsWith(BOMMarkUtf8))
+            {
+                data = data.Remove(0, BOMMarkUtf8.Length);
+            }
+            data = data.Replace("\r\n", "").Replace("\n", "").Replace("\r", "");
+
+            int braceIdx = data.IndexOf("{");
+            int bracketIdx = data.IndexOf("[");
+
+            // multi editor writes to the data.json can
+            // cause an undefined string before the json chars, remove it
+            if (braceIdx > 0 && (braceIdx < bracketIdx || bracketIdx == -1))
+            {
+                data = data.Substring(braceIdx);
+            }
+            else if (bracketIdx > 0 && (bracketIdx < braceIdx || braceIdx == -1))
+            {
+                data = data.Substring(bracketIdx);
+            }
+
+            return data;
+        }
     }
-   
+
     struct Date
     {
         public static double GetTime(DateTime dateTime)
@@ -613,5 +643,5 @@ namespace SoftwareCo
         public long local_start_of_week { get; set; }
 
     }
-    
+
 }

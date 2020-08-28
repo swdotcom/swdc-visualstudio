@@ -1,15 +1,16 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
-using System.Threading;
-using Task = System.Threading.Tasks.Task;
-using EnvDTE;
+﻿using EnvDTE;
+using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net.Http;
-using System.Collections.Generic;
-using EnvDTE80;
-using Microsoft.VisualStudio.Shell.Interop;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
+using Task = System.Threading.Tasks.Task;
 
 namespace SoftwareCo
 {
@@ -17,19 +18,19 @@ namespace SoftwareCo
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
     [Guid(PackageGuidString)]
-    [ProvideAutoLoad(UIContextGuids.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
-    // [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
+    [ProvideAutoLoad(UIContextGuids.NoSolution, PackageAutoLoadFlags.BackgroundLoad)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideToolWindow(typeof(CodeMetricsToolPane),
         Window = ToolWindowGuids.SolutionExplorer,
-        MultiInstances=false)]
+        MultiInstances = false)]
     public sealed class SoftwareCoPackage : AsyncPackage
     {
         #region fields
 
         public const string PackageGuidString = "0ae38c4e-1ac5-4457-bdca-bb2dfc342a1c";
 
+        private Events2 events;
         private DocumentEvents _docEvents;
         private SelectionEvents _selectionEvents;
         private TextEditorEvents _textEditorEvents;
@@ -43,9 +44,9 @@ namespace SoftwareCo
         private DocEventManager docEventMgr;
 
         private static int ONE_MINUTE = 1000 * 60;
-        public static bool PLUGIN_READY = false;
+        public static bool INITIALIZED = false;
 
-        public SoftwareCoPackage() {}
+        public SoftwareCoPackage() { }
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -59,53 +60,19 @@ namespace SoftwareCo
                 base.Initialize();
 
                 ObjDte = await GetServiceAsync(typeof(DTE)) as DTE;
+                events = (Events2)ObjDte.Events;
+
+                // Intialize the document event handlers
+                _textEditorEvents = events.TextEditorEvents;
+                _textDocKeyEvents = events.TextDocumentKeyPressEvents;
+                _selectionEvents = events.SelectionEvents;
+                _docEvents = events.DocumentEvents;
 
                 string PluginVersion = EnvUtil.GetVersion();
                 Logger.Info(string.Format("Initializing Code Time v{0}", PluginVersion));
 
                 // init the package manager that will use the AsyncPackage to run main thread requests
                 PackageManager.initialize(this, ObjDte);
-
-                // Intialize the document event handlers
-                Events2 events = (Events2)ObjDte.Events;
-                _textEditorEvents = events.TextEditorEvents;
-                _textDocKeyEvents = events.TextDocumentKeyPressEvents;
-                _selectionEvents = events.SelectionEvents;
-                _docEvents = events.DocumentEvents;
-
-                InitializePlugin();
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("Error Initializing SoftwareCo", ex);
-            }
-        }
-
-        public async void InitializePlugin()
-        {
-            await this.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (!PLUGIN_READY)
-            {
-                string solutionDir = await PackageManager.GetSolutionDirectory();
-                if (string.IsNullOrEmpty(solutionDir))
-                {
-                    Task.Delay(3000).ContinueWith((task) =>
-                    {
-                        InitializePlugin();
-                    });
-                    return;
-                }
-                await this.InitializeUserInfoAsync();
-
-                // initialize the tracker event manager
-                TrackerEventManager.init();
-
-                // update the latestPayloadTimestampEndUtc
-                NowTime nowTime = SoftwareCoUtil.GetNowTime();
-                FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
-
-                // init the wallclock
-                WallclockManager wallclockMgr = WallclockManager.Instance;
 
                 // init the doc event mgr and inject ObjDte
                 docEventMgr = DocEventManager.Instance;
@@ -117,6 +84,50 @@ namespace SoftwareCo
                 _selectionEvents.OnChange += docEventMgr.OnChangeAsync;
                 _textEditorEvents.LineChanged += docEventMgr.LineChangedAsync;
 
+                // initialize the rest of the plugin lazily as it takes time to
+                // select a new or existing project to open
+                new Scheduler().Execute(() => CheckSolutionActivation(), 10000);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Error Initializing Code Time", ex);
+            }
+        }
+
+        public async void CheckSolutionActivation()
+        {
+            await this.JoinableTaskFactory.SwitchToMainThreadAsync();
+            if (!INITIALIZED)
+            {
+                // don't initialize the rest of the plugin until a project is loaded
+                string solutionDir = await PackageManager.GetSolutionDirectory();
+                if (string.IsNullOrEmpty(solutionDir))
+                {
+                    // no solution, try again later
+                    new Scheduler().Execute(() => CheckSolutionActivation(), 10000);
+                } else
+                {
+                    // solution is activated, initialize
+                    new Scheduler().Execute(() => InitializePlugin(), 5000);
+                }
+            }
+        }
+
+        private async void InitializePlugin() {
+            await this.JoinableTaskFactory.SwitchToMainThreadAsync();
+            if (!INITIALIZED)
+            {
+                await this.InitializeUserInfoAsync();
+
+                // initialize the tracker event manager
+                TrackerEventManager.init();
+
+                // update the latestPayloadTimestampEndUtc
+                NowTime nowTime = SoftwareCoUtil.GetNowTime();
+                FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
+
+                // init the wallclock
+                WallclockManager wallclockMgr = WallclockManager.Instance;
 
                 // initialize the menu commands
                 SoftwareLaunchCommand.InitializeAsync(this);
@@ -136,29 +147,29 @@ namespace SoftwareCo
                       ONE_MINUTE / 2,
                       ONE_MINUTE * 5);
 
-                processPayloadTimer = new Timer(
-                    ProcessKeystrokePayload,
-                    null,
-                    ONE_MINUTE,
-                    ONE_MINUTE);
-
-                // check if we've shown the readme or not
-                bool initializedVisualStudioPlugin = FileManager.getItemAsBool("visualstudio_CtInit");
-                if (!initializedVisualStudioPlugin)
-                {
-                    DashboardManager.Instance.LaunchReadmeFileAsync();
-                    FileManager.setBoolItem("visualstudio_CtInit", true);
-
-                    // launch the tree view
-                    PackageManager.OpenCodeMetricsPaneAsync();
-                }
-
                 string PluginVersion = EnvUtil.GetVersion();
                 Logger.Info(string.Format("Initialized Code Time v{0}", PluginVersion));
 
-                Task.Delay(5000).ContinueWith((task) => { ProcessKeystrokePayload(null); });
+                new Scheduler().Execute(() => SendOfflinePluginBatchData(), 10000);
 
-                PLUGIN_READY = true;
+                new Scheduler().Execute(() => InitializeReadme(), 1000);
+
+                INITIALIZED = true;
+            }
+        }
+
+        private async void InitializeReadme()
+        {
+            await this.JoinableTaskFactory.SwitchToMainThreadAsync();
+            // check if we've shown the readme or not
+            bool initializedVisualStudioPlugin = FileManager.getItemAsBool("visualstudio_CtInit");
+            if (!initializedVisualStudioPlugin)
+            {
+                DashboardManager.Instance.LaunchReadmeFileAsync();
+                FileManager.setBoolItem("visualstudio_CtInit", true);
+
+                // launch the tree view
+                PackageManager.OpenCodeMetricsPaneAsync();
             }
         }
 
@@ -172,6 +183,8 @@ namespace SoftwareCo
             TrackerEventManager.TrackEditorActionEvent("editor", "deactivate");
 
             WallclockManager.Instance.Dispose();
+
+            TrackerManager.Dispose();
 
             if (offlineDataTimer != null)
             {
@@ -189,6 +202,8 @@ namespace SoftwareCo
                 processPayloadTimer.Dispose();
                 processPayloadTimer = null;
             }
+
+            INITIALIZED = false;
         }
         #endregion
 
@@ -204,7 +219,8 @@ namespace SoftwareCo
             SendOfflinePluginBatchData();
         }
 
-        public static async void SendOfflinePluginBatchData() {
+        public static async void SendOfflinePluginBatchData()
+        {
 
             Logger.Info(DateTime.Now.ToString());
             bool online = await SoftwareUserManager.IsOnlineAsync();
@@ -214,66 +230,81 @@ namespace SoftwareCo
                 return;
             }
 
-            int batch_limit = 5;
-            HttpResponseMessage response = null;
-            string jsonData = "";
+            int batch_limit = 25;
+            bool succeeded = false;
             List<string> offlinePluginData = FileManager.GetOfflinePayloadList();
             List<string> batchList = new List<string>();
             if (offlinePluginData != null && offlinePluginData.Count > 0)
             {
-                
+
                 for (int i = 0; i < offlinePluginData.Count; i++)
                 {
                     string line = offlinePluginData[i];
                     if (i >= batch_limit)
                     {
                         // send this batch off
-                        jsonData = "[" + string.Join(",", batchList) + "]";
-                        response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonData);
-                        if (!SoftwareHttpManager.IsOk(response))
+                        succeeded = await SendBatchData(batchList);
+                        if (!succeeded)
                         {
-                            // there was an error, don't delete the offline data
+                            if (offlinePluginData.Count > 1000)
+                            {
+                                // delete anyway, there's an issue and the data is gathering
+                                File.Delete(FileManager.getSoftwareDataStoreFile());
+                            }
                             return;
                         }
-                        batchList.Clear();
                     }
                     batchList.Add(line);
                 }
 
                 if (batchList.Count > 0)
                 {
-                    jsonData = "[" + string.Join(",", batchList) + "]";
-                    response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonData);
-                    if (!SoftwareHttpManager.IsOk(response))
-                    {
-                        // there was an error, don't delete the offline data
-                        return;
-                    }
+                    succeeded = await SendBatchData(batchList);
                 }
 
                 // delete the file
-                File.Delete(FileManager.getSoftwareDataStoreFile());
+                if (succeeded)
+                {
+                    File.Delete(FileManager.getSoftwareDataStoreFile());
+                }
+                else if (offlinePluginData.Count > 1000)
+                {
+                    File.Delete(FileManager.getSoftwareDataStoreFile());
+                }
             }
-            
+
+        }
+
+        private static async Task<bool> SendBatchData(List<string> batchList)
+        {
+            // send this batch off
+            string jsonData = "[" + string.Join(",", batchList) + "]";
+            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonData);
+            if (!SoftwareHttpManager.IsOk(response) && response.StatusCode != System.Net.HttpStatusCode.Unauthorized)
+            {
+                // there was an error, don't delete the offline data
+                return false;
+            }
+            batchList.Clear();
+            return true;
         }
 
         private async Task InitializeUserInfoAsync()
         {
             try
             {
-                bool online = await SoftwareUserManager.IsOnlineAsync();
                 bool softwareSessionFileExists = FileManager.softwareSessionFileExists();
                 object jwt = FileManager.getItem("jwt");
-                if (!softwareSessionFileExists || jwt == null || jwt.ToString().Equals(""))
+                if (string.IsNullOrEmpty("jwt"))
                 {
-                    string result = await SoftwareUserManager.CreateAnonymousUserAsync(online);
+                    string result = await SoftwareUserManager.CreateAnonymousUserAsync();
                 }
 
                 // check if the "name" is set. if not, get the user
                 string name = FileManager.getItemAsString("name");
-                if (name == null || name.Equals(""))
+                if (string.IsNullOrEmpty(name))
                 {
-                    await SoftwareUserManager.IsLoggedOn(online);
+                    await SoftwareUserManager.IsLoggedOn();
                     SoftwareLoginCommand.UpdateEnabledState(true);
                     SoftwareLaunchCommand.UpdateEnabledState(true);
                 }
@@ -294,7 +325,7 @@ namespace SoftwareCo
                 Logger.Error("Error Initializing UserInfo", ex);
 
             }
-            
+
         }
 
         #endregion

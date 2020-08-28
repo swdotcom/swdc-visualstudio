@@ -1,15 +1,10 @@
-﻿using Commons.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace SoftwareCo
 {
 
-     public class SessionSummary
-     {
+    public class SessionSummary
+    {
         public long currentDayMinutes { get; set; }
         public long currentDayKeystrokes { get; set; }
         public long currentDayKpm { get; set; }
@@ -187,6 +182,6 @@ namespace SoftwareCo
 
             this.dailyMinutesGoal = summary.dailyMinutesGoal;
         }
-      
+
     }
 }

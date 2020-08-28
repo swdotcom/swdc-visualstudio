@@ -9,6 +9,7 @@ using Snowplow.Tracker.Models.Adapters;
 using Snowplow.Tracker.Models.Events;
 using Snowplow.Tracker.Queues;
 using Snowplow.Tracker.Storage;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -17,58 +18,69 @@ namespace SoftwareCo
 {
     class TrackerManager
     {
-        private string swdcApiHost = "";
         private string trackerNamespace = "";
         private string appId = "";
         private Tracker t = null;
+        private static LiteDBStorage storage = null;
 
         public bool initialized = false;
 
-        public TrackerManager(string swdcApiHost, string trackerNamespace, string appId)
+        public TrackerManager(string trackerNamespace, string appId)
         {
-            this.swdcApiHost = swdcApiHost;
             this.trackerNamespace = trackerNamespace;
             this.appId = appId;
         }
 
         public async Task initializeTracker()
         {
-            // initialie our http client with the endpoint that fetches the snowplow collector endpoint
-            // Http.Initialize(swdcApiHost);
-
-            // fetch the tracker_api from the plugin config
-            // Response resp = await Http.GetAsync("/plugins/config");
-            HttpResponseMessage resp = await SoftwareHttpManager.SendRequestAsync(System.Net.Http.HttpMethod.Get, "/plugins/config", null, null, false);
-
-            // if (resp.ok && resp.responseData != null)
-            if (SoftwareHttpManager.IsOk(resp))
+            if (!initialized)
             {
-                // get the json data
-                string json = await resp.Content.ReadAsStringAsync();
-                // string json = JsonConvert.SerializeObject(resp.responseData);
-                Dictionary<string, object> dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
-                string track_api_host = DictionaryUtil.TryGetStringFromDictionary(dictionary, "tracker_api");
 
-                // Controls the sending of events
-                SnowplowHttpCollectorEndpoint endpoint = new SnowplowHttpCollectorEndpoint(track_api_host, HttpProtocol.HTTPS, null, Snowplow.Tracker.Endpoints.HttpMethod.POST);
+                // fetch the tracker_api from the plugin config
+                HttpResponseMessage resp = await SoftwareHttpManager.SendRequestAsync(System.Net.Http.HttpMethod.Get, "/plugins/config", null, null, false);
 
-                // Controls the storage of events
-                // NOTE: You must dispose of storage yourself when closing your application!
-                LiteDBStorage storage = new LiteDBStorage("events.db");
-
-                // Controls queueing events
-                PersistentBlockingQueue queue = new PersistentBlockingQueue(storage, new PayloadToJsonString());
-
-                // Controls pulling events of the queue and pushing them to the sender
-                AsyncEmitter emitter = new AsyncEmitter(endpoint, queue);
-                Subject subject = new Subject().SetPlatform(Platform.Iot).SetLang("EN");
-
-                t = Tracker.Instance;
-                if (!t.Started)
+                // if (resp.ok && resp.responseData != null)
+                if (SoftwareHttpManager.IsOk(resp))
                 {
-                    t.Start(emitter, subject, null, trackerNamespace, appId, false /*encodeBase64*/, false /*synchronous*/);
+                    // get the json data
+                    string json = await resp.Content.ReadAsStringAsync();
+                    // string json = JsonConvert.SerializeObject(resp.responseData);
+                    Dictionary<string, object> dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+                    string track_api_host = DictionaryUtil.TryGetStringFromDictionary(dictionary, "tracker_api");
+
+                    // Controls the sending of events
+                    SnowplowHttpCollectorEndpoint endpoint = new SnowplowHttpCollectorEndpoint(track_api_host, HttpProtocol.HTTPS, null, Snowplow.Tracker.Endpoints.HttpMethod.POST);
+
+                    // Controls the storage of events
+                    // NOTE: You must dispose of storage yourself when closing your application!
+                    storage = new LiteDBStorage(FileManager.GetSnowplowStorageFile());
+
+                    // Controls queueing events
+                    PersistentBlockingQueue queue = new PersistentBlockingQueue(storage, new PayloadToJsonString());
+
+                    // Controls pulling events of the queue and pushing them to the sender
+                    AsyncEmitter emitter = new AsyncEmitter(endpoint, queue);
+                    Subject subject = new Subject().SetPlatform(Platform.Iot).SetLang("EN");
+
+                    t = Tracker.Instance;
+                    if (!t.Started)
+                    {
+                        t.Start(emitter, subject, null, trackerNamespace, appId, false /*encodeBase64*/, false /*synchronous*/);
+                    }
+                    initialized = true;
                 }
-                initialized = true;
+            }
+        }
+
+        public static void Dispose()
+        {
+            if (storage != null)
+            {
+                try
+                {
+                    storage.Dispose();
+                }
+                catch (Exception) { }
             }
         }
 

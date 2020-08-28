@@ -1,6 +1,5 @@
 ﻿using Snowplow.Tracker.Models.Contexts;
 using Snowplow.Tracker.Models.Events;
-using System;
 using System.Collections.Generic;
 
 namespace SoftwareCo

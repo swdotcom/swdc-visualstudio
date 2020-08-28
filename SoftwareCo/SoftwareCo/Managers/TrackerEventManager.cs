@@ -12,14 +12,15 @@ namespace SoftwareCo
         {
             try
             {
-                tracker = new TrackerManager(Constants.api_endpoint, "CodeTime", "swdc-visualstudio");
+                tracker = new TrackerManager("CodeTime", "swdc-visualstudio");
                 await tracker.initializeTracker();
 
                 if (tracker.initialized)
                 {
                     TrackEditorActionEvent("editor", "activate");
                 }
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 Logger.Warning("Error initializing tracker: " + e.ToString());
             }
@@ -69,7 +70,7 @@ namespace SoftwareCo
 
                 codetimeEvent.fileEntity = await GetFileEntity(fileInfo.file);
                 codetimeEvent.projectEntity = await GetProjectEntity(fileInfo.file);
-                
+
 
                 if (repoEntity == null)
                 {

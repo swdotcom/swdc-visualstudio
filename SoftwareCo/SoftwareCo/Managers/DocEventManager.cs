@@ -1,9 +1,8 @@
 ﻿
-using System;
 using EnvDTE;
+using System;
 using System.IO;
 using System.Linq;
-using System.Threading;
 
 namespace SoftwareCo
 {
@@ -17,6 +16,7 @@ namespace SoftwareCo
         private Document doc = null;
         private Scheduler scheduler = null;
         private long lastKeystrokeTime = 0;
+        private static int ACTIVITY_LAG_THRESHOLD_SEC = 12;
         public static DocEventManager Instance { get { return lazy.Value; } }
 
         public bool hasData()
@@ -42,7 +42,8 @@ namespace SoftwareCo
                 {
                     FileInfo fi = new FileInfo(_solutionDirectory);
                     _pluginData = new PluginData(fi.Name, _solutionDirectory);
-                } else
+                }
+                else
                 {
                     // set it to unnamed
                     _pluginData = new PluginData("Unnamed", "Untitled");
@@ -62,12 +63,16 @@ namespace SoftwareCo
 
         private void UpdateLineCount(PluginDataFileInfo pdfileInfo)
         {
-            pdfileInfo.lines = CountLinesLINQ(pdfileInfo.file);
+            if (pdfileInfo.lines == 0)
+            {
+                pdfileInfo.lines = CountLinesLINQ(pdfileInfo.file);
+            }
         }
 
         public async void OnChangeAsync()
         {
             doc = await PackageManager.GetActiveDocument();
+            Logger.Info("OnChangeAsync - updated doc: " + doc);
         }
 
         public async void LineChangedAsync(TextPoint start, TextPoint end, int hint)
@@ -182,7 +187,7 @@ namespace SoftwareCo
 
             TrackerEventManager.TrackEditorFileActionEvent("file", "open", fileName);
         }
-    
+
         public async void DocEventsOnDocumentClosedAsync(Document document)
         {
             SoftwareCoPackage package = PackageManager.GetAsyncPackage();
@@ -221,7 +226,8 @@ namespace SoftwareCo
                 // this is a line change event
                 linesAdded = end.Line - start.Line;
                 numKeystrokes = end.AbsoluteCharOffset - start.AbsoluteCharOffset;
-            } else if (Keypress != null)
+            }
+            else if (Keypress != null)
             {
                 if (textSelection != null)
                 {
@@ -239,14 +245,21 @@ namespace SoftwareCo
                     // it's a single delete
                     numDeleteKeystrokes = 1;
                 }
+                else if (linesRemoved == 0 && textSelection != null && textSelection.CurrentColumn == 1 && Keypress == "\b")
+                {
+                    // it's a single line delete
+                    linesRemoved = 1;
+                }
                 else if (Keypress == "\r" && linesAdded == 0)
                 {
                     // it's a single carriage return
                     linesAdded = 1;
-                } else if (Keypress == "\t")
+                }
+                else if (Keypress == "\t")
                 {
                     hasAutoIndent = true;
-                } else if (numDeleteKeystrokes == 0)
+                }
+                else if (numDeleteKeystrokes == 0)
                 {
                     // it's a single character
                     numKeystrokes = 1;
@@ -256,7 +269,7 @@ namespace SoftwareCo
             // update the deletion keystrokes if there are lines removed
             numDeleteKeystrokes = numDeleteKeystrokes >= linesRemoved ? numDeleteKeystrokes - linesRemoved : numDeleteKeystrokes;
 
-            Logger.Info("{la: " + linesAdded + ", lr: " + linesRemoved + ", dk: " + numDeleteKeystrokes + ", k: " + numKeystrokes + ", indent: " + hasAutoIndent + "}");
+            // Logger.Info("{la: " + linesAdded + ", lr: " + linesRemoved + ", dk: " + numDeleteKeystrokes + ", k: " + numKeystrokes + ", indent: " + hasAutoIndent + "}");
 
             // event updates
             if (newLineAutoIndent)
@@ -340,7 +353,8 @@ namespace SoftwareCo
             if (linesAdded > 0)
             {
                 fileInfo.lines += linesAdded;
-            } else if (linesRemoved > 0)
+            }
+            else if (linesRemoved > 0)
             {
                 fileInfo.lines -= linesRemoved;
             }
@@ -350,28 +364,29 @@ namespace SoftwareCo
 
             lastKeystrokeTime = DateTimeOffset.Now.ToUnixTimeSeconds();
 
-            // process this payload in 10 seconds if no activity
+            // process this payload in ACTIVITY_LAG_THRESHOLD_SEC seconds if no activity
             if (scheduler == null)
             {
                 scheduler = new Scheduler();
-                scheduler.Execute(() => CheckToProcessPayload(), 10000);
+                scheduler.Execute(() => CheckToProcessPayload(), ACTIVITY_LAG_THRESHOLD_SEC * 1000);
             }
         }
 
         private void CheckToProcessPayload()
         {
             long nowInSec = DateTimeOffset.Now.ToUnixTimeSeconds();
-            if (nowInSec - lastKeystrokeTime >= 10)
+            if (nowInSec - lastKeystrokeTime >= ACTIVITY_LAG_THRESHOLD_SEC)
             {
                 if (scheduler != null)
                 {
                     PostData();
                 }
-            } else
+            }
+            else
             {
                 // create a new one
                 scheduler = new Scheduler();
-                scheduler.Execute(() => CheckToProcessPayload(), 10000);
+                scheduler.Execute(() => CheckToProcessPayload(), ACTIVITY_LAG_THRESHOLD_SEC * 1000);
             }
         }
 

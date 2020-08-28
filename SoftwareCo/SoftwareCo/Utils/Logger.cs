@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using System;
 using System.Globalization;
 using System.IO;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 
 namespace SoftwareCo
 {
@@ -43,9 +43,9 @@ namespace SoftwareCo
             Log(LogLevel.Debug, message);
         }
 
-        internal static void FileLog(string message,string method)
+        internal static void FileLog(string message, string method)
         {
-            Log(LogLevel.File, message,method);
+            Log(LogLevel.File, message, method);
         }
         internal static void Error(string message, Exception ex = null)
         {
@@ -72,23 +72,23 @@ namespace SoftwareCo
             var outputMessage = string.Format("[CodeTime {0} {1}] {2}{3}", Enum.GetName(level.GetType(), level),
                 DateTime.Now.ToString("hh:mm:ss tt", CultureInfo.InvariantCulture), message, Environment.NewLine);
 
-            if(Enum.GetName(level.GetType(),level)=="File" || Enum.GetName(level.GetType(), level) == "HandledException")
+            if (Enum.GetName(level.GetType(), level) == "File" || Enum.GetName(level.GetType(), level) == "HandledException")
             {
                 string LogContent = outputMessage.ToString();
                 string LogDataPath = FileManager.getLogFile();
-                    try
-                    {
+                try
+                {
                     File.AppendAllText(LogDataPath, LogContent);
-                    }
-                    catch (Exception ex)
-                    {
+                }
+                catch (Exception ex)
+                {
 
-                    }
-                
-                
+                }
+
+
             }
             else
-            outputWindowPane.OutputString(outputMessage);
+                outputWindowPane.OutputString(outputMessage);
         }
     }
 }

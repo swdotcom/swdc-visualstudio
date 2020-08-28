@@ -1,11 +1,11 @@
 ﻿
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace SoftwareCo
 {
@@ -28,10 +28,12 @@ namespace SoftwareCo
             {
                 string fileData = File.ReadAllText(GetTimeDataFile(), System.Text.Encoding.UTF8);
                 return fileData;
-            } catch (Exception)
+            }
+            catch (Exception)
             {
                 //
-            } finally
+            }
+            finally
             {
 
             }
@@ -61,7 +63,8 @@ namespace SoftwareCo
             catch (Exception)
             {
                 return null;
-            } finally
+            }
+            finally
             {
 
             }
@@ -79,7 +82,8 @@ namespace SoftwareCo
             catch (Exception)
             {
                 //
-            } finally
+            }
+            finally
             {
 
             }
@@ -108,7 +112,7 @@ namespace SoftwareCo
         }
 
         public async Task<TimeData> UpdateSessionAndFileSecondsAsync(PluginDataProject project, long session_seconds)
-        {   
+        {
             TimeData td = await GetTodayTimeDataSummary(project);
             if (td != null)
             {
@@ -162,7 +166,8 @@ namespace SoftwareCo
             catch (Exception e)
             {
                 //
-            } finally
+            }
+            finally
             {
 
             }
@@ -195,7 +200,7 @@ namespace SoftwareCo
             {
                 proj = new PluginDataProject("Unnamed", "Untitled");
             }
-            
+
             if (list != null && list.Count > 0)
             {
                 foreach (TimeData td in list)
@@ -212,7 +217,7 @@ namespace SoftwareCo
         public List<TimeData> GetTimeDataList()
         {
             List<TimeData> existingList = new List<TimeData>();
-            
+
             string timeDataJson = GetTimeDataFileData();
             if (timeDataJson != null)
             {
@@ -237,7 +242,8 @@ namespace SoftwareCo
             if (project != null)
             {
                 td = await GetTodayTimeDataSummary(project);
-            } else
+            }
+            else
             {
                 List<TimeData> list = GetTimeDataList();
                 if (list != null && list.Count > 0)
@@ -300,7 +306,7 @@ namespace SoftwareCo
                 {
                     // join array around the json string
                     timeDataSummary = "[" + string.Join(",", timeDataSummary) + "]";
-                } 
+                }
                 HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
                     HttpMethod.Post, "/data/time", timeDataSummary);
                 if (SoftwareHttpManager.IsOk(response))

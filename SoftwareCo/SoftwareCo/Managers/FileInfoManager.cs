@@ -30,7 +30,8 @@ namespace SoftwareCo
             if (ext.IndexOf(".") != -1)
             {
                 fd.syntax = ext.Substring(ext.IndexOf(".") + 1);
-            } else
+            }
+            else
             {
                 fd.syntax = ext;
             }

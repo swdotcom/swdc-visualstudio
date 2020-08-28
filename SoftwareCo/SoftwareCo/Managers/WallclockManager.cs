@@ -10,9 +10,8 @@ namespace SoftwareCo
     {
         private static readonly Lazy<WallclockManager> lazy = new Lazy<WallclockManager>(() => new WallclockManager());
 
-        private System.Threading.Timer timer;
-        private System.Threading.Timer newDayTimer;
-        private static int SECONDS_TO_INCREMENT = 30;
+        private Timer timer;
+        private static int SECONDS_TO_INCREMENT = 60;
         private static int THIRTY_SECONDS_IN_MILLIS = 1000 * SECONDS_TO_INCREMENT;
         private static int ONE_MINUTE = THIRTY_SECONDS_IN_MILLIS * 2;
 
@@ -21,8 +20,6 @@ namespace SoftwareCo
 
         private long _wctime = 0;
         private string _currentDay = "";
-
-        private SessionSummaryManager sessionSummaryMgr;
 
         public static WallclockManager Instance { get { return lazy.Value; } }
 
@@ -37,22 +34,10 @@ namespace SoftwareCo
                       null,
                       1000,
                       THIRTY_SECONDS_IN_MILLIS);
-            sessionSummaryMgr = SessionSummaryManager.Instance;
-
-            newDayTimer = new Timer(
-                    GetNewDayChecker,
-                    null,
-                    1000,
-                    ONE_MINUTE * 10);
         }
 
         public void Dispose()
         {
-            if (newDayTimer != null)
-            {
-                newDayTimer.Dispose();
-                newDayTimer = null;
-            }
 
             if (timer != null)
             {
@@ -71,6 +56,8 @@ namespace SoftwareCo
 
                 // update the file info file (async is fine)
                 TimeDataManager.Instance.UpdateEditorSeconds(SECONDS_TO_INCREMENT);
+
+                GetNewDayCheckerAsync();
             }
             DispatchUpdateAsync();
         }
@@ -98,27 +85,21 @@ namespace SoftwareCo
             Task.Delay(2000).ContinueWith((task) => { DispatchUpdatesProcessorAsync(); });
         }
 
-        private async Task DispatchUpdatesProcessorAsync() {
+        private async Task DispatchUpdatesProcessorAsync()
+        {
             SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
             PackageManager.RebuildCodeMetricsAsync();
             PackageManager.RebuildGitMetricsAsync();
         }
 
-        public async void GetNewDayChecker(object stateinfo)
+        public async Task GetNewDayCheckerAsync()
         {
-            GetNewDayCheckerAsync();
-        }
-
-        public async Task GetNewDayCheckerAsync() {
             if (SoftwareCoUtil.IsNewDay())
             {
                 SessionSummaryManager.Instance.ÇlearSessionSummaryData();
 
                 // send the offline data
                 SoftwareCoPackage.SendOfflinePluginBatchData();
-
-                // clear the last payload in memory
-                FileManager.ClearLastSavedKeystrokeStats();
 
                 // send the offline TimeData payloads
                 // this will clear the time data summary as well
@@ -165,7 +146,8 @@ namespace SoftwareCo
                             SessionSummaryManager.Instance.SaveSessionSummaryToDisk(summary);
 
                             DispatchUpdatesProcessorAsync();
-                        } catch (Exception e)
+                        }
+                        catch (Exception e)
                         {
                             Logger.Error("failed to read json: " + e.Message);
                         }

@@ -32,7 +32,7 @@ namespace SoftwareCo
             try
             {
                 string content = JsonConvert.SerializeObject(new JsonObject());
-                
+
                 File.WriteAllText(file, content, System.Text.Encoding.UTF8);
             }
             catch (Exception e)
@@ -121,7 +121,8 @@ namespace SoftwareCo
             Int32 limit = Math.Min(changeInfos.Count, 3);
             List<FileChangeInfo> orderedInfos = changeInfos.OrderBy(o => o.keystrokes).Reverse().ToList<FileChangeInfo>();
             List<FileChangeInfo> finalList = new List<FileChangeInfo>();
-            for (int i = 0; i < orderedInfos.Count; i++) {
+            for (int i = 0; i < orderedInfos.Count; i++)
+            {
                 FileChangeInfo info = orderedInfos[i];
                 if (info.keystrokes > 0)
                 {
