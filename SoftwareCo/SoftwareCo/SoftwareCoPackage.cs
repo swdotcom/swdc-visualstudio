@@ -17,8 +17,7 @@ namespace SoftwareCo
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
     [Guid(PackageGuidString)]
-    [ProvideAutoLoad(UIContextGuids.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
-    // [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
+    [ProvideAutoLoad(UIContextGuids.NoSolution, PackageAutoLoadFlags.BackgroundLoad)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideToolWindow(typeof(CodeMetricsToolPane),
@@ -30,6 +29,7 @@ namespace SoftwareCo
 
         public const string PackageGuidString = "0ae38c4e-1ac5-4457-bdca-bb2dfc342a1c";
 
+        private Events2 events;
         private DocumentEvents _docEvents;
         private SelectionEvents _selectionEvents;
         private TextEditorEvents _textEditorEvents;
@@ -43,7 +43,7 @@ namespace SoftwareCo
         private DocEventManager docEventMgr;
 
         private static int ONE_MINUTE = 1000 * 60;
-        public static bool PLUGIN_READY = false;
+        public static bool INITIALIZED = false;
 
         public SoftwareCoPackage() {}
 
@@ -59,53 +59,19 @@ namespace SoftwareCo
                 base.Initialize();
 
                 ObjDte = await GetServiceAsync(typeof(DTE)) as DTE;
+                events = (Events2)ObjDte.Events;
+                
+                // Intialize the document event handlers
+                _textEditorEvents = events.TextEditorEvents;
+                _textDocKeyEvents = events.TextDocumentKeyPressEvents;
+                _selectionEvents = events.SelectionEvents;
+                _docEvents = events.DocumentEvents;
 
                 string PluginVersion = EnvUtil.GetVersion();
                 Logger.Info(string.Format("Initializing Code Time v{0}", PluginVersion));
 
                 // init the package manager that will use the AsyncPackage to run main thread requests
                 PackageManager.initialize(this, ObjDte);
-
-                // Intialize the document event handlers
-                Events2 events = (Events2)ObjDte.Events;
-                _textEditorEvents = events.TextEditorEvents;
-                _textDocKeyEvents = events.TextDocumentKeyPressEvents;
-                _selectionEvents = events.SelectionEvents;
-                _docEvents = events.DocumentEvents;
-
-                InitializePlugin();
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("Error Initializing SoftwareCo", ex);
-            }
-        }
-
-        public async void InitializePlugin()
-        {
-            await this.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (!PLUGIN_READY)
-            {
-                string solutionDir = await PackageManager.GetSolutionDirectory();
-                if (string.IsNullOrEmpty(solutionDir))
-                {
-                    Task.Delay(3000).ContinueWith((task) =>
-                    {
-                        InitializePlugin();
-                    });
-                    return;
-                }
-                await this.InitializeUserInfoAsync();
-
-                // initialize the tracker event manager
-                TrackerEventManager.init();
-
-                // update the latestPayloadTimestampEndUtc
-                NowTime nowTime = SoftwareCoUtil.GetNowTime();
-                FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
-
-                // init the wallclock
-                WallclockManager wallclockMgr = WallclockManager.Instance;
 
                 // init the doc event mgr and inject ObjDte
                 docEventMgr = DocEventManager.Instance;
@@ -117,6 +83,32 @@ namespace SoftwareCo
                 _selectionEvents.OnChange += docEventMgr.OnChangeAsync;
                 _textEditorEvents.LineChanged += docEventMgr.LineChangedAsync;
 
+                // initialize the rest of the plugin lazily as it takes time to
+                // select a new or existing project to open
+                new Scheduler().Execute(() => InitializePlugin(), 15000);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Error Initializing Code Time", ex);
+            }
+        }
+
+        public async void InitializePlugin()
+        {
+            await this.JoinableTaskFactory.SwitchToMainThreadAsync();
+            if (!INITIALIZED)
+            {
+                await this.InitializeUserInfoAsync();
+
+                // initialize the tracker event manager
+                TrackerEventManager.init();
+
+                // update the latestPayloadTimestampEndUtc
+                NowTime nowTime = SoftwareCoUtil.GetNowTime();
+                FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
+
+                // init the wallclock
+                WallclockManager wallclockMgr = WallclockManager.Instance;
 
                 // initialize the menu commands
                 SoftwareLaunchCommand.InitializeAsync(this);
@@ -156,9 +148,9 @@ namespace SoftwareCo
                 string PluginVersion = EnvUtil.GetVersion();
                 Logger.Info(string.Format("Initialized Code Time v{0}", PluginVersion));
 
-                Task.Delay(5000).ContinueWith((task) => { ProcessKeystrokePayload(null); });
+                new Scheduler().Execute(() => ProcessKeystrokePayload(null), 10000);
 
-                PLUGIN_READY = true;
+                INITIALIZED = true;
             }
         }
 
@@ -172,6 +164,8 @@ namespace SoftwareCo
             TrackerEventManager.TrackEditorActionEvent("editor", "deactivate");
 
             WallclockManager.Instance.Dispose();
+
+            TrackerManager.Dispose();
 
             if (offlineDataTimer != null)
             {
@@ -189,6 +183,8 @@ namespace SoftwareCo
                 processPayloadTimer.Dispose();
                 processPayloadTimer = null;
             }
+
+            INITIALIZED = false;
         }
         #endregion
 

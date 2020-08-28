@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Snowplow.Tracker.Models.Adapters;
 
 namespace SoftwareCo
 {
@@ -48,6 +49,12 @@ namespace SoftwareCo
                 {}
             }
             return softwareDataDir;
+        }
+
+        public static string GetSnowplowStorageFile()
+        {
+            string file = getSoftwareDataDir(true) + "\\events.db";
+            return file;
         }
 
         public static bool softwareSessionFileExists()

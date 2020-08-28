@@ -156,7 +156,7 @@ namespace SoftwareCo
 
         public async Task RebuildCodeMetricsAsync()
         {
-            if (!SoftwareCoPackage.PLUGIN_READY)
+            if (!SoftwareCoPackage.INITIALIZED)
             {
                 return;
             }
@@ -377,21 +377,6 @@ namespace SoftwareCo
         {
 
             string dir = await PackageManager.GetSolutionDirectory();
-            if ((dir == null || dir.Equals("")) && SoftwareCoPackage.PLUGIN_READY)
-            {
-                dir = await PackageManager.GetSolutionDirectory();
-            }
-
-            // if (dir == null || dir.Equals(""))
-            // {
-                // Uncommitted.Visibility = Visibility.Hidden;
-                // CommittedToday.Visibility = Visibility.Hidden;
-                // return;
-            // } else
-            // {
-                // Uncommitted.Visibility = Visibility.Visible;
-                // CommittedToday.Visibility = Visibility.Visible;
-            // }
 
             string name = "";
             try

@@ -12,7 +12,7 @@ namespace SoftwareCo
         {
             try
             {
-                tracker = new TrackerManager(Constants.api_endpoint, "CodeTime", "swdc-visualstudio");
+                tracker = new TrackerManager("CodeTime", "swdc-visualstudio");
                 await tracker.initializeTracker();
 
                 if (tracker.initialized)
