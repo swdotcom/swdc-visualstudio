@@ -168,12 +168,12 @@ namespace SoftwareCo
 
         public static async Task<string> GetSolutionDirectory()
         {
-            if (package == null || ObjDte == null || ObjDte.Solution == null)
+            if (package == null || ObjDte == null)
             {
                 return "";
             }
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
+            if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
             {
                 _solutionDirectory = ObjDte.Solution.FullName;
                 if (_solutionDirectory.LastIndexOf(".sln") == _solutionDirectory.Length - ".sln".Length)
@@ -181,6 +181,7 @@ namespace SoftwareCo
                     _solutionDirectory = _solutionDirectory.Substring(0, _solutionDirectory.LastIndexOf("\\"));
                 }
             }
+
             return _solutionDirectory;
         }
 

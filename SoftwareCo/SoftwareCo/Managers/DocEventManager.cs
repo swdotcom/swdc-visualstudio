@@ -16,6 +16,7 @@ namespace SoftwareCo
         private Document doc = null;
         private Scheduler scheduler = null;
         private long lastKeystrokeTime = 0;
+        private static int ACTIVITY_LAG_THRESHOLD_SEC = 12;
         public static DocEventManager Instance { get { return lazy.Value; } }
 
         public bool hasData()
@@ -62,12 +63,16 @@ namespace SoftwareCo
 
         private void UpdateLineCount(PluginDataFileInfo pdfileInfo)
         {
-            pdfileInfo.lines = CountLinesLINQ(pdfileInfo.file);
+            if (pdfileInfo.lines == 0)
+            {
+                pdfileInfo.lines = CountLinesLINQ(pdfileInfo.file);
+            }
         }
 
         public async void OnChangeAsync()
         {
             doc = await PackageManager.GetActiveDocument();
+            Logger.Info("OnChangeAsync - updated doc: " + doc);
         }
 
         public async void LineChangedAsync(TextPoint start, TextPoint end, int hint)
@@ -240,7 +245,7 @@ namespace SoftwareCo
                     // it's a single delete
                     numDeleteKeystrokes = 1;
                 }
-                else if (textSelection != null && textSelection.CurrentColumn == 1 && Keypress == "\b")
+                else if (linesRemoved == 0 && textSelection != null && textSelection.CurrentColumn == 1 && Keypress == "\b")
                 {
                     // it's a single line delete
                     linesRemoved = 1;
@@ -359,18 +364,18 @@ namespace SoftwareCo
 
             lastKeystrokeTime = DateTimeOffset.Now.ToUnixTimeSeconds();
 
-            // process this payload in 10 seconds if no activity
+            // process this payload in ACTIVITY_LAG_THRESHOLD_SEC seconds if no activity
             if (scheduler == null)
             {
                 scheduler = new Scheduler();
-                scheduler.Execute(() => CheckToProcessPayload(), 10000);
+                scheduler.Execute(() => CheckToProcessPayload(), ACTIVITY_LAG_THRESHOLD_SEC * 1000);
             }
         }
 
         private void CheckToProcessPayload()
         {
             long nowInSec = DateTimeOffset.Now.ToUnixTimeSeconds();
-            if (nowInSec - lastKeystrokeTime >= 10)
+            if (nowInSec - lastKeystrokeTime >= ACTIVITY_LAG_THRESHOLD_SEC)
             {
                 if (scheduler != null)
                 {
@@ -381,7 +386,7 @@ namespace SoftwareCo
             {
                 // create a new one
                 scheduler = new Scheduler();
-                scheduler.Execute(() => CheckToProcessPayload(), 10000);
+                scheduler.Execute(() => CheckToProcessPayload(), ACTIVITY_LAG_THRESHOLD_SEC * 1000);
             }
         }
 

@@ -40,13 +40,13 @@ namespace SoftwareCo
             return isOnline;
         }
 
-        public static async Task<string> CreateAnonymousUserAsync(bool online)
+        public static async Task<string> CreateAnonymousUserAsync()
         {
             // get the app jwt
             try
             {
-                string app_jwt = await GetAppJwtAsync(online);
-                if (app_jwt != null && online)
+                string app_jwt = await GetAppJwtAsync();
+                if (app_jwt != null)
                 {
                     string creation_annotation = "NO_SESSION_FILE";
                     string osUsername = Environment.UserName;
@@ -96,25 +96,24 @@ namespace SoftwareCo
             return null;
         }
 
-        public static async Task<string> GetAppJwtAsync(bool online)
+        public static async Task<string> GetAppJwtAsync()
         {
             try
             {
-                if (online)
-                {
-                    long seconds = SoftwareCoUtil.GetNowInSeconds();
-                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
-                            HttpMethod.Get, "/data/apptoken?token=" + seconds);
 
-                    if (SoftwareHttpManager.IsOk(response))
-                    {
-                        string responseBody = await response.Content.ReadAsStringAsync();
-                        IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody, new Dictionary<string, object>());
-                        jsonObj.TryGetValue("jwt", out object jwtObj);
-                        string app_jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
-                        return app_jwt;
-                    }
+                long seconds = SoftwareCoUtil.GetNowInSeconds();
+                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
+                        HttpMethod.Get, "/data/apptoken?token=" + seconds);
+
+                if (SoftwareHttpManager.IsOk(response))
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody, new Dictionary<string, object>());
+                    jsonObj.TryGetValue("jwt", out object jwtObj);
+                    string app_jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
+                    return app_jwt;
                 }
+
             }
             catch (Exception ex)
             {
@@ -125,12 +124,12 @@ namespace SoftwareCo
             return null;
         }
 
-        private static async Task<User> GetUserAsync(bool online)
+        private static async Task<User> GetUserAsync()
         {
             string jwt = FileManager.getItemAsString("jwt");
             try
             {
-                if (jwt != null && online)
+                if (jwt != null)
                 {
                     string api = "/users/me";
                     HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api);
@@ -171,14 +170,14 @@ namespace SoftwareCo
             return null;
         }
 
-        public static async Task<bool> IsLoggedOn(bool online)
+        public static async Task<bool> IsLoggedOn()
         {
             try
             {
                 string jwt = FileManager.getItemAsString("jwt");
-                if (online && jwt != null)
+                if (jwt != null)
                 {
-                    User user = await GetUserAsync(online);
+                    User user = await GetUserAsync();
                     if (user != null && SoftwareCoUtil.IsValidEmail(user.email))
                     {
                         FileManager.setItem("name", user.email);
@@ -230,7 +229,7 @@ namespace SoftwareCo
         {
             try
             {
-                bool loggedIn = await IsLoggedOn(true);
+                bool loggedIn = await IsLoggedOn();
 
                 if (!loggedIn && tryCountUntilFoundUser > 0)
                 {

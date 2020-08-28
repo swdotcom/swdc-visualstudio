@@ -86,7 +86,7 @@ namespace SoftwareCo
 
                 // initialize the rest of the plugin lazily as it takes time to
                 // select a new or existing project to open
-                new Scheduler().Execute(() => InitializePlugin(), 10000);
+                new Scheduler().Execute(() => CheckSolutionActivation(), 10000);
             }
             catch (Exception ex)
             {
@@ -94,8 +94,26 @@ namespace SoftwareCo
             }
         }
 
-        public async void InitializePlugin()
+        public async void CheckSolutionActivation()
         {
+            await this.JoinableTaskFactory.SwitchToMainThreadAsync();
+            if (!INITIALIZED)
+            {
+                // don't initialize the rest of the plugin until a project is loaded
+                string solutionDir = await PackageManager.GetSolutionDirectory();
+                if (string.IsNullOrEmpty(solutionDir))
+                {
+                    // no solution, try again later
+                    new Scheduler().Execute(() => CheckSolutionActivation(), 10000);
+                } else
+                {
+                    // solution is activated, initialize
+                    new Scheduler().Execute(() => InitializePlugin(), 5000);
+                }
+            }
+        }
+
+        private async void InitializePlugin() {
             await this.JoinableTaskFactory.SwitchToMainThreadAsync();
             if (!INITIALIZED)
             {
@@ -128,12 +146,6 @@ namespace SoftwareCo
                       null,
                       ONE_MINUTE / 2,
                       ONE_MINUTE * 5);
-
-                processPayloadTimer = new Timer(
-                    ProcessKeystrokePayload,
-                    null,
-                    ONE_MINUTE,
-                    ONE_MINUTE);
 
                 string PluginVersion = EnvUtil.GetVersion();
                 Logger.Info(string.Format("Initialized Code Time v{0}", PluginVersion));
@@ -281,19 +293,18 @@ namespace SoftwareCo
         {
             try
             {
-                bool online = await SoftwareUserManager.IsOnlineAsync();
                 bool softwareSessionFileExists = FileManager.softwareSessionFileExists();
                 object jwt = FileManager.getItem("jwt");
-                if (!softwareSessionFileExists || jwt == null || jwt.ToString().Equals(""))
+                if (string.IsNullOrEmpty("jwt"))
                 {
-                    string result = await SoftwareUserManager.CreateAnonymousUserAsync(online);
+                    string result = await SoftwareUserManager.CreateAnonymousUserAsync();
                 }
 
                 // check if the "name" is set. if not, get the user
                 string name = FileManager.getItemAsString("name");
-                if (name == null || name.Equals(""))
+                if (string.IsNullOrEmpty(name))
                 {
-                    await SoftwareUserManager.IsLoggedOn(online);
+                    await SoftwareUserManager.IsLoggedOn();
                     SoftwareLoginCommand.UpdateEnabledState(true);
                     SoftwareLaunchCommand.UpdateEnabledState(true);
                 }
