@@ -17,7 +17,6 @@ namespace SoftwareCo
 
         private void TimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            Logger.Info("------------ Stopping timer ----------");
             if (Timer != null)
             {
                 Timer.Stop();

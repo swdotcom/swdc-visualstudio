@@ -61,14 +61,6 @@ namespace SoftwareCo
             return 0;
         }
 
-        private void UpdateLineCount(PluginDataFileInfo pdfileInfo)
-        {
-            if (pdfileInfo.lines == 0)
-            {
-                pdfileInfo.lines = CountLinesLINQ(pdfileInfo.file);
-            }
-        }
-
         public async void LineChangedAsync(TextPoint start, TextPoint end, int hint)
         {
             if (doc == null)
@@ -80,6 +72,12 @@ namespace SoftwareCo
             if (!IsTrueEventFile(fileName))
             {
                 return;
+            }
+
+            SoftwareCoPackage package = PackageManager.GetAsyncPackage();
+            if (package != null)
+            {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             }
 
             // only allow single line or bulk paste. visual sudio marks up the document
@@ -117,6 +115,12 @@ namespace SoftwareCo
                 return;
             }
 
+            SoftwareCoPackage package = PackageManager.GetAsyncPackage();
+            if (package != null)
+            {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
+            }
+
             InitPluginDataIfNotExists();
             _pluginData.InitFileInfoIfNotExists(fileName);
 
@@ -147,7 +151,6 @@ namespace SoftwareCo
                 doc = Window.Document;
                 TrackerEventManager.TrackEditorFileActionEvent("file", "open", fileName);
             }
-            Logger.Info("window showing: " + Window);
         }
 
         public async void DocEventsOnDocumentClosedAsync(Document document)
@@ -354,12 +357,12 @@ namespace SoftwareCo
             }
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
 
-            if (_pluginData != null && _pluginData.source.Count > 0 && _pluginData.keystrokes > 0)
+            if (hasData())
             {
                 // create the aggregates, end the file times, gather the cumulatives
                 string softwareDataContent = await _pluginData.CompletePayloadAndReturnJsonString();
 
-                Logger.Info("Code Time: storing plugin data: " + softwareDataContent);
+                Logger.Info("Code Time: processing plugin data: " + softwareDataContent);
 
                 TrackerEventManager.TrackCodeTimeEventAsync(_pluginData);
 
