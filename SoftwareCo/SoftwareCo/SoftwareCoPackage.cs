@@ -32,9 +32,9 @@ namespace SoftwareCo
 
         private Events2 events;
         private DocumentEvents _docEvents;
-        private SelectionEvents _selectionEvents;
         private TextEditorEvents _textEditorEvents;
         private TextDocumentKeyPressEvents _textDocKeyEvents;
+        private WindowVisibilityEvents _windowVisibilityEvents;
 
         private Timer offlineDataTimer;
         private Timer processPayloadTimer;
@@ -65,8 +65,8 @@ namespace SoftwareCo
                 // Intialize the document event handlers
                 _textEditorEvents = events.TextEditorEvents;
                 _textDocKeyEvents = events.TextDocumentKeyPressEvents;
-                _selectionEvents = events.SelectionEvents;
                 _docEvents = events.DocumentEvents;
+                _windowVisibilityEvents = events.WindowVisibilityEvents;
 
                 string PluginVersion = EnvUtil.GetVersion();
                 Logger.Info(string.Format("Initializing Code Time v{0}", PluginVersion));
@@ -80,8 +80,7 @@ namespace SoftwareCo
                 // setup event handlers
                 _textDocKeyEvents.BeforeKeyPress += new _dispTextDocumentKeyPressEvents_BeforeKeyPressEventHandler(BeforeKeyPress);
                 _docEvents.DocumentClosing += docEventMgr.DocEventsOnDocumentClosedAsync;
-                _docEvents.DocumentOpening += docEventMgr.DocEventsOnDocumentOpeningAsync;
-                _selectionEvents.OnChange += docEventMgr.OnChangeAsync;
+                _windowVisibilityEvents.WindowShowing += docEventMgr.WindowVisibilityEventAsync;
                 _textEditorEvents.LineChanged += docEventMgr.LineChangedAsync;
 
                 // initialize the rest of the plugin lazily as it takes time to
@@ -190,9 +189,8 @@ namespace SoftwareCo
             {
                 _textDocKeyEvents.BeforeKeyPress -= new _dispTextDocumentKeyPressEvents_BeforeKeyPressEventHandler(BeforeKeyPress);
                 _docEvents.DocumentClosing -= docEventMgr.DocEventsOnDocumentClosedAsync;
-                _docEvents.DocumentOpening -= docEventMgr.DocEventsOnDocumentOpeningAsync;
-                _selectionEvents.OnChange -= docEventMgr.OnChangeAsync;
                 _textEditorEvents.LineChanged -= docEventMgr.LineChangedAsync;
+                _windowVisibilityEvents.WindowShowing -= docEventMgr.WindowVisibilityEventAsync;
 
                 offlineDataTimer.Dispose();
                 offlineDataTimer = null;

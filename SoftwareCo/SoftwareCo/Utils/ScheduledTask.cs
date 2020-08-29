@@ -17,11 +17,18 @@ namespace SoftwareCo
 
         private void TimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            Timer.Stop();
-            Timer.Elapsed -= TimerElapsed;
-            Timer = null;
+            Logger.Info("------------ Stopping timer ----------");
+            if (Timer != null)
+            {
+                Timer.Stop();
+                Timer.Elapsed -= TimerElapsed;
+                Timer = null;
+            }
 
-            Action();
+            if (Action != null)
+            {
+                Action();
+            }
             TaskComplete?.Invoke(this, EventArgs.Empty);
         }
     }

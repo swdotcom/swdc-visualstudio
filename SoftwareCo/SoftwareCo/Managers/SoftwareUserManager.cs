@@ -227,6 +227,7 @@ namespace SoftwareCo
 
         public static async void RefetchUserStatusLazily(int tryCountUntilFoundUser)
         {
+            checkingLoginState = true;
             try
             {
                 bool loggedIn = await IsLoggedOn();

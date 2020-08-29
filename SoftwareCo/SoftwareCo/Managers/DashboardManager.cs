@@ -33,7 +33,7 @@ namespace SoftwareCo
 
             if (SoftwareHttpManager.IsOk(resp))
             {
-                summaryContent += await resp.Content.ReadAsStringAsync();
+                summaryContent = await resp.Content.ReadAsStringAsync();
             }
             else
             {

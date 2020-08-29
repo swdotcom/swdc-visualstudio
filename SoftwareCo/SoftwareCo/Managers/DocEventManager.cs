@@ -69,41 +69,25 @@ namespace SoftwareCo
             }
         }
 
-        public async void OnChangeAsync()
-        {
-            doc = await PackageManager.GetActiveDocument();
-            Logger.Info("OnChangeAsync - updated doc: " + doc);
-        }
-
         public async void LineChangedAsync(TextPoint start, TextPoint end, int hint)
         {
+            if (doc == null)
+            {
+                return;
+            }
+
+            string fileName = doc.FullName;
+            if (!IsTrueEventFile(fileName))
+            {
+                return;
+            }
+
             // only allow single line or bulk paste. visual sudio marks up the document
             // when opening the file so we need to prevent these change events from coming through
             bool isSameLinePaste = start.Line == end.Line && start.LineCharOffset < start.LineLength && end.LineCharOffset > start.LineCharOffset;
             bool isBulkPaste = start.AtStartOfLine && end.AtEndOfLine && !end.AtStartOfLine && start.Line < end.Line;
             if (isSameLinePaste || isBulkPaste)
             {
-                SoftwareCoPackage package = PackageManager.GetAsyncPackage();
-                if (package != null)
-                {
-                    await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-                }
-
-                if (doc == null)
-                {
-                    doc = (start.DTE != null && start.DTE.ActiveDocument != null) ? start.DTE.ActiveDocument : await PackageManager.GetActiveDocument();
-                }
-
-                if (doc == null)
-                {
-                    return;
-                }
-
-                string fileName = doc.FullName;
-                if (!IsTrueEventFile(fileName))
-                {
-                    return;
-                }
 
                 InitPluginDataIfNotExists();
                 _pluginData.InitFileInfoIfNotExists(fileName);
@@ -121,16 +105,6 @@ namespace SoftwareCo
 
         public async void BeforeKeyPressAsync(string Keypress, TextSelection Selection, bool InStatementCompletion, bool CancelKeypress)
         {
-            SoftwareCoPackage package = PackageManager.GetAsyncPackage();
-            if (package != null)
-            {
-                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            }
-
-            if (doc == null)
-            {
-                doc = (Selection.DTE != null && Selection.DTE.ActiveDocument != null) ? Selection.DTE.ActiveDocument : await PackageManager.GetActiveDocument();
-            }
 
             if (doc == null)
             {
@@ -165,36 +139,19 @@ namespace SoftwareCo
             UpdateFileInfoMetrics(pdfileInfo, null, null, Keypress, Selection);
         }
 
-        public async void DocEventsOnDocumentOpeningAsync(string docPath, Boolean readOnly)
+        public async void WindowVisibilityEventAsync(Window Window)
         {
-            SoftwareCoPackage package = PackageManager.GetAsyncPackage();
-            if (package != null)
+            if (Window != null && Window.Document != null)
             {
-                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
+                string fileName = Window.Document.FullName;
+                doc = Window.Document;
+                TrackerEventManager.TrackEditorFileActionEvent("file", "open", fileName);
             }
-            // wrapper for a file path
-            FileInfo fi = new FileInfo(docPath);
-            string fileName = fi.FullName;
-            if (!IsTrueEventFile(fileName))
-            {
-                return;
-            }
-            InitPluginDataIfNotExists();
-            _pluginData.InitFileInfoIfNotExists(fileName);
-
-            PluginDataFileInfo pdfileInfo = _pluginData.GetFileInfo(fileName);
-            UpdateLineCount(pdfileInfo);
-
-            TrackerEventManager.TrackEditorFileActionEvent("file", "open", fileName);
+            Logger.Info("window showing: " + Window);
         }
 
         public async void DocEventsOnDocumentClosedAsync(Document document)
         {
-            SoftwareCoPackage package = PackageManager.GetAsyncPackage();
-            if (package != null)
-            {
-                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            }
             if (document == null || document.FullName == null)
             {
                 return;
@@ -204,8 +161,6 @@ namespace SoftwareCo
             {
                 return;
             }
-            InitPluginDataIfNotExists();
-            _pluginData.InitFileInfoIfNotExists(fileName);
 
             TrackerEventManager.TrackEditorFileActionEvent("file", "close", fileName);
         }
@@ -401,7 +356,6 @@ namespace SoftwareCo
 
             if (_pluginData != null && _pluginData.source.Count > 0 && _pluginData.keystrokes > 0)
             {
-
                 // create the aggregates, end the file times, gather the cumulatives
                 string softwareDataContent = await _pluginData.CompletePayloadAndReturnJsonString();
 
@@ -414,8 +368,6 @@ namespace SoftwareCo
                 // update the latestPayloadTimestampEndUtc
                 FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
 
-                // update the status bar and tree
-                WallclockManager.Instance.DispatchUpdateAsync();
                 _pluginData = null;
             }
         }

@@ -31,6 +31,7 @@ namespace SoftwareCo
 
         private void DisposeTask(ScheduledTask task)
         {
+            Logger.Info("------ Scheduler disposing task: " + task);
             task.TaskComplete -= RemoveTask;
             ScheduledTask deleted;
             _scheduledTasks.TryRemove(task.Action, out deleted);

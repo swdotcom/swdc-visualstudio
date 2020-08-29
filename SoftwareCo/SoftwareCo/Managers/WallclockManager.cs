@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -32,13 +34,12 @@ namespace SoftwareCo
             timer = new Timer(
                       WallclcockTimerHandlerAsync,
                       null,
-                      1000,
+                      5000,
                       THIRTY_SECONDS_IN_MILLIS);
         }
 
         public void Dispose()
         {
-
             if (timer != null)
             {
                 timer.Dispose();
@@ -48,7 +49,7 @@ namespace SoftwareCo
 
         private void WallclcockTimerHandlerAsync(object stateinfo)
         {
-            if (IsVisualStudioAppInForeground() || DocEventManager.Instance.hasData())
+            if (ApplicationIsActivated() || DocEventManager.Instance.hasData())
             {
                 _wctime = FileManager.getItemAsLong("wctime");
                 _wctime += SECONDS_TO_INCREMENT;
@@ -59,14 +60,29 @@ namespace SoftwareCo
 
                 GetNewDayCheckerAsync();
             }
-            DispatchUpdateAsync();
+            DispatchUpdatesProcessorAsync();
         }
 
-        public bool IsVisualStudioAppInForeground()
+        private static bool ApplicationIsActivated()
         {
-            TimeGapData tgd = SessionSummaryManager.Instance.GetTimeBetweenLastPayload();
-            return (tgd.elapsed_seconds < EDITOR_ACTIVE_THRESHOLD) ? true : false;
+            var activatedHandle = GetForegroundWindow();
+            if (activatedHandle == IntPtr.Zero)
+            {
+                return false; // No window is currently activated
+            }
+
+            var procId = Process.GetCurrentProcess().Id;
+            int activeProcId;
+            GetWindowThreadProcessId(activatedHandle, out activeProcId);
+
+            return activeProcId == procId;
         }
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
+        private static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
 
         public long GetWcTimeInMinutes()
         {
@@ -78,11 +94,6 @@ namespace SoftwareCo
         {
             this._wctime = 0L;
             FileManager.setNumericItem("wctime", this._wctime);
-        }
-
-        public async Task DispatchUpdateAsync()
-        {
-            Task.Delay(2000).ContinueWith((task) => { DispatchUpdatesProcessorAsync(); });
         }
 
         private async Task DispatchUpdatesProcessorAsync()
