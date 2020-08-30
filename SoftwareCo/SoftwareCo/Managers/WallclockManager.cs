@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
@@ -16,9 +17,6 @@ namespace SoftwareCo
         private static int SECONDS_TO_INCREMENT = 60;
         private static int THIRTY_SECONDS_IN_MILLIS = 1000 * SECONDS_TO_INCREMENT;
         private static int ONE_MINUTE = THIRTY_SECONDS_IN_MILLIS * 2;
-
-        // 1 hour threshold
-        private static long EDITOR_ACTIVE_THRESHOLD = 60 * 15;
 
         private long _wctime = 0;
         private string _currentDay = "";
@@ -131,7 +129,7 @@ namespace SoftwareCo
                 FileManager.setNumericItem("latestPayloadTimestampEndUtc", 0);
 
                 // update the session summary global and averages for the new day
-                Task.Delay(ONE_MINUTE).ContinueWith((task) => { WallclockManager.Instance.UpdateSessionSummaryFromServerAsync(); });
+                WallclockManager.Instance.UpdateSessionSummaryFromServerAsync();
 
             }
         }
@@ -147,7 +145,7 @@ namespace SoftwareCo
                 {
                     SessionSummary summary = SessionSummaryManager.Instance.GetSessionSummayData();
                     string responseBody = await response.Content.ReadAsStringAsync();
-                    IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody, new Dictionary<string, object>());
+                    IDictionary<string, object> jsonObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(responseBody);
                     if (jsonObj != null)
                     {
                         try

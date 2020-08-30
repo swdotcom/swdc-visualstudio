@@ -137,7 +137,7 @@ namespace SoftwareCo
 
         private static AuthEntity GetAuthEntity()
         {
-            string jwt = FileManager.getItem("jwt").ToString();
+            string jwt = FileManager.getItemAsString("jwt");
             AuthEntity authEntity = new AuthEntity();
             authEntity.jwt = !string.IsNullOrEmpty(jwt) ? jwt.Substring("JWT ".Length) : jwt;
             return authEntity;

@@ -1,4 +1,5 @@
 ﻿
+
 using EnvDTE;
 using System;
 using System.IO;
@@ -30,7 +31,7 @@ namespace SoftwareCo
 
         private bool IsTrueEventFile(string fileName)
         {
-            return (fileName == null || fileName.IndexOf("CodeTime.txt") != -1) ? false : true;
+            return (string.IsNullOrEmpty(fileName) || fileName.IndexOf("CodeTime.txt") != -1) ? false : true;
         }
 
         private async void InitPluginDataIfNotExists()

@@ -80,16 +80,8 @@ namespace SoftwareCo
 
                 string averageTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.averageDailyMinutes);
 
-                //if (_sessionSummary.liveshareMinutes != 0)
-                //{
-                //    liveshareTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.liveshareMinutes);
-                //}
-
                 dashboardContent += SoftwareCoUtil.getDashboardRow("90-day avg", averageTime);
-                //if (liveshareTime != "0")
-                //{
-                //    dashboardContent += SoftwareCoUtil.getDashboardRow("Live Share", liveshareTime);
-                //}
+
                 dashboardContent += "\n";
             }
 
