@@ -254,7 +254,6 @@ namespace SoftwareCo
                         WallclockManager.Instance.UpdateSessionSummaryFromServerAsync();
 
                         SoftwareCoPackage.SendOfflinePluginBatchData();
-
                     }
                 }
             }

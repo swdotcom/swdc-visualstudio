@@ -17,6 +17,7 @@ namespace SoftwareCo
         private Document doc = null;
         private Scheduler scheduler = null;
         private long lastKeystrokeTime = 0;
+        private string currentSolutionDirectory = "";
         private static int ACTIVITY_LAG_THRESHOLD_SEC = 12;
         public static DocEventManager Instance { get { return lazy.Value; } }
 
@@ -34,20 +35,27 @@ namespace SoftwareCo
             return (string.IsNullOrEmpty(fileName) || fileName.IndexOf("CodeTime.txt") != -1) ? false : true;
         }
 
-        private async void InitPluginDataIfNotExists()
+        private void InitPluginDataIfNotExists(string fileName)
         {
-            if (_pluginData == null)
+            if (_pluginData == null && doc != null && !string.IsNullOrEmpty(fileName))
             {
-                string _solutionDirectory = await PackageManager.GetSolutionDirectory();
-                if (_solutionDirectory != null && !_solutionDirectory.Equals(""))
+                long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                if (!string.IsNullOrEmpty(currentSolutionDirectory))
                 {
-                    FileInfo fi = new FileInfo(_solutionDirectory);
-                    _pluginData = new PluginData(fi.Name, _solutionDirectory);
+                    FileInfo fi = new FileInfo(currentSolutionDirectory);
+                    _pluginData = new PluginData(fi.Name, currentSolutionDirectory);
                 }
                 else
                 {
                     // set it to unnamed
                     _pluginData = new PluginData("Unnamed", "Untitled");
+                }
+
+                _pluginData.InitFileInfoIfNotExists(fileName);
+                long elapsedTimeInMillis = DateTimeOffset.Now.ToUnixTimeMilliseconds() - now;
+                if (elapsedTimeInMillis > 5)
+                {
+                    Logger.Info("Initialized plugin data file, elapsed: " + elapsedTimeInMillis + " ms");
                 }
             }
         }
@@ -88,8 +96,7 @@ namespace SoftwareCo
             if (isSameLinePaste || isBulkPaste)
             {
 
-                InitPluginDataIfNotExists();
-                _pluginData.InitFileInfoIfNotExists(fileName);
+                InitPluginDataIfNotExists(fileName);
 
                 PluginDataFileInfo pdfileInfo = _pluginData.GetFileInfo(fileName);
 
@@ -122,8 +129,7 @@ namespace SoftwareCo
                 await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             }
 
-            InitPluginDataIfNotExists();
-            _pluginData.InitFileInfoIfNotExists(fileName);
+            InitPluginDataIfNotExists(fileName);
 
             PluginDataFileInfo pdfileInfo = _pluginData.GetFileInfo(fileName);
             if (pdfileInfo == null)
@@ -150,6 +156,7 @@ namespace SoftwareCo
             {
                 string fileName = Window.Document.FullName;
                 doc = Window.Document;
+                currentSolutionDirectory = await PackageManager.GetSolutionDirectory();
                 TrackerEventManager.TrackEditorFileActionEvent("file", "open", fileName);
             }
         }
@@ -171,6 +178,7 @@ namespace SoftwareCo
 
         private void UpdateFileInfoMetrics(PluginDataFileInfo fileInfo, TextPoint start, TextPoint end, string Keypress, TextSelection textSelection)
         {
+            long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             bool hasAutoIndent = false;
             bool newLineAutoIndent = false;
 
@@ -213,6 +221,10 @@ namespace SoftwareCo
                 {
                     // it's a single carriage return
                     linesAdded = 1;
+                    if (textSelection.CurrentColumn > 1)
+                    {
+                        hasAutoIndent = true;
+                    }
                 }
                 else if (Keypress == "\t")
                 {
@@ -241,6 +253,11 @@ namespace SoftwareCo
             {
                 // it's an auto indent action
                 fileInfo.auto_indents += 1;
+                if (linesAdded > 0)
+                {
+                    fileInfo.linesAdded += 1;
+                    fileInfo.single_adds += 1;
+                }
             }
             else if (linesAdded == 1)
             {
@@ -328,6 +345,12 @@ namespace SoftwareCo
             {
                 scheduler = new Scheduler();
                 scheduler.Execute(() => CheckToProcessPayload(), ACTIVITY_LAG_THRESHOLD_SEC * 1000);
+            }
+
+            long elapsedTimeInMillis = DateTimeOffset.Now.ToUnixTimeMilliseconds() - now;
+            if (elapsedTimeInMillis > 5)
+            {
+                Logger.Info("Updated file info metrics, elapsed: " + elapsedTimeInMillis + " ms");
             }
         }
 

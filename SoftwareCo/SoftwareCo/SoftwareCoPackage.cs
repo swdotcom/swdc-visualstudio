@@ -292,8 +292,8 @@ namespace SoftwareCo
             try
             {
                 bool softwareSessionFileExists = FileManager.softwareSessionFileExists();
-                object jwt = FileManager.getItem("jwt");
-                if (string.IsNullOrEmpty("jwt"))
+                string jwt = FileManager.getItemAsString("jwt");
+                if (string.IsNullOrEmpty(jwt))
                 {
                     string result = await SoftwareUserManager.CreateAnonymousUserAsync();
                 }
