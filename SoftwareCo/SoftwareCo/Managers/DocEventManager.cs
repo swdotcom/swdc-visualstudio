@@ -1,10 +1,7 @@
-﻿
-
-using EnvDTE;
+﻿using EnvDTE;
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading;
 
 namespace SoftwareCo
 {
@@ -59,7 +56,7 @@ namespace SoftwareCo
                 long elapsedTimeInMillis = DateTimeOffset.Now.ToUnixTimeMilliseconds() - now;
                 if (elapsedTimeInMillis > 5)
                 {
-                    Logger.Info("Initialized plugin data file, elapsed: " + elapsedTimeInMillis + " ms");
+                    Logger.Info("Initialized - elapsed: " + elapsedTimeInMillis + " ms");
                 }
             }
         }
@@ -378,7 +375,7 @@ namespace SoftwareCo
             long elapsedTimeInMillis = DateTimeOffset.Now.ToUnixTimeMilliseconds() - now;
             if (elapsedTimeInMillis > 10)
             {
-                Logger.Info("Updated file info metrics, elapsed: " + elapsedTimeInMillis + " ms");
+                Logger.Info("Tracking elapsed: " + elapsedTimeInMillis + " ms");
             }
         }
 

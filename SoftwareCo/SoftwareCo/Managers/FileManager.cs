@@ -70,7 +70,7 @@ namespace SoftwareCo
             {
                 return File.ReadAllText(getSoftwareDataDir(true) + "\\sessionSummary.json", System.Text.Encoding.UTF8);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return new JsonObject().ToString();
             }
@@ -92,7 +92,7 @@ namespace SoftwareCo
             {
                 return File.ReadAllText(getSoftwareDataDir(true) + "\\fileChangeSummary.json", System.Text.Encoding.UTF8);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return new JsonObject().ToString();
             }
@@ -134,7 +134,7 @@ namespace SoftwareCo
             {
                 return File.ReadAllText(getSoftwareDataDir(true) + "\\events.json", System.Text.Encoding.UTF8);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return new JsonArray().ToString();
             }
@@ -209,7 +209,7 @@ namespace SoftwareCo
                 {
                     return val.ToString();
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     return null;
                 }

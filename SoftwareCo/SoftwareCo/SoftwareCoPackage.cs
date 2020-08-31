@@ -234,7 +234,6 @@ namespace SoftwareCo
             List<string> batchList = new List<string>();
             if (offlinePluginData != null && offlinePluginData.Count > 0)
             {
-
                 for (int i = 0; i < offlinePluginData.Count; i++)
                 {
                     string line = offlinePluginData[i];
@@ -270,7 +269,6 @@ namespace SoftwareCo
                     File.Delete(FileManager.getSoftwareDataStoreFile());
                 }
             }
-
         }
 
         private static async Task<bool> SendBatchData(List<string> batchList)
