@@ -103,11 +103,11 @@ namespace SoftwareCo
                 if (string.IsNullOrEmpty(solutionDir))
                 {
                     // no solution, try again later
-                    new Scheduler().Execute(() => CheckSolutionActivation(), 10000);
+                    new Scheduler().Execute(() => CheckSolutionActivation(), 5000);
                 } else
                 {
                     // solution is activated, initialize
-                    new Scheduler().Execute(() => InitializePlugin(), 5000);
+                    new Scheduler().Execute(() => InitializePlugin(), 1000);
                 }
             }
         }
@@ -149,9 +149,9 @@ namespace SoftwareCo
                 string PluginVersion = EnvUtil.GetVersion();
                 Logger.Info(string.Format("Initialized Code Time v{0}", PluginVersion));
 
-                new Scheduler().Execute(() => SendOfflinePluginBatchData(), 10000);
+                new Scheduler().Execute(() => SendOfflinePluginBatchData(), 15000);
 
-                new Scheduler().Execute(() => InitializeReadme(), 1000);
+                new Scheduler().Execute(() => InitializeReadme(), 5000);
 
                 INITIALIZED = true;
             }

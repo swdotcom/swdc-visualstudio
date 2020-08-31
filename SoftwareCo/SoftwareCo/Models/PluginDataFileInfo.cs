@@ -89,6 +89,7 @@ namespace SoftwareCo
             fileInfo.lines = SoftwareCoUtil.ConvertObjectToInt(dict, "lines");
             fileInfo.charsPasted = SoftwareCoUtil.ConvertObjectToInt(dict, "charsPasted");
             fileInfo.add = SoftwareCoUtil.ConvertObjectToInt(dict, "add");
+            fileInfo.keystrokes = SoftwareCoUtil.ConvertObjectToInt(dict, "keystrokes");
             fileInfo.close = SoftwareCoUtil.ConvertObjectToInt(dict, "close");
             fileInfo.paste = SoftwareCoUtil.ConvertObjectToInt(dict, "paste");
             fileInfo.netkeys = SoftwareCoUtil.ConvertObjectToInt(dict, "netkeys");

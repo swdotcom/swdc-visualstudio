@@ -22,7 +22,6 @@
             this.open += fileInfo.open;
             this.paste += fileInfo.paste;
             this.keystrokes += fileInfo.keystrokes;
-
         }
     }
 }
