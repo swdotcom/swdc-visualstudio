@@ -10,6 +10,7 @@
         private long lastMetricsRebuild = 0;
         private long lastMenuRebuild = 0;
         private long lastGitMetricsRebuild = 0;
+        private static long TREE_REBUILD_THRESHOLD_SECONDS = 10;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CodeMetricsToolPane"/> class.
@@ -29,7 +30,7 @@
             if (this.Content != null && SoftwareCoPackage.INITIALIZED)
             {
                 long now = DateTimeOffset.Now.ToUnixTimeSeconds();
-                if (now - lastMenuRebuild > 5)
+                if (now - lastMenuRebuild > TREE_REBUILD_THRESHOLD_SECONDS)
                 {
                     ((CodeMetricsTree)this.Content).RebuildMenuButtonsAsync();
                     lastMenuRebuild = now;
@@ -42,7 +43,7 @@
             if (this.Content != null && SoftwareCoPackage.INITIALIZED)
             {
                 long now = DateTimeOffset.Now.ToUnixTimeSeconds();
-                if (now - lastMetricsRebuild > 5)
+                if (now - lastMetricsRebuild > TREE_REBUILD_THRESHOLD_SECONDS)
                 {
                     ((CodeMetricsTree)this.Content).RebuildCodeMetricsAsync();
                     lastMetricsRebuild = now;
@@ -53,7 +54,8 @@
         public void ToggleClickHandler()
         {
             StatusBarButton.showingStatusbarMetrics = !StatusBarButton.showingStatusbarMetrics;
-            if (this.Content != null && SoftwareCoPackage.INITIALIZED)
+            long now = DateTimeOffset.Now.ToUnixTimeSeconds();
+            if (this.Content != null && SoftwareCoPackage.INITIALIZED && now - lastGitMetricsRebuild > TREE_REBUILD_THRESHOLD_SECONDS)
             {
                 ((CodeMetricsTree)this.Content).RebuildCodeMetricsAsync();
             }
@@ -65,7 +67,7 @@
             if (this.Content != null && SoftwareCoPackage.INITIALIZED)
             {
                 long now = DateTimeOffset.Now.ToUnixTimeSeconds();
-                if (now - lastGitMetricsRebuild > 5)
+                if (now - lastGitMetricsRebuild > TREE_REBUILD_THRESHOLD_SECONDS)
                 {
                     ((CodeMetricsTree)this.Content).RebuildGitMetricsAsync();
                     ((CodeMetricsTree)this.Content).RebuildContributorMetricsAsync();

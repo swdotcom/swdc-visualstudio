@@ -129,12 +129,12 @@ namespace SoftwareCo
                 FileManager.setNumericItem("latestPayloadTimestampEndUtc", 0);
 
                 // update the session summary global and averages for the new day
-                WallclockManager.Instance.UpdateSessionSummaryFromServerAsync();
+                WallclockManager.Instance.UpdateSessionSummaryFromServerAsync(true);
 
             }
         }
 
-        public async Task UpdateSessionSummaryFromServerAsync()
+        public async Task UpdateSessionSummaryFromServerAsync(bool useCurrentDayMetrics)
         {
             object jwt = FileManager.getItem("jwt");
             if (jwt != null)
@@ -150,7 +150,7 @@ namespace SoftwareCo
                     {
                         try
                         {
-                            SessionSummary incomingSummary = summary.GetSessionSummaryFromDictionary(jsonObj);
+                            SessionSummary incomingSummary = summary.GetSessionSummaryFromDictionary(jsonObj, useCurrentDayMetrics);
                             summary.CloneSessionSummary(incomingSummary);
                             SessionSummaryManager.Instance.SaveSessionSummaryToDisk(summary);
 

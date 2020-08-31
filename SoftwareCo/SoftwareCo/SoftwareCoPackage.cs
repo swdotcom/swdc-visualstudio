@@ -314,9 +314,6 @@ namespace SoftwareCo
                     FileManager.setNumericItem("sessionThresholdInSec", Constants.DEFAULT_SESSION_THRESHOLD_SECONDS);
                 }
 
-                // fetch the session summary
-                WallclockManager.Instance.UpdateSessionSummaryFromServerAsync();
-
             }
             catch (Exception ex)
             {

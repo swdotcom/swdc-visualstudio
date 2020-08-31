@@ -80,7 +80,7 @@ namespace SoftwareCo
             {
                 IDictionary<string, object> jsonObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(sessionSummary);
 
-                _sessionSummary = _sessionSummary.GetSessionSummaryFromDictionary(jsonObj);
+                _sessionSummary = _sessionSummary.GetSessionSummaryFromDictionary(jsonObj, true);
             }
             catch (Exception) { }
             return _sessionSummary;
