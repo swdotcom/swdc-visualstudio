@@ -74,18 +74,9 @@ namespace SoftwareCo
                 // init the package manager that will use the AsyncPackage to run main thread requests
                 PackageManager.initialize(this, ObjDte);
 
-                // init the doc event mgr and inject ObjDte
-                docEventMgr = DocEventManager.Instance;
-
-                // setup event handlers
-                _textDocKeyEvents.BeforeKeyPress += new _dispTextDocumentKeyPressEvents_BeforeKeyPressEventHandler(BeforeKeyPress);
-                _docEvents.DocumentClosing += docEventMgr.DocEventsOnDocumentClosedAsync;
-                _windowVisibilityEvents.WindowShowing += docEventMgr.WindowVisibilityEventAsync;
-                _textEditorEvents.LineChanged += docEventMgr.LineChangedAsync;
-
                 // initialize the rest of the plugin lazily as it takes time to
                 // select a new or existing project to open
-                new Scheduler().Execute(() => CheckSolutionActivation(), 10000);
+                new Scheduler().Execute(() => CheckSolutionActivation(), 12000);
             }
             catch (Exception ex)
             {
@@ -107,9 +98,24 @@ namespace SoftwareCo
                 } else
                 {
                     // solution is activated, initialize
-                    new Scheduler().Execute(() => InitializePlugin(), 1000);
+                    new Scheduler().Execute(() => InitializeListeners(), 1000);
                 }
             }
+        }
+
+        private async void InitializeListeners()
+        {
+            // init the doc event mgr and inject ObjDte
+            docEventMgr = DocEventManager.Instance;
+
+            // setup event handlers
+            _textDocKeyEvents.BeforeKeyPress += new _dispTextDocumentKeyPressEvents_BeforeKeyPressEventHandler(BeforeKeyPress);
+            _docEvents.DocumentClosing += docEventMgr.DocEventsOnDocumentClosedAsync;
+            _windowVisibilityEvents.WindowShowing += docEventMgr.WindowVisibilityEventAsync;
+            _textEditorEvents.LineChanged += docEventMgr.LineChangedAsync;
+
+            // solution is activated, initialize
+            new Scheduler().Execute(() => InitializePlugin(), 1000);
         }
 
         private async void InitializePlugin() {
@@ -125,20 +131,29 @@ namespace SoftwareCo
                 NowTime nowTime = SoftwareCoUtil.GetNowTime();
                 FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
 
+                await PackageManager.InitializeStatusBar();
+
                 // init the wallclock
                 WallclockManager wallclockMgr = WallclockManager.Instance;
 
                 // initialize the menu commands
                 SoftwareLaunchCommand.InitializeAsync(this);
                 SoftwareDashboardLaunchCommand.InitializeAsync(this);
-                SoftwareTopFortyCommand.InitializeAsync(this);
                 SoftwareLoginCommand.InitializeAsync(this);
                 SoftwareToggleStatusInfoCommand.InitializeAsync(this);
                 SoftwareOpenCodeMetricsTreeCommand.InitializeAsync(this);
 
-                // Create an AutoResetEvent to signal the timeout threshold in the
-                // timer callback has been reached.
-                var autoEvent = new AutoResetEvent(false);
+                // check if the "name" is set. if not, get the user
+                string name = FileManager.getItemAsString("name");
+                if (string.IsNullOrEmpty(name))
+                {
+                    // enable the login command
+                    SoftwareLoginCommand.UpdateEnabledState(true);
+                } else
+                {
+                    // enable web dashboard command
+                    SoftwareLaunchCommand.UpdateEnabledState(true);
+                }
 
                 offlineDataTimer = new Timer(
                       SendOfflineData,
@@ -146,14 +161,14 @@ namespace SoftwareCo
                       ONE_MINUTE / 2,
                       ONE_MINUTE * 5);
 
-                string PluginVersion = EnvUtil.GetVersion();
-                Logger.Info(string.Format("Initialized Code Time v{0}", PluginVersion));
-
                 new Scheduler().Execute(() => SendOfflinePluginBatchData(), 15000);
 
                 new Scheduler().Execute(() => InitializeReadme(), 5000);
 
                 INITIALIZED = true;
+
+                string PluginVersion = EnvUtil.GetVersion();
+                Logger.Info(string.Format("Initialized Code Time v{0}", PluginVersion));
             }
         }
 
@@ -294,15 +309,6 @@ namespace SoftwareCo
                 if (string.IsNullOrEmpty(jwt))
                 {
                     string result = await SoftwareUserManager.CreateAnonymousUserAsync();
-                }
-
-                // check if the "name" is set. if not, get the user
-                string name = FileManager.getItemAsString("name");
-                if (string.IsNullOrEmpty(name))
-                {
-                    await SoftwareUserManager.IsLoggedOn();
-                    SoftwareLoginCommand.UpdateEnabledState(true);
-                    SoftwareLaunchCommand.UpdateEnabledState(true);
                 }
 
                 long sessionTresholdSeconds = FileManager.getItemAsLong("sessionThresholdInSec");

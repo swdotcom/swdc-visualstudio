@@ -23,10 +23,6 @@ namespace SoftwareCo
         {
             package = mainPackage;
             ObjDte = dte;
-            _statusBarButton = new StatusBarButton();
-
-            // initialize the status bar before we fetch the summary data
-            InitializeStatusBar();
         }
 
         public static SoftwareCoPackage GetAsyncPackage()
@@ -59,11 +55,10 @@ namespace SoftwareCo
 
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
-            if ((null == _codeMetricsWindow) || (null == _codeMetricsWindow.Frame))
+            if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
             {
-                throw new NotSupportedException("Cannot create tool window");
+                _codeMetricsWindow.RebuildCodeMetrics();
             }
-            _codeMetricsWindow.RebuildCodeMetrics();
         }
 
         public static async Task RebuildGitMetricsAsync()
@@ -75,11 +70,10 @@ namespace SoftwareCo
 
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
-            if ((null == _codeMetricsWindow) || (null == _codeMetricsWindow.Frame))
+            if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
             {
-                throw new NotSupportedException("Cannot create tool window");
+                _codeMetricsWindow.RebuildGitMetricsAsync();
             }
-            _codeMetricsWindow.RebuildGitMetricsAsync();
         }
 
         public static async Task OpenCodeMetricsPaneAsync()
@@ -110,32 +104,35 @@ namespace SoftwareCo
 
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-            await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
-            if ((null == _codeMetricsWindow) || (null == _codeMetricsWindow.Frame))
+            if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
             {
-                throw new NotSupportedException("Cannot create tool window");
+                _codeMetricsWindow.ToggleClickHandler();
             }
-            _codeMetricsWindow.ToggleClickHandler();
         }
 
         public static async Task UpdateStatusBarButtonText(string text, string iconName = null)
         {
-            if (package == null || !SoftwareCoPackage.INITIALIZED)
+            if (package == null || !SoftwareCoPackage.INITIALIZED || _statusBarButton == null)
             {
                 return;
             }
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            await InitializeStatusBar();
 
             _statusBarButton.UpdateDisplayAsync(text, iconName);
         }
 
         public static async Task InitializeStatusBar()
         {
+
             if (package == null || _addedStatusBarButton || !SoftwareCoPackage.INITIALIZED)
             {
                 return;
+            }
+
+            if (_statusBarButton == null)
+            {
+                _statusBarButton = new StatusBarButton();
             }
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             DockPanel statusBarObj = FindChildControl<DockPanel>(System.Windows.Application.Current.MainWindow, "StatusBarPanel");

@@ -65,12 +65,6 @@
           <ButtonText>Web dashboard</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareTopFortyCommand" priority="0x0200" type="Button">
-        <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
-        <Strings>
-          <ButtonText>Software top 40</ButtonText>
-        </Strings>
-      </Button>
       <Button guid="guidSoftwareCoPackageCmdSet" id="cmdidSoftwareLoginCommand" priority="0x0300" type="Button">
         <Parent guid="guidSoftwareCoPackageCmdSet" id="SoftwareToolsGroup" />
         <Strings>
@@ -101,7 +95,6 @@
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
      <Bitmap guid="guidImages1" href="Resources\SoftwareLaunchCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
       <Bitmap guid="guidImages4" href="Resources\SoftwareDashboardLaunchCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
-      <Bitmap guid="guidImages6" href="Resources\SoftwareTopFortyCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
     </Bitmaps>
   </Commands>
 
@@ -114,7 +107,6 @@
       <IDSymbol name="SoftwareToolsGroup" value="0x1020" />
       <IDSymbol name="cmdidSoftwareLaunchCommand" value="4129" />
       <IDSymbol name="cmdidSoftwareDashboardLaunchCommand" value="4131" />
-      <IDSymbol name="cmdidSoftwareTopFortyCommand" value="4132" />
       <IDSymbol name="cmdidSoftwareLoginCommand" value="4133" />
       <IDSymbol name="cmdidSoftwareToggleStatusInfoCommand" value="4134" />
       <IDSymbol name="cmdidSoftwareOpenCodetimeTreeCommand" value="4135" />

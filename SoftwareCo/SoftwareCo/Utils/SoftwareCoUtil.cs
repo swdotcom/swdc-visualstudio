@@ -257,11 +257,6 @@ namespace SoftwareCo
 
             return result = content + dash + "\n";
         }
-        public static void launchSoftwareTopForty()
-        {
-            string url = "https://api.software.com/music/top40";
-            Process.Start(url);
-        }
 
         public static void launchWebDashboard()
         {

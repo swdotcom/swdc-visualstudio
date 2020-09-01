@@ -27,7 +27,7 @@
 
         public void RebuildMenuButtons()
         {
-            if (this.Content != null && SoftwareCoPackage.INITIALIZED)
+            if (this.Content != null)
             {
                 long now = DateTimeOffset.Now.ToUnixTimeSeconds();
                 if (now - lastMenuRebuild > TREE_REBUILD_THRESHOLD_SECONDS)
@@ -70,7 +70,7 @@
                 if (now - lastGitMetricsRebuild > TREE_REBUILD_THRESHOLD_SECONDS)
                 {
                     ((CodeMetricsTree)this.Content).RebuildGitMetricsAsync();
-                    ((CodeMetricsTree)this.Content).RebuildContributorMetricsAsync();
+                    // ((CodeMetricsTree)this.Content).RebuildContributorMetricsAsync();
                     lastGitMetricsRebuild = now;
                 }
             }
