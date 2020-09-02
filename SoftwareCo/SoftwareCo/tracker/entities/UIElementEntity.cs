@@ -13,7 +13,7 @@ namespace SoftwareCo
         public GenericContext buildContext()
         {
             GenericContext context = new GenericContext()
-                .SetSchema("iglu:com.software/codetime/jsonschema/1-0-3")
+                .SetSchema("iglu:com.software/ui_element/jsonschema/1-0-3")
                 .Add("element_name", element_name)
                 .Add("element_location", element_location)
                 .Add("color", color)

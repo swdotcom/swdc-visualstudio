@@ -125,7 +125,7 @@ namespace SoftwareCo
         public static async Task InitializeStatusBar()
         {
 
-            if (package == null || _addedStatusBarButton || !SoftwareCoPackage.INITIALIZED)
+            if (package == null || _addedStatusBarButton)
             {
                 return;
             }
