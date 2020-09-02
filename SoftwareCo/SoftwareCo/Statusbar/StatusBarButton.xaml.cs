@@ -12,6 +12,11 @@ namespace SoftwareCo
     {
 
         public static Boolean showingStatusbarMetrics = true;
+
+        private Image ClockImage = null;
+        private Image PawImage = null;
+        private Image RocketImage = null;
+
         public StatusBarButton()
         {
             InitializeComponent();
@@ -20,15 +25,34 @@ namespace SoftwareCo
 
         public async Task UpdateDisplayAsync(string label, string iconName)
         {
+            Image statusImg = null;
+            if (PawImage == null)
+            {
+                PawImage = SoftwareCoUtil.CreateImage("cpaw.png");
+            }
+
+            // 3 types of images: clock, rocket, and paw
             if (!showingStatusbarMetrics)
             {
                 label = "";
                 iconName = "clock.png";
+                if (ClockImage == null)
+                {
+                    ClockImage = SoftwareCoUtil.CreateImage(iconName);
+                }
+                statusImg = ClockImage;
             }
-
-            if (string.IsNullOrEmpty(iconName))
+            else if (iconName == "rocket.png")
             {
-                iconName = "cpaw.png";
+                if (RocketImage == null)
+                {
+                    RocketImage = SoftwareCoUtil.CreateImage(iconName);
+                }
+                statusImg = RocketImage;
+            }
+            else
+            {
+                statusImg = PawImage;
             }
 
             await Dispatcher.BeginInvoke(new Action(() =>
@@ -42,8 +66,7 @@ namespace SoftwareCo
                 TimeLabel.Content = label;
                 TimeLabel.ToolTip = "Code time today";
 
-                Image img = SoftwareCoUtil.CreateImage(iconName);
-                TimeIcon.Source = img.Source;
+                TimeIcon.Source = statusImg.Source;
                 TimeIcon.ToolTip = tooltip;
             }));
         }

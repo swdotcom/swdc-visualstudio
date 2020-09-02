@@ -4,7 +4,6 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
@@ -19,7 +18,6 @@ namespace SoftwareCo
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
     [Guid(PackageGuidString)]
     [ProvideAutoLoad(UIContextGuids.NoSolution, PackageAutoLoadFlags.BackgroundLoad)]
-    [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideToolWindow(typeof(CodeMetricsToolPane),
         Window = ToolWindowGuids.SolutionExplorer,
@@ -46,6 +44,9 @@ namespace SoftwareCo
         private static int ONE_MINUTE = 1000 * 60;
         public static bool INITIALIZED = false;
 
+        private int solutionTryThreshold = 10;
+        private int solutionTryCount = 0;
+
         public SoftwareCoPackage() { }
 
         /// <summary>
@@ -59,24 +60,15 @@ namespace SoftwareCo
                 await JoinableTaskFactory.SwitchToMainThreadAsync();
                 base.Initialize();
 
+                // obtain the DTE service to track doc changes
                 ObjDte = await GetServiceAsync(typeof(DTE)) as DTE;
                 events = (Events2)ObjDte.Events;
-
-                // Intialize the document event handlers
-                _textEditorEvents = events.TextEditorEvents;
-                _textDocKeyEvents = events.TextDocumentKeyPressEvents;
-                _docEvents = events.DocumentEvents;
-                _windowVisibilityEvents = events.WindowVisibilityEvents;
-
-                string PluginVersion = EnvUtil.GetVersion();
-                Logger.Info(string.Format("Initializing Code Time v{0}", PluginVersion));
 
                 // init the package manager that will use the AsyncPackage to run main thread requests
                 PackageManager.initialize(this, ObjDte);
 
-                // initialize the rest of the plugin lazily as it takes time to
-                // select a new or existing project to open
-                new Scheduler().Execute(() => CheckSolutionActivation(), 12000);
+                // initialize the rest of the plugin in 10 seconds (allow the user to select a solution to open)
+                new Scheduler().Execute(() => CheckSolutionActivation(), 10000);
             }
             catch (Exception ex)
             {
@@ -91,13 +83,15 @@ namespace SoftwareCo
             {
                 // don't initialize the rest of the plugin until a project is loaded
                 string solutionDir = await PackageManager.GetSolutionDirectory();
-                if (string.IsNullOrEmpty(solutionDir))
+                if (string.IsNullOrEmpty(solutionDir) || solutionTryCount > solutionTryThreshold)
                 {
+                    solutionTryCount++;
                     // no solution, try again later
                     new Scheduler().Execute(() => CheckSolutionActivation(), 5000);
-                } else
+                }
+                else
                 {
-                    // solution is activated, initialize
+                    // solution is activated or it's empty, initialize
                     new Scheduler().Execute(() => InitializeListeners(), 1000);
                 }
             }
@@ -105,6 +99,13 @@ namespace SoftwareCo
 
         private async void InitializeListeners()
         {
+
+            // Intialize the document event handlers
+            _textEditorEvents = events.TextEditorEvents;
+            _textDocKeyEvents = events.TextDocumentKeyPressEvents;
+            _docEvents = events.DocumentEvents;
+            _windowVisibilityEvents = events.WindowVisibilityEvents;
+
             // init the doc event mgr and inject ObjDte
             docEventMgr = DocEventManager.Instance;
 
@@ -118,14 +119,12 @@ namespace SoftwareCo
             new Scheduler().Execute(() => InitializePlugin(), 1000);
         }
 
-        private async void InitializePlugin() {
+        private async void InitializePlugin()
+        {
             await this.JoinableTaskFactory.SwitchToMainThreadAsync();
             if (!INITIALIZED)
             {
                 await this.InitializeUserInfoAsync();
-
-                // initialize the tracker event manager
-                TrackerEventManager.init();
 
                 // update the latestPayloadTimestampEndUtc
                 NowTime nowTime = SoftwareCoUtil.GetNowTime();
@@ -149,12 +148,14 @@ namespace SoftwareCo
                 {
                     // enable the login command
                     SoftwareLoginCommand.UpdateEnabledState(true);
-                } else
+                }
+                else
                 {
                     // enable web dashboard command
                     SoftwareLaunchCommand.UpdateEnabledState(true);
                 }
 
+                // create a 5 minute timer to send offline data
                 offlineDataTimer = new Timer(
                       SendOfflineData,
                       null,
@@ -163,13 +164,23 @@ namespace SoftwareCo
 
                 new Scheduler().Execute(() => SendOfflinePluginBatchData(), 15000);
 
-                new Scheduler().Execute(() => InitializeReadme(), 5000);
-
                 INITIALIZED = true;
 
                 string PluginVersion = EnvUtil.GetVersion();
                 Logger.Info(string.Format("Initialized Code Time v{0}", PluginVersion));
+
+                // show the readme if it's the initial install
+                InitializeReadme();
+
+                // initialize the tracker manager
+                InitializeTracker();
             }
+        }
+
+        private async void InitializeTracker()
+        {
+            // initialize the tracker event manager
+            TrackerEventManager.init();
         }
 
         private async void InitializeReadme()

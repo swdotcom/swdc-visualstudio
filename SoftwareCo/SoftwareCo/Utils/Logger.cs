@@ -80,7 +80,7 @@ namespace SoftwareCo
                 {
                     File.AppendAllText(LogDataPath, LogContent);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
 
                 }

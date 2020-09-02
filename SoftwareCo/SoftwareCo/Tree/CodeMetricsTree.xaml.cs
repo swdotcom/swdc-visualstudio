@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,9 +15,18 @@ namespace SoftwareCo
         private TreeViewItem topKeystrokesParent;
         private TreeViewItem topCodetimeParent;
 
+        private static ImageSource WebAnalyticsImageSrc = null;
+        private static ImageSource SummaryImageSrc = null;
+        private static ImageSource LearnMoreImageSrc = null;
+        private static ImageSource FeedbackImageSrc = null;
+
         public CodeMetricsTree()
         {
             InitializeComponent();
+
+            // hide the separators until the panel has rendered
+            Seperator1.Visibility = Visibility.Hidden;
+            Seperator2.Visibility = Visibility.Hidden;
 
             // update the menu buttons
             RebuildMenuButtonsAsync();
@@ -31,6 +38,7 @@ namespace SoftwareCo
             RebuildGitMetricsAsync();
 
             // update the contributor metric nodes
+
             // RebuildContributorMetricsAsync();
         }
 
@@ -50,18 +58,28 @@ namespace SoftwareCo
             if (!string.IsNullOrEmpty(email))
             {
                 WebDashboardLabel.Content = "See advanced metrics";
-                WebDashboardImage.Source = SoftwareCoUtil.CreateImage("cpaw.png").Source;
+                if (WebAnalyticsImageSrc == null)
+                {
+                    WebAnalyticsImageSrc = SoftwareCoUtil.CreateImage("cpaw.png").Source;
+                }
+                WebDashboardImage.Source = WebAnalyticsImageSrc;
             }
 
             // dashboard label
             DashboardLabel.Content = "View summary";
-            DashboardImage.Source = SoftwareCoUtil.CreateImage("dashboard.png").Source;
+            if (SummaryImageSrc == null)
+            {
+                SummaryImageSrc = SoftwareCoUtil.CreateImage("dashboard.png").Source;
+            }
+            DashboardImage.Source = SummaryImageSrc;
 
             // Toggle status label
             if (!StatusBarButton.showingStatusbarMetrics)
             {
                 ToggleStatusLabel.Content = "Show status bar metrics";
-            } else {
+            }
+            else
+            {
                 ToggleStatusLabel.Content = "Hide status bar metrics";
             }
 
@@ -69,11 +87,19 @@ namespace SoftwareCo
 
             // Learn more label
             LearnMoreLabel.Content = "Learn more";
-            LearnMoreImage.Source = SoftwareCoUtil.CreateImage("readme.png").Source;
+            if (LearnMoreImageSrc == null)
+            {
+                LearnMoreImageSrc = SoftwareCoUtil.CreateImage("readme.png").Source;
+            }
+            LearnMoreImage.Source = LearnMoreImageSrc;
 
             // Feedback label
             FeedbackLabel.Content = "Submit feedback";
-            FeedbackImage.Source = SoftwareCoUtil.CreateImage("message.png").Source;
+            if (FeedbackImageSrc == null)
+            {
+                FeedbackImageSrc = SoftwareCoUtil.CreateImage("message.png").Source;
+            }
+            FeedbackImage.Source = FeedbackImageSrc;
         }
 
         private List<StackPanel> BuildSignupPanels()
@@ -158,6 +184,9 @@ namespace SoftwareCo
             {
                 return;
             }
+
+            Seperator1.Visibility = Visibility.Visible;
+
             SessionSummary summary = SessionSummaryManager.Instance.GetSessionSummayData();
             CodeTimeSummary ctSummary = TimeDataManager.Instance.GetCodeTimeSummary();
 
@@ -362,6 +391,9 @@ namespace SoftwareCo
             {
                 return;
             }
+
+            Seperator2.Visibility = Visibility.Visible;
+
             string dir = await PackageManager.GetSolutionDirectory();
 
             RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(dir, true);
@@ -449,11 +481,19 @@ namespace SoftwareCo
 
         private void ConnectClickHandler(string loginType)
         {
+            if (!SoftwareCoPackage.INITIALIZED)
+            {
+                return;
+            }
             SoftwareCoUtil.launchLogin(loginType);
         }
 
         private void LaunchWebDashboard(object sender, MouseButtonEventArgs args)
         {
+            if (!SoftwareCoPackage.INITIALIZED)
+            {
+                return;
+            }
             SoftwareCoUtil.launchWebDashboard();
             UIElementEntity entity = new UIElementEntity();
             entity.color = "blue";
@@ -466,6 +506,10 @@ namespace SoftwareCo
 
         private void DashboardClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
+            if (!SoftwareCoPackage.INITIALIZED)
+            {
+                return;
+            }
             DashboardManager.Instance.LaunchCodeTimeDashboardAsync();
             UIElementEntity entity = new UIElementEntity();
             entity.color = "white";
@@ -490,6 +534,10 @@ namespace SoftwareCo
 
         private void LearnMoreClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
+            if (!SoftwareCoPackage.INITIALIZED)
+            {
+                return;
+            }
             DashboardManager.Instance.LaunchReadmeFileAsync();
             UIElementEntity entity = new UIElementEntity();
             entity.color = "yellow";
@@ -502,6 +550,10 @@ namespace SoftwareCo
 
         private void FeedbackClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
         {
+            if (!SoftwareCoPackage.INITIALIZED)
+            {
+                return;
+            }
             SoftwareCoUtil.launchMailToCody();
             UIElementEntity entity = new UIElementEntity();
             entity.color = null;

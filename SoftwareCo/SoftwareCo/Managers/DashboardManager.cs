@@ -128,6 +128,10 @@ namespace SoftwareCo
 
         public async void LaunchReadmeFileAsync()
         {
+            if (!SoftwareCoPackage.INITIALIZED)
+            {
+                return;
+            }
             try
             {
                 string vsReadmeFile = FileManager.getVSReadmeFile();
