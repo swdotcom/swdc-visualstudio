@@ -28,7 +28,7 @@ namespace SoftwareCo
         private static bool loggedIn = false;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SoftwareTopFortyCommand"/> class.
+        /// Initializes a new instance of the <see cref="SoftwareLoginCommand"/> class.
         /// Adds our command handlers for menu (commands must exist in the command table file)
         /// </summary>
         /// <param name="package">Owner package, not null.</param>

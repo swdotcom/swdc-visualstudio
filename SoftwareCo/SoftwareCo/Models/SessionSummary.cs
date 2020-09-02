@@ -114,15 +114,18 @@ namespace SoftwareCo
             return dict;
         }
 
-        public SessionSummary GetSessionSummaryFromDictionary(IDictionary<string, object> dict)
+        public SessionSummary GetSessionSummaryFromDictionary(IDictionary<string, object> dict, bool useCurrentDayMetrics)
         {
             SessionSummary sessionSummary = new SessionSummary();
 
-            sessionSummary.currentDayMinutes = SoftwareCoUtil.ConvertObjectToLong(dict, "currentDayMinutes");
-            sessionSummary.currentDayKeystrokes = SoftwareCoUtil.ConvertObjectToLong(dict, "currentDayKeystrokes");
-            sessionSummary.currentDayKpm = SoftwareCoUtil.ConvertObjectToLong(dict, "currentDayKpm");
-            sessionSummary.currentDayLinesAdded = SoftwareCoUtil.ConvertObjectToLong(dict, "currentDayLinesAdded");
-            sessionSummary.currentDayLinesRemoved = SoftwareCoUtil.ConvertObjectToLong(dict, "currentDayLinesRemoved");
+            if (useCurrentDayMetrics)
+            {
+                sessionSummary.currentDayMinutes = SoftwareCoUtil.ConvertObjectToLong(dict, "currentDayMinutes");
+                sessionSummary.currentDayKeystrokes = SoftwareCoUtil.ConvertObjectToLong(dict, "currentDayKeystrokes");
+                sessionSummary.currentDayKpm = SoftwareCoUtil.ConvertObjectToLong(dict, "currentDayKpm");
+                sessionSummary.currentDayLinesAdded = SoftwareCoUtil.ConvertObjectToLong(dict, "currentDayLinesAdded");
+                sessionSummary.currentDayLinesRemoved = SoftwareCoUtil.ConvertObjectToLong(dict, "currentDayLinesRemoved");
+            }
             sessionSummary.averageDailyKeystrokes = SoftwareCoUtil.ConvertObjectToLong(dict, "averageDailyKeystrokes");
             sessionSummary.averageDailyKpm = SoftwareCoUtil.ConvertObjectToLong(dict, "averageDailyKpm");
             sessionSummary.averageDailyLinesAdded = SoftwareCoUtil.ConvertObjectToLong(dict, "averageDailyLinesAdded");

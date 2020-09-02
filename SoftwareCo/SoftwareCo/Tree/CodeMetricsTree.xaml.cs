@@ -20,19 +20,18 @@ namespace SoftwareCo
         public CodeMetricsTree()
         {
             InitializeComponent();
-            Init();
-        }
 
-        private async Task Init()
-        {
             // update the menu buttons
             RebuildMenuButtonsAsync();
+
             // update the metric nodes
             RebuildCodeMetricsAsync();
+
             // update the git metric nodes
             RebuildGitMetricsAsync();
+
             // update the contributor metric nodes
-            RebuildContributorMetricsAsync();
+            // RebuildContributorMetricsAsync();
         }
 
         public async Task RebuildMenuButtonsAsync()
@@ -47,8 +46,12 @@ namespace SoftwareCo
                 }
             }
 
-            WebDashboardLabel.Content = "See advanced metrics";
-            WebDashboardImage.Source = SoftwareCoUtil.CreateImage("cpaw.png").Source;
+            string email = FileManager.getItemAsString("name");
+            if (!string.IsNullOrEmpty(email))
+            {
+                WebDashboardLabel.Content = "See advanced metrics";
+                WebDashboardImage.Source = SoftwareCoUtil.CreateImage("cpaw.png").Source;
+            }
 
             // dashboard label
             DashboardLabel.Content = "View summary";
@@ -77,7 +80,7 @@ namespace SoftwareCo
         {
             List<StackPanel> panels = new List<StackPanel>();
             string email = FileManager.getItemAsString("name");
-            if (email == null || email.Equals(""))
+            if (string.IsNullOrEmpty(email))
             {
                 panels.Add(BuildClickLabel("GoogleSignupPanel", "google.png", "Sign up with Google", GoogleConnectClickHandler));
                 panels.Add(BuildClickLabel("GitHubSignupPanel", "github.png", "Sign up with GitHub", GitHubConnectClickHandler));
@@ -355,6 +358,10 @@ namespace SoftwareCo
 
         public async Task RebuildContributorMetricsAsync()
         {
+            if (!SoftwareCoPackage.INITIALIZED)
+            {
+                return;
+            }
             string dir = await PackageManager.GetSolutionDirectory();
 
             RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(dir, true);
@@ -373,19 +380,11 @@ namespace SoftwareCo
 
         public async Task RebuildGitMetricsAsync()
         {
-
+            if (!SoftwareCoPackage.INITIALIZED)
+            {
+                return;
+            }
             string dir = await PackageManager.GetSolutionDirectory();
-
-            string name = "";
-            try
-            {
-                FileInfo fi = new FileInfo(dir);
-                name = fi.Name;
-            }
-            catch (Exception e)
-            {
-                //
-            }
 
             CommitChangeStats uncommited = GitUtilManager.GetUncommitedChanges(dir);
             string uncommittedInsertions = "Insertion(s): " + uncommited.insertions;

@@ -243,7 +243,9 @@ namespace SoftwareCo
                     checkingLoginState = false;
                     if (loggedIn)
                     {
-                        SoftwareLoginCommand.UpdateEnabledState(true);
+                        // disable login command
+                        SoftwareLoginCommand.UpdateEnabledState(false);
+                        // enable web dashboard command
                         SoftwareLaunchCommand.UpdateEnabledState(true);
                         // show they've logged on
                         string msg = "Successfully logged on to Code Time.";
@@ -251,7 +253,7 @@ namespace SoftwareCo
                         MessageBox.Show(msg, caption, MessageBoxButtons.OK);
 
                         // fetch the session summary to get the user's averages
-                        WallclockManager.Instance.UpdateSessionSummaryFromServerAsync();
+                        WallclockManager.Instance.UpdateSessionSummaryFromServerAsync(false);
 
                         SoftwareCoPackage.SendOfflinePluginBatchData();
                     }
