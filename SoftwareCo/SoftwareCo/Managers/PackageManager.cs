@@ -39,6 +39,7 @@ namespace SoftwareCo
 
             try
             {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
                 _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
                 if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null) {
                     _codeMetricsWindow.RebuildMenuButtons();
@@ -56,6 +57,7 @@ namespace SoftwareCo
 
             try
             {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
                 _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
                 if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
                 {
@@ -73,6 +75,7 @@ namespace SoftwareCo
 
             try
             {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
                 _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
                 if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
                 {
@@ -91,6 +94,7 @@ namespace SoftwareCo
 
             try
             {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
                 ToolWindowPane window = package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
                 if (window != null && window.Frame != null)
                 {
@@ -110,6 +114,7 @@ namespace SoftwareCo
 
             try
             {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
                 _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
                 if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
                 {
@@ -126,10 +131,11 @@ namespace SoftwareCo
                 return;
             }
 
+            await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             if (!_addedStatusBarButton)
             {
                 // initialize it
-                InitializeStatusBar();
+                await InitializeStatusBar();
             }
 
             try
@@ -146,7 +152,7 @@ namespace SoftwareCo
         public static async Task InitializeStatusBar()
         {
 
-            if (package == null || _addedStatusBarButton)
+            if (package == null || _statusBarButton != null || _addedStatusBarButton)
             {
                 return;
             }
@@ -158,6 +164,7 @@ namespace SoftwareCo
 
             try
             {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
                 DockPanel statusBarObj = FindChildControl<DockPanel>(System.Windows.Application.Current.MainWindow, "StatusBarPanel");
                 if (statusBarObj != null)
                 {
@@ -176,6 +183,7 @@ namespace SoftwareCo
             }
             try
             {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
                 if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
                 {
                     _solutionDirectory = ObjDte.Solution.FullName;
@@ -199,6 +207,7 @@ namespace SoftwareCo
 
             try
             {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
                 if (ObjDte != null && ObjDte.ActiveWindow != null)
                 {
                     return ObjDte.ActiveWindow.Document;
@@ -217,6 +226,7 @@ namespace SoftwareCo
             }
             try
             {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
                 if (ObjDte != null && ObjDte.ActiveWindow != null && ObjDte.ActiveWindow.Document != null)
                 {
                     return ObjDte.ActiveWindow.Document.FullName;
@@ -235,6 +245,7 @@ namespace SoftwareCo
 
             try
             {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
                 if (ObjDte != null && ObjDte.ActiveWindow != null && ObjDte.ActiveWindow.Document != null)
                 {
                     return ObjDte.ActiveWindow.Document.Language;

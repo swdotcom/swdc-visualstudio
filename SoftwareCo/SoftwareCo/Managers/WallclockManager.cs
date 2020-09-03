@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace SoftwareCo
 {
@@ -32,7 +33,9 @@ namespace SoftwareCo
                       10000,
                       ONE_MINUTE_MILLIS);
 
-            DispatchUpdatesProcessorAsync();
+            Application.Current.Dispatcher.Invoke((Action)delegate {
+                PackageManager.InitializeStatusBar();
+            });
         }
 
         public static void Dispose()

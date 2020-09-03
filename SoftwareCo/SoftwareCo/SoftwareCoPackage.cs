@@ -43,7 +43,7 @@ namespace SoftwareCo
         private static int ONE_MINUTE = 1000 * 60;
         public static bool INITIALIZED = false;
 
-        private int solutionTryThreshold = 10;
+        private int solutionTryThreshold = 6;
         private int solutionTryCount = 0;
 
         public SoftwareCoPackage() { }
@@ -77,10 +77,7 @@ namespace SoftwareCo
 
         public async void CheckSolutionActivation()
         {
-
-            // init the status bar within the main thread
-            PackageManager.InitializeStatusBar();
-
+            await this.JoinableTaskFactory.SwitchToMainThreadAsync();
             if (!INITIALIZED)
             {
                 // don't initialize the rest of the plugin until a project is loaded
