@@ -77,7 +77,10 @@ namespace SoftwareCo
 
         public async void CheckSolutionActivation()
         {
-            await this.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            // init the status bar within the main thread
+            PackageManager.InitializeStatusBar();
+
             if (!INITIALIZED)
             {
                 // don't initialize the rest of the plugin until a project is loaded
@@ -160,7 +163,6 @@ namespace SoftwareCo
 
             // initialize the tracker manager
             new Scheduler().Execute(() => InitializeTracker(), 5000);
-            new Scheduler().Execute(() => SendOfflinePluginBatchData(), 15000);
 
             Logger.Info(string.Format("Initialized Code Time v{0}", EnvUtil.GetVersion()));
 
@@ -176,28 +178,25 @@ namespace SoftwareCo
 
         private async void InitializeStatusBarAndWallClock()
         {
-            await JoinableTaskFactory.SwitchToMainThreadAsync();
-
-            // init the status bar within the main thread
-            await PackageManager.InitializeStatusBar();
-
             // this needs INITIALIZED to be true at this point
             WallclockManager.Initialize();
         }
 
         private async void InitializeReadme()
         {
-            await this.JoinableTaskFactory.SwitchToMainThreadAsync();
-            // check if we've shown the readme or not
-            bool initializedVisualStudioPlugin = FileManager.getItemAsBool("visualstudio_CtInit");
-            if (!initializedVisualStudioPlugin)
+            try
             {
-                DashboardManager.Instance.LaunchReadmeFileAsync();
-                FileManager.setBoolItem("visualstudio_CtInit", true);
+                // check if we've shown the readme or not
+                bool initializedVisualStudioPlugin = FileManager.getItemAsBool("visualstudio_CtInit");
+                if (!initializedVisualStudioPlugin)
+                {
+                    DashboardManager.Instance.LaunchReadmeFileAsync();
+                    FileManager.setBoolItem("visualstudio_CtInit", true);
 
-                // launch the tree view
-                PackageManager.OpenCodeMetricsPaneAsync();
-            }
+                    // launch the tree view
+                    PackageManager.OpenCodeMetricsPaneAsync();
+                }
+            } catch (Exception) { }
         }
 
         void BeforeKeyPress(string Keypress, TextSelection Selection, bool InStatementCompletion, ref bool CancelKeypress)

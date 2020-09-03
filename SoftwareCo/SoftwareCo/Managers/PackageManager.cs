@@ -37,13 +37,14 @@ namespace SoftwareCo
                 return;
             }
 
-            await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
-            if ((null == _codeMetricsWindow) || (null == _codeMetricsWindow.Frame))
+            try
             {
-                throw new NotSupportedException("Cannot create tool window");
+                _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
+                if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null) {
+                    _codeMetricsWindow.RebuildMenuButtons();
+                }
             }
-            _codeMetricsWindow.RebuildMenuButtons();
+            catch (Exception) { }
         }
 
         public static async Task RebuildCodeMetricsAsync()
@@ -53,12 +54,14 @@ namespace SoftwareCo
                 return;
             }
 
-            await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
-            if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
+            try
             {
-                _codeMetricsWindow.RebuildCodeMetrics();
-            }
+                _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
+                if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
+                {
+                    _codeMetricsWindow.RebuildCodeMetrics();
+                }
+            } catch (Exception) { }
         }
 
         public static async Task RebuildGitMetricsAsync()
@@ -68,12 +71,15 @@ namespace SoftwareCo
                 return;
             }
 
-            await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
-            if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
+            try
             {
-                _codeMetricsWindow.RebuildGitMetricsAsync();
+                _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
+                if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
+                {
+                    _codeMetricsWindow.RebuildGitMetricsAsync();
+                }
             }
+            catch (Exception) { }
         }
 
         public static async Task OpenCodeMetricsPaneAsync()
@@ -83,16 +89,16 @@ namespace SoftwareCo
                 return;
             }
 
-            await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            ToolWindowPane window = package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
-            if ((null == window) || (null == window.Frame))
+            try
             {
-                throw new NotSupportedException("Cannot create tool window");
+                ToolWindowPane window = package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
+                if (window != null && window.Frame != null)
+                {
+                    IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
+                    windowFrame.Show();
+                }
             }
-
-            IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
-            windowFrame.Show();
-            //Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
+            catch (Exception) { }
         }
 
         public static async Task ToggleStatusbarMetrics()
@@ -102,24 +108,39 @@ namespace SoftwareCo
                 return;
             }
 
-            await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-            _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
-            if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
+            try
             {
-                _codeMetricsWindow.ToggleClickHandler();
+                _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
+                if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
+                {
+                    _codeMetricsWindow.ToggleClickHandler();
+                }
             }
+            catch (Exception) { }
         }
 
         public static async Task UpdateStatusBarButtonText(string text, string iconName = null)
         {
-            if (package == null || !SoftwareCoPackage.INITIALIZED || _statusBarButton == null)
+            if (package == null || !SoftwareCoPackage.INITIALIZED)
             {
                 return;
             }
-            await package.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-            _statusBarButton.UpdateDisplayAsync(text, iconName);
+            if (!_addedStatusBarButton)
+            {
+                // initialize it
+                InitializeStatusBar();
+            }
+
+            try
+            {
+                if (_statusBarButton != null)
+                {
+                    _statusBarButton.UpdateDisplayAsync(text, iconName);
+                }
+            } catch (Exception)
+            {
+            }
         }
 
         public static async Task InitializeStatusBar()
@@ -135,13 +156,16 @@ namespace SoftwareCo
                 _statusBarButton = new StatusBarButton();
             }
 
-            await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            DockPanel statusBarObj = FindChildControl<DockPanel>(System.Windows.Application.Current.MainWindow, "StatusBarPanel");
-            if (statusBarObj != null)
+            try
             {
-                statusBarObj.Children.Insert(0, _statusBarButton);
-                _addedStatusBarButton = true;
+                DockPanel statusBarObj = FindChildControl<DockPanel>(System.Windows.Application.Current.MainWindow, "StatusBarPanel");
+                if (statusBarObj != null)
+                {
+                    statusBarObj.Children.Insert(0, _statusBarButton);
+                    _addedStatusBarButton = true;
+                }
             }
+            catch (Exception) { }
         }
 
         public static async Task<string> GetSolutionDirectory()
@@ -150,17 +174,20 @@ namespace SoftwareCo
             {
                 return "";
             }
-            await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
+            try
             {
-                _solutionDirectory = ObjDte.Solution.FullName;
-                if (_solutionDirectory.LastIndexOf(".sln") == _solutionDirectory.Length - ".sln".Length)
+                if (ObjDte.Solution != null && ObjDte.Solution.FullName != null && !ObjDte.Solution.FullName.Equals(""))
                 {
-                    _solutionDirectory = _solutionDirectory.Substring(0, _solutionDirectory.LastIndexOf("\\"));
+                    _solutionDirectory = ObjDte.Solution.FullName;
+                    if (_solutionDirectory.LastIndexOf(".sln") == _solutionDirectory.Length - ".sln".Length)
+                    {
+                        _solutionDirectory = _solutionDirectory.Substring(0, _solutionDirectory.LastIndexOf("\\"));
+                    }
                 }
-            }
 
-            return _solutionDirectory;
+                return _solutionDirectory;
+            } catch (Exception) { }
+            return "";
         }
 
         public static async Task<Document> GetActiveDocument()
@@ -169,11 +196,15 @@ namespace SoftwareCo
             {
                 return null;
             }
-            await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (ObjDte != null && ObjDte.ActiveWindow != null)
+
+            try
             {
-                return ObjDte.ActiveWindow.Document;
+                if (ObjDte != null && ObjDte.ActiveWindow != null)
+                {
+                    return ObjDte.ActiveWindow.Document;
+                }
             }
+            catch (Exception) { }
             return null;
         }
 
@@ -184,11 +215,14 @@ namespace SoftwareCo
             {
                 return "";
             }
-            await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (ObjDte != null && ObjDte.ActiveWindow != null && ObjDte.ActiveWindow.Document != null)
+            try
             {
-                return ObjDte.ActiveWindow.Document.FullName;
+                if (ObjDte != null && ObjDte.ActiveWindow != null && ObjDte.ActiveWindow.Document != null)
+                {
+                    return ObjDte.ActiveWindow.Document.FullName;
+                }
             }
+            catch (Exception) { }
             return "";
         }
 
@@ -198,11 +232,15 @@ namespace SoftwareCo
             {
                 return "";
             }
-            await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (ObjDte != null && ObjDte.ActiveWindow != null && ObjDte.ActiveWindow.Document != null)
+
+            try
             {
-                return ObjDte.ActiveWindow.Document.Language;
+                if (ObjDte != null && ObjDte.ActiveWindow != null && ObjDte.ActiveWindow.Document != null)
+                {
+                    return ObjDte.ActiveWindow.Document.Language;
+                }
             }
+            catch (Exception) { }
             return "";
         }
 
