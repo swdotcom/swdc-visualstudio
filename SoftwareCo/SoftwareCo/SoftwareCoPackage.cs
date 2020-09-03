@@ -63,11 +63,26 @@ namespace SoftwareCo
                 ObjDte = await GetServiceAsync(typeof(DTE)) as DTE;
                 events = (Events2)ObjDte.Events;
 
+                // Intialize the document event handlers
+                _textEditorEvents = events.TextEditorEvents;
+                _textDocKeyEvents = events.TextDocumentKeyPressEvents;
+                _docEvents = events.DocumentEvents;
+                _windowVisibilityEvents = events.WindowVisibilityEvents;
+
                 // init the package manager that will use the AsyncPackage to run main thread requests
                 PackageManager.initialize(this, ObjDte);
 
+                // init the doc event mgr and inject ObjDte
+                docEventMgr = DocEventManager.Instance;
+
+                // setup event handlers
+                _textDocKeyEvents.BeforeKeyPress += this.BeforeKeyPress;
+                _docEvents.DocumentClosing += docEventMgr.DocEventsOnDocumentClosedAsync;
+                _windowVisibilityEvents.WindowShowing += docEventMgr.WindowVisibilityEventAsync;
+                _textEditorEvents.LineChanged += docEventMgr.LineChangedAsync;
+
                 // initialize the rest of the plugin in 10 seconds (allow the user to select a solution to open)
-                new Scheduler().Execute(() => CheckSolutionActivation(), 10000);
+                System.Threading.Tasks.Task.Delay(10000).ContinueWith((task) => { CheckSolutionActivation(); });
             }
             catch (Exception ex)
             {
@@ -86,38 +101,22 @@ namespace SoftwareCo
                 {
                     solutionTryCount++;
                     // no solution, try again later
-                    new Scheduler().Execute(() => CheckSolutionActivation(), 5000);
+                    System.Threading.Tasks.Task.Delay(5000).ContinueWith((task) => { CheckSolutionActivation(); });
                 }
                 else
                 {
                     // solution is activated or it's empty, initialize
-                    new Scheduler().Execute(() => InitializeListeners(), 1000);
+                    System.Threading.Tasks.Task.Delay(1000).ContinueWith((task) => { InitializeUser(); });
                 }
             }
         }
 
-        private async void InitializeListeners()
+        private async void InitializeUser()
         {
-
-            // Intialize the document event handlers
-            _textEditorEvents = events.TextEditorEvents;
-            _textDocKeyEvents = events.TextDocumentKeyPressEvents;
-            _docEvents = events.DocumentEvents;
-            _windowVisibilityEvents = events.WindowVisibilityEvents;
-
-            // init the doc event mgr and inject ObjDte
-            docEventMgr = DocEventManager.Instance;
-
-            // setup event handlers
-            _textDocKeyEvents.BeforeKeyPress += this.BeforeKeyPress;
-            _docEvents.DocumentClosing += docEventMgr.DocEventsOnDocumentClosedAsync;
-            _windowVisibilityEvents.WindowShowing += docEventMgr.WindowVisibilityEventAsync;
-            _textEditorEvents.LineChanged += docEventMgr.LineChangedAsync;
-
-            await InitializeUserInfoAsync();
+            InitializeUserInfoAsync();
 
             // solution is activated, initialize
-            new Scheduler().Execute(() => InitializePlugin(), 1000);
+            System.Threading.Tasks.Task.Delay(2000).ContinueWith((task) => { InitializePlugin(); });
         }
 
         private void InitializePlugin()
@@ -159,7 +158,7 @@ namespace SoftwareCo
             InitializeReadme();
 
             // initialize the tracker manager
-            new Scheduler().Execute(() => InitializeTracker(), 5000);
+            System.Threading.Tasks.Task.Delay(5000).ContinueWith((task) => { InitializeTracker(); });
 
             Logger.Info(string.Format("Initialized Code Time v{0}", EnvUtil.GetVersion()));
 
@@ -169,7 +168,6 @@ namespace SoftwareCo
         private async void InitializeTracker()
         {
             // initialize the tracker event manager
-            Logger.Info("Initializing Snowplow Tracker");
             TrackerEventManager.init();
         }
 

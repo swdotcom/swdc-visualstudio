@@ -14,8 +14,8 @@ namespace SoftwareCo
     {
 
         private static Timer timer;
-        private static int ONE_MINUTE_SECONDS = 60;
-        private static int ONE_MINUTE_MILLIS = 1000 * 60;
+        private static int THIRTY_SECONDS = 30;
+        private static int THIRTY_SECONDS_MILLIS = 1000 * 30;
 
         private static long _wctime = 0;
         private static string _currentDay = "";
@@ -31,9 +31,9 @@ namespace SoftwareCo
                       WallclcockTimerHandlerAsync,
                       null,
                       10000,
-                      ONE_MINUTE_MILLIS);
+                      THIRTY_SECONDS_MILLIS);
 
-            Application.Current.Dispatcher.Invoke((Action)delegate {
+            Application.Current.Dispatcher.InvokeAsync((Action)delegate {
                 PackageManager.InitializeStatusBar();
             });
         }
@@ -49,18 +49,29 @@ namespace SoftwareCo
 
         private static void WallclcockTimerHandlerAsync(object stateinfo)
         {
-            if (ApplicationIsActivated() || DocEventManager.Instance.hasData())
+            bool isWinActivated = ApplicationIsActivated();
+
+            if (isWinActivated || DocEventManager.Instance.hasData())
             {
                 _wctime = FileManager.getItemAsLong("wctime");
-                _wctime += ONE_MINUTE_SECONDS;
+                _wctime += THIRTY_SECONDS;
                 FileManager.setNumericItem("wctime", _wctime);
 
                 // update the file info file (async is fine)
-                TimeDataManager.Instance.UpdateEditorSeconds(ONE_MINUTE_SECONDS);
+                TimeDataManager.Instance.UpdateEditorSeconds(THIRTY_SECONDS);
 
                 GetNewDayCheckerAsync();
+
             }
-            DispatchUpdatesProcessorAsync();
+            if (!isWinActivated)
+            {
+                DocEventManager.Instance.PostData();
+            }
+            else
+            {
+                DispatchUpdatesProcessorAsync();
+            }
+            
         }
 
         private static bool ApplicationIsActivated()
@@ -96,7 +107,7 @@ namespace SoftwareCo
             FileManager.setNumericItem("wctime", _wctime);
         }
 
-        private static async Task DispatchUpdatesProcessorAsync()
+        public static async Task DispatchUpdatesProcessorAsync()
         {
             SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
             PackageManager.RebuildCodeMetricsAsync();
@@ -160,7 +171,7 @@ namespace SoftwareCo
                         }
                         catch (Exception e)
                         {
-                            Logger.Error("failed to read json: " + e.Message);
+                            Logger.Error("error reading file: " + e.Message);
                         }
                     }
                 }

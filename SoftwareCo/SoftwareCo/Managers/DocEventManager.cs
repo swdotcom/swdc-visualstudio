@@ -15,6 +15,7 @@ namespace SoftwareCo
         private Scheduler scheduler = null;
         private string currentSolutionDirectory = "";
         private static int ACTIVITY_LAG_THRESHOLD_SEC = 30;
+        private static bool _initializingPluginPayload = false;
         public static DocEventManager Instance { get { return lazy.Value; } }
 
         public bool hasData()
@@ -35,10 +36,11 @@ namespace SoftwareCo
         {
             if (_pluginData == null && doc != null && !string.IsNullOrEmpty(fileName))
             {
+                _initializingPluginPayload = true;
                 if (_pluginData == null)
                 {
                     // initialize the 1-minute timer
-                    new Scheduler().Execute(() => PostData(), 1000 * 60);
+                    System.Threading.Tasks.Task.Delay(1000 * 60).ContinueWith((task) => { PostData(); });
                 }
                 long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
                 if (!string.IsNullOrEmpty(currentSolutionDirectory))
@@ -54,10 +56,11 @@ namespace SoftwareCo
 
                 _pluginData.InitFileInfoIfNotExists(fileName);
                 long elapsedTimeInMillis = DateTimeOffset.Now.ToUnixTimeMilliseconds() - now;
-                if (elapsedTimeInMillis > 5)
+                if (elapsedTimeInMillis > 10)
                 {
                     Logger.Info("Initialized - elapsed: " + elapsedTimeInMillis + " ms");
                 }
+                _initializingPluginPayload = false;
             }
         }
 
@@ -73,8 +76,7 @@ namespace SoftwareCo
 
         public async void LineChangedAsync(TextPoint start, TextPoint end, int hint)
         {
-            long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-            if (doc == null)
+            if (doc == null || _initializingPluginPayload)
             {
                 return;
             }
@@ -83,12 +85,6 @@ namespace SoftwareCo
             if (!IsTrueEventFile(fileName))
             {
                 return;
-            }
-
-            SoftwareCoPackage package = PackageManager.GetAsyncPackage();
-            if (package != null)
-            {
-                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             }
 
             // only allow single line or bulk paste. visual sudio marks up the document
@@ -115,18 +111,12 @@ namespace SoftwareCo
                 }
 
                 UpdateFileInfoMetrics(pdfileInfo, start, end, null, null);
-                long elapsedTimeInMillis = DateTimeOffset.Now.ToUnixTimeMilliseconds() - now;
-                if (elapsedTimeInMillis > 10)
-                {
-                    Logger.Info("LineChanged elapsed: " + elapsedTimeInMillis + " ms");
-                }
             }
         }
 
         public async void BeforeKeyPressAsync(string Keypress, TextSelection Selection, bool InStatementCompletion, bool CancelKeypress)
         {
-            long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-            if (doc == null)
+            if (doc == null || _initializingPluginPayload)
             {
                 return;
             }
@@ -135,12 +125,6 @@ namespace SoftwareCo
             if (!IsTrueEventFile(fileName))
             {
                 return;
-            }
-
-            SoftwareCoPackage package = PackageManager.GetAsyncPackage();
-            if (package != null)
-            {
-                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             }
 
             if (string.IsNullOrEmpty(currentSolutionDirectory))
@@ -170,11 +154,6 @@ namespace SoftwareCo
             }
 
             UpdateFileInfoMetrics(pdfileInfo, null, null, Keypress, Selection);
-            long elapsedTimeInMillis = DateTimeOffset.Now.ToUnixTimeMilliseconds() - now;
-            if (elapsedTimeInMillis > 10)
-            {
-                Logger.Info("BeforeKeyPressed elapsed: " + elapsedTimeInMillis + " ms");
-            }
         }
 
         public async void WindowVisibilityEventAsync(Window Window)
@@ -381,10 +360,9 @@ namespace SoftwareCo
 
         public async void PostData()
         {
-            NowTime nowTime = SoftwareCoUtil.GetNowTime();
-
-            if (hasData())
+            if (_pluginData != null && hasData())
             {
+                NowTime nowTime = SoftwareCoUtil.GetNowTime();
                 // create the aggregates, end the file times, gather the cumulatives
                 string softwareDataContent = await _pluginData.CompletePayloadAndReturnJsonString();
 
@@ -398,6 +376,8 @@ namespace SoftwareCo
                 FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
 
                 _pluginData = null;
+
+                WallclockManager.DispatchUpdatesProcessorAsync();
             }
         }
     }

@@ -271,7 +271,7 @@ namespace SoftwareCo
                 Linesremoved.Items.Add(linesremovedParent);
             }
 
-            string keystrokesBoltIcon = summary.currentDayLinesRemoved > summary.averageDailyKeystrokes ? "bolt.png" : "bolt-grey.png";
+            string keystrokesBoltIcon = summary.currentDayKeystrokes > summary.averageDailyKeystrokes ? "bolt.png" : "bolt-grey.png";
             string keystrokesToday = "Today: " + SoftwareCoUtil.FormatNumber(summary.currentDayKeystrokes);
             string keystrokesAvg = "Your average: " + SoftwareCoUtil.FormatNumber(summary.averageDailyKeystrokes);
             string keystrokesGlobal = "Global average: " + SoftwareCoUtil.FormatNumber(summary.globalAverageDailyKeystrokes);

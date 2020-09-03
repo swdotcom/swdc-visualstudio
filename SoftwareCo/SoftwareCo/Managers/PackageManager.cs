@@ -131,15 +131,13 @@ namespace SoftwareCo
                 return;
             }
 
-            await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (!_addedStatusBarButton)
-            {
-                // initialize it
-                await InitializeStatusBar();
-            }
-
-            try
-            {
+            try {
+                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
+                if (!_addedStatusBarButton)
+                {
+                    // initialize it
+                    await InitializeStatusBar();
+                }
                 if (_statusBarButton != null)
                 {
                     _statusBarButton.UpdateDisplayAsync(text, iconName);
@@ -172,11 +170,19 @@ namespace SoftwareCo
                     _addedStatusBarButton = true;
                 }
             }
-            catch (Exception) { }
+            catch (Exception e)
+            {
+                Logger.Warning("Error initializing code time status bar metrics: " + e.Message);
+            }
         }
 
         public static async Task<string> GetSolutionDirectory()
         {
+            if (!string.IsNullOrEmpty(_solutionDirectory))
+            {
+                return _solutionDirectory;
+            }
+
             if (package == null || ObjDte == null)
             {
                 return "";
@@ -195,6 +201,7 @@ namespace SoftwareCo
 
                 return _solutionDirectory;
             } catch (Exception) { }
+
             return "";
         }
 
