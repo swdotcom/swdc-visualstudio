@@ -38,7 +38,6 @@ namespace SoftwareCo
             RebuildGitMetricsAsync();
 
             // update the contributor metric nodes
-
             // RebuildContributorMetricsAsync();
         }
 

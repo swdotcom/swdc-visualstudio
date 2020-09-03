@@ -11,32 +11,31 @@ namespace SoftwareCo
 {
     public sealed class WallclockManager
     {
-        private static readonly Lazy<WallclockManager> lazy = new Lazy<WallclockManager>(() => new WallclockManager());
 
-        private Timer timer;
-        private static int SECONDS_TO_INCREMENT = 60;
-        private static int THIRTY_SECONDS_IN_MILLIS = 1000 * SECONDS_TO_INCREMENT;
-        private static int ONE_MINUTE = THIRTY_SECONDS_IN_MILLIS * 2;
+        private static Timer timer;
+        private static int ONE_MINUTE_SECONDS = 60;
+        private static int ONE_MINUTE_MILLIS = 1000 * 60;
 
-        private long _wctime = 0;
-        private string _currentDay = "";
-
-        public static WallclockManager Instance { get { return lazy.Value; } }
+        private static long _wctime = 0;
+        private static string _currentDay = "";
 
         public CancellationToken DisposalToken { get; private set; }
 
-        private WallclockManager()
+        public static void Initialize()
         {
             // fetch the current day from the sessions.json
-            this._currentDay = FileManager.getItemAsString("currentDay");
+            _currentDay = FileManager.getItemAsString("currentDay");
+            // start the wall clock timer in 10 seconds, every 1 minute
             timer = new Timer(
                       WallclcockTimerHandlerAsync,
                       null,
-                      5000,
-                      THIRTY_SECONDS_IN_MILLIS);
+                      10000,
+                      ONE_MINUTE_MILLIS);
+
+            DispatchUpdatesProcessorAsync();
         }
 
-        public void Dispose()
+        public static void Dispose()
         {
             if (timer != null)
             {
@@ -45,16 +44,16 @@ namespace SoftwareCo
             }
         }
 
-        private void WallclcockTimerHandlerAsync(object stateinfo)
+        private static void WallclcockTimerHandlerAsync(object stateinfo)
         {
             if (ApplicationIsActivated() || DocEventManager.Instance.hasData())
             {
                 _wctime = FileManager.getItemAsLong("wctime");
-                _wctime += SECONDS_TO_INCREMENT;
+                _wctime += ONE_MINUTE_SECONDS;
                 FileManager.setNumericItem("wctime", _wctime);
 
                 // update the file info file (async is fine)
-                TimeDataManager.Instance.UpdateEditorSeconds(SECONDS_TO_INCREMENT);
+                TimeDataManager.Instance.UpdateEditorSeconds(ONE_MINUTE_SECONDS);
 
                 GetNewDayCheckerAsync();
             }
@@ -82,26 +81,26 @@ namespace SoftwareCo
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
 
-        public long GetWcTimeInMinutes()
+        public static long GetWcTimeInMinutes()
         {
-            this._wctime = FileManager.getItemAsLong("wctime");
-            return this._wctime / 60;
+            _wctime = FileManager.getItemAsLong("wctime");
+            return _wctime / 60;
         }
 
-        public void ClearWcTime()
+        public static void ClearWcTime()
         {
-            this._wctime = 0L;
-            FileManager.setNumericItem("wctime", this._wctime);
+            _wctime = 0L;
+            FileManager.setNumericItem("wctime", _wctime);
         }
 
-        private async Task DispatchUpdatesProcessorAsync()
+        private static async Task DispatchUpdatesProcessorAsync()
         {
             SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
             PackageManager.RebuildCodeMetricsAsync();
             PackageManager.RebuildGitMetricsAsync();
         }
 
-        public async Task GetNewDayCheckerAsync()
+        public static async Task GetNewDayCheckerAsync()
         {
             if (SoftwareCoUtil.IsNewDay())
             {
@@ -129,12 +128,12 @@ namespace SoftwareCo
                 FileManager.setNumericItem("latestPayloadTimestampEndUtc", 0);
 
                 // update the session summary global and averages for the new day
-                WallclockManager.Instance.UpdateSessionSummaryFromServerAsync(true);
+                UpdateSessionSummaryFromServerAsync(true);
 
             }
         }
 
-        public async Task UpdateSessionSummaryFromServerAsync(bool useCurrentDayMetrics)
+        public static async Task UpdateSessionSummaryFromServerAsync(bool useCurrentDayMetrics)
         {
             object jwt = FileManager.getItem("jwt");
             if (jwt != null)

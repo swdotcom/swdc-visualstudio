@@ -35,7 +35,6 @@ namespace SoftwareCo
         private WindowVisibilityEvents _windowVisibilityEvents;
 
         private Timer offlineDataTimer;
-        private Timer processPayloadTimer;
 
         // Used by Constants for version info
         public static DTE ObjDte;
@@ -110,77 +109,80 @@ namespace SoftwareCo
             docEventMgr = DocEventManager.Instance;
 
             // setup event handlers
-            _textDocKeyEvents.BeforeKeyPress += new _dispTextDocumentKeyPressEvents_BeforeKeyPressEventHandler(BeforeKeyPress);
+            _textDocKeyEvents.BeforeKeyPress += this.BeforeKeyPress;
             _docEvents.DocumentClosing += docEventMgr.DocEventsOnDocumentClosedAsync;
             _windowVisibilityEvents.WindowShowing += docEventMgr.WindowVisibilityEventAsync;
             _textEditorEvents.LineChanged += docEventMgr.LineChangedAsync;
+
+            await InitializeUserInfoAsync();
 
             // solution is activated, initialize
             new Scheduler().Execute(() => InitializePlugin(), 1000);
         }
 
-        private async void InitializePlugin()
+        private void InitializePlugin()
         {
-            await this.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (!INITIALIZED)
+            // update the latestPayloadTimestampEndUtc
+            NowTime nowTime = SoftwareCoUtil.GetNowTime();
+            FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
+
+            // initialize the menu commands
+            SoftwareLaunchCommand.InitializeAsync(this);
+            SoftwareDashboardLaunchCommand.InitializeAsync(this);
+            SoftwareLoginCommand.InitializeAsync(this);
+            SoftwareToggleStatusInfoCommand.InitializeAsync(this);
+            SoftwareOpenCodeMetricsTreeCommand.InitializeAsync(this);
+
+            // check if the "name" is set. if not, get the user
+            string name = FileManager.getItemAsString("name");
+            if (string.IsNullOrEmpty(name))
             {
-                await this.InitializeUserInfoAsync();
-
-                // update the latestPayloadTimestampEndUtc
-                NowTime nowTime = SoftwareCoUtil.GetNowTime();
-                FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
-
-                await PackageManager.InitializeStatusBar();
-
-                // init the wallclock
-                WallclockManager wallclockMgr = WallclockManager.Instance;
-
-                // initialize the menu commands
-                SoftwareLaunchCommand.InitializeAsync(this);
-                SoftwareDashboardLaunchCommand.InitializeAsync(this);
-                SoftwareLoginCommand.InitializeAsync(this);
-                SoftwareToggleStatusInfoCommand.InitializeAsync(this);
-                SoftwareOpenCodeMetricsTreeCommand.InitializeAsync(this);
-
-                // check if the "name" is set. if not, get the user
-                string name = FileManager.getItemAsString("name");
-                if (string.IsNullOrEmpty(name))
-                {
-                    // enable the login command
-                    SoftwareLoginCommand.UpdateEnabledState(true);
-                }
-                else
-                {
-                    // enable web dashboard command
-                    SoftwareLaunchCommand.UpdateEnabledState(true);
-                }
-
-                // create a 5 minute timer to send offline data
-                offlineDataTimer = new Timer(
-                      SendOfflineData,
-                      null,
-                      ONE_MINUTE / 2,
-                      ONE_MINUTE * 5);
-
-                new Scheduler().Execute(() => SendOfflinePluginBatchData(), 15000);
-
-                INITIALIZED = true;
-
-                string PluginVersion = EnvUtil.GetVersion();
-                Logger.Info(string.Format("Initialized Code Time v{0}", PluginVersion));
-
-                // show the readme if it's the initial install
-                InitializeReadme();
-
-                // initialize the tracker manager
-                InitializeTracker();
+                // enable the login command
+                SoftwareLoginCommand.UpdateEnabledState(true);
             }
+            else
+            {
+                // enable web dashboard command
+                SoftwareLaunchCommand.UpdateEnabledState(true);
+            }
+
+            // create a 5 minute timer to send offline data
+            offlineDataTimer = new Timer(
+                    SendOfflineData,
+                    null,
+                    ONE_MINUTE / 2,
+                    ONE_MINUTE * 5);
+
+            INITIALIZED = true;
+
+            // show the readme if it's the initial install
+            InitializeReadme();
+
+            // initialize the tracker manager
+            new Scheduler().Execute(() => InitializeTracker(), 5000);
+            new Scheduler().Execute(() => SendOfflinePluginBatchData(), 15000);
+
+            Logger.Info(string.Format("Initialized Code Time v{0}", EnvUtil.GetVersion()));
+
+            InitializeStatusBarAndWallClock();
         }
 
         private async void InitializeTracker()
         {
             // initialize the tracker event manager
+            Logger.Info("Initializing Snowplow Tracker");
             TrackerEventManager.init();
+        }
+
+        private async void InitializeStatusBarAndWallClock()
+        {
+            await JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            // init the status bar within the main thread
+            await PackageManager.InitializeStatusBar();
+
+            // this needs INITIALIZED to be true at this point
+            WallclockManager.Initialize();
         }
 
         private async void InitializeReadme()
@@ -198,7 +200,7 @@ namespace SoftwareCo
             }
         }
 
-        void BeforeKeyPress(string Keypress, EnvDTE.TextSelection Selection, bool InStatementCompletion, ref bool CancelKeypress)
+        void BeforeKeyPress(string Keypress, TextSelection Selection, bool InStatementCompletion, ref bool CancelKeypress)
         {
             docEventMgr.BeforeKeyPressAsync(Keypress, Selection, InStatementCompletion, CancelKeypress);
         }
@@ -207,24 +209,19 @@ namespace SoftwareCo
         {
             TrackerEventManager.TrackEditorActionEvent("editor", "deactivate");
 
-            WallclockManager.Instance.Dispose();
+            WallclockManager.Dispose();
 
             TrackerManager.Dispose();
 
             if (offlineDataTimer != null)
             {
-                _textDocKeyEvents.BeforeKeyPress -= new _dispTextDocumentKeyPressEvents_BeforeKeyPressEventHandler(BeforeKeyPress);
+                _textDocKeyEvents.BeforeKeyPress -= this.BeforeKeyPress;
                 _docEvents.DocumentClosing -= docEventMgr.DocEventsOnDocumentClosedAsync;
                 _textEditorEvents.LineChanged -= docEventMgr.LineChangedAsync;
                 _windowVisibilityEvents.WindowShowing -= docEventMgr.WindowVisibilityEventAsync;
 
                 offlineDataTimer.Dispose();
                 offlineDataTimer = null;
-            }
-            if (processPayloadTimer != null)
-            {
-                processPayloadTimer.Dispose();
-                processPayloadTimer = null;
             }
 
             INITIALIZED = false;
@@ -301,12 +298,7 @@ namespace SoftwareCo
         {
             // send this batch off
             string jsonData = "[" + string.Join(",", batchList) + "]";
-            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonData);
-            if (!SoftwareHttpManager.IsOk(response) && response.StatusCode != System.Net.HttpStatusCode.Unauthorized)
-            {
-                // there was an error, don't delete the offline data
-                return false;
-            }
+            await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonData);
             batchList.Clear();
             return true;
         }

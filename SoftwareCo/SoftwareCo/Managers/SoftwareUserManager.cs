@@ -253,7 +253,7 @@ namespace SoftwareCo
                         MessageBox.Show(msg, caption, MessageBoxButtons.OK);
 
                         // fetch the session summary to get the user's averages
-                        WallclockManager.Instance.UpdateSessionSummaryFromServerAsync(false);
+                        WallclockManager.UpdateSessionSummaryFromServerAsync(false);
 
                         SoftwareCoPackage.SendOfflinePluginBatchData();
                     }

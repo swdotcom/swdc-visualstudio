@@ -134,6 +134,7 @@ namespace SoftwareCo
             {
                 _statusBarButton = new StatusBarButton();
             }
+
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             DockPanel statusBarObj = FindChildControl<DockPanel>(System.Windows.Application.Current.MainWindow, "StatusBarPanel");
             if (statusBarObj != null)

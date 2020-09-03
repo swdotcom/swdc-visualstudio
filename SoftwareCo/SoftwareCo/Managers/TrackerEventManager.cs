@@ -8,17 +8,15 @@ namespace SoftwareCo
     {
         private static TrackerManager tracker;
 
-        public async static void init()
+        public static void init()
         {
             try
             {
                 tracker = new TrackerManager("CodeTime", "swdc-visualstudio");
-                await tracker.initializeTracker();
-
-                if (tracker.initialized)
+                tracker.initializeTracker().ContinueWith(result =>
                 {
                     TrackEditorActionEvent("editor", "activate");
-                }
+                });
             }
             catch (Exception e)
             {
@@ -35,11 +33,7 @@ namespace SoftwareCo
 
             if (tracker == null || !tracker.initialized)
             {
-                init();
-                if (!tracker.initialized)
-                {
-                    return;
-                }
+                return;
             }
 
             AuthEntity authEntity = GetAuthEntity();
@@ -94,11 +88,7 @@ namespace SoftwareCo
         {
             if (tracker == null || !tracker.initialized)
             {
-                init();
-                if (!tracker.initialized)
-                {
-                    return;
-                }
+                return;
             }
 
             EditorActionEvent editorActionEvent = new EditorActionEvent();

@@ -231,7 +231,7 @@ namespace SoftwareCo
             {
                 // the days don't match. don't use the editor or session seconds for a different day
                 // clear out data from the previous day
-                await WallclockManager.Instance.GetNewDayCheckerAsync();
+                await WallclockManager.GetNewDayCheckerAsync();
                 if (td != null)
                 {
                     td = null;
