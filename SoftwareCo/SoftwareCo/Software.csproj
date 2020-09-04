@@ -168,7 +168,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="TextFile1.txt" />
     <Resource Include="Resources\cpaw.png" />
     <Resource Include="Resources\app-icon-blue-16x16.png" />
     <Resource Include="Resources\bolt-grey.png" />

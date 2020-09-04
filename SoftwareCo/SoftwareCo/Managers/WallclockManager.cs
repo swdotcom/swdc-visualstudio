@@ -32,6 +32,8 @@ namespace SoftwareCo
                       null,
                       3000,
                       THIRTY_SECONDS_MILLIS);
+
+            DispatchUpdatesProcessorAsync();
         }
 
         public static void Dispose()
@@ -106,6 +108,7 @@ namespace SoftwareCo
         public static async Task DispatchUpdatesProcessorAsync()
         {
             SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
+            PackageManager.RebuildMenuButtonsAsync();
             PackageManager.RebuildCodeMetricsAsync();
             PackageManager.RebuildGitMetricsAsync();
         }

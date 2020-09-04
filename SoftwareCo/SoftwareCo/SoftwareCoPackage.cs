@@ -59,6 +59,9 @@ namespace SoftwareCo
                 await JoinableTaskFactory.SwitchToMainThreadAsync();
                 base.Initialize();
 
+                // create the anon user if it's a new install (async)
+                InitializeUserInfoAsync();
+
                 // obtain the DTE service to track doc changes
                 ObjDte = await GetServiceAsync(typeof(DTE)) as DTE;
                 events = (Events2)ObjDte.Events;
@@ -106,17 +109,9 @@ namespace SoftwareCo
                 else
                 {
                     // solution is activated or it's empty, initialize
-                    System.Threading.Tasks.Task.Delay(1000).ContinueWith((task) => { InitializeUser(); });
+                    System.Threading.Tasks.Task.Delay(1000).ContinueWith((task) => { InitializePlugin(); });
                 }
             }
-        }
-
-        private async void InitializeUser()
-        {
-            InitializeUserInfoAsync();
-
-            // solution is activated, initialize
-            System.Threading.Tasks.Task.Delay(2000).ContinueWith((task) => { InitializePlugin(); });
         }
 
         private void InitializePlugin()
@@ -153,8 +148,6 @@ namespace SoftwareCo
                     BatchDataIntervalMillis,
                     BatchDataIntervalMillis);
 
-            INITIALIZED = true;
-
             // show the readme if it's the initial install
             InitializeReadme();
 
@@ -162,6 +155,8 @@ namespace SoftwareCo
             System.Threading.Tasks.Task.Delay(5000).ContinueWith((task) => { InitializeTracker(); });
 
             Logger.Info(string.Format("Initialized Code Time v{0}", EnvUtil.GetVersion()));
+
+            INITIALIZED = true;
 
             InitializeStatusBarAndWallClock();
         }
