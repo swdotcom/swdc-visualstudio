@@ -146,11 +146,12 @@ namespace SoftwareCo
             }
 
             // create a 5 minute timer to send offline data
+            long BatchDataIntervalMillis = ONE_MINUTE * 5;
             offlineDataTimer = new Timer(
-                    SendOfflineData,
+                    SendOfflinePluginBatchData,
                     null,
-                    ONE_MINUTE / 2,
-                    ONE_MINUTE * 5);
+                    BatchDataIntervalMillis,
+                    BatchDataIntervalMillis);
 
             INITIALIZED = true;
 
@@ -173,6 +174,8 @@ namespace SoftwareCo
 
         private async void InitializeStatusBarAndWallClock()
         {
+            PackageManager.InitializeStatusBar();
+
             // this needs INITIALIZED to be true at this point
             WallclockManager.Initialize();
         }
@@ -229,24 +232,10 @@ namespace SoftwareCo
             DocEventManager.Instance.PostData();
         }
 
-        public static async void SendOfflineData(object stateinfo)
+        public static async void SendOfflinePluginBatchData(object stateinfo)
         {
-            SendOfflinePluginBatchData();
-        }
-
-        public static async void SendOfflinePluginBatchData()
-        {
-
-            Logger.Info(DateTime.Now.ToString());
-            bool online = await SoftwareUserManager.IsOnlineAsync();
-
-            if (!online)
-            {
-                return;
-            }
 
             int batch_limit = 25;
-            bool succeeded = false;
             List<string> offlinePluginData = FileManager.GetOfflinePayloadList();
             List<string> batchList = new List<string>();
             if (offlinePluginData != null && offlinePluginData.Count > 0)
@@ -257,34 +246,18 @@ namespace SoftwareCo
                     if (i >= batch_limit)
                     {
                         // send this batch off
-                        succeeded = await SendBatchData(batchList);
-                        if (!succeeded)
-                        {
-                            if (offlinePluginData.Count > 1000)
-                            {
-                                // delete anyway, there's an issue and the data is gathering
-                                File.Delete(FileManager.getSoftwareDataStoreFile());
-                            }
-                            return;
-                        }
+                        SendBatchData(batchList);
                     }
                     batchList.Add(line);
                 }
 
                 if (batchList.Count > 0)
                 {
-                    succeeded = await SendBatchData(batchList);
+                    SendBatchData(batchList);
                 }
 
                 // delete the file
-                if (succeeded)
-                {
-                    File.Delete(FileManager.getSoftwareDataStoreFile());
-                }
-                else if (offlinePluginData.Count > 1000)
-                {
-                    File.Delete(FileManager.getSoftwareDataStoreFile());
-                }
+                File.Delete(FileManager.getSoftwareDataStoreFile());
             }
         }
 
@@ -292,7 +265,7 @@ namespace SoftwareCo
         {
             // send this batch off
             string jsonData = "[" + string.Join(",", batchList) + "]";
-            await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonData);
+            SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonData);
             batchList.Clear();
             return true;
         }
@@ -305,7 +278,7 @@ namespace SoftwareCo
                 string jwt = FileManager.getItemAsString("jwt");
                 if (string.IsNullOrEmpty(jwt))
                 {
-                    string result = await SoftwareUserManager.CreateAnonymousUserAsync();
+                    SoftwareUserManager.CreateAnonymousUserAsync();
                 }
 
                 long sessionTresholdSeconds = FileManager.getItemAsLong("sessionThresholdInSec");

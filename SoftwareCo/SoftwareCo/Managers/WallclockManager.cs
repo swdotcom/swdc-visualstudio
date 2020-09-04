@@ -30,12 +30,8 @@ namespace SoftwareCo
             timer = new Timer(
                       WallclcockTimerHandlerAsync,
                       null,
-                      10000,
+                      3000,
                       THIRTY_SECONDS_MILLIS);
-
-            Application.Current.Dispatcher.InvokeAsync((Action)delegate {
-                PackageManager.InitializeStatusBar();
-            });
         }
 
         public static void Dispose()
@@ -121,7 +117,7 @@ namespace SoftwareCo
                 SessionSummaryManager.Instance.ÇlearSessionSummaryData();
 
                 // send the offline data
-                SoftwareCoPackage.SendOfflinePluginBatchData();
+                SoftwareCoPackage.SendOfflinePluginBatchData(null);
 
                 // send the offline TimeData payloads
                 // this will clear the time data summary as well
