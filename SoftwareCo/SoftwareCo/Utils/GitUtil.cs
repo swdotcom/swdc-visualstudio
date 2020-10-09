@@ -12,7 +12,7 @@ namespace SoftwareCo
     {
         public static CommitChangeStats GetUncommitedChanges(string projectDir)
         {
-            if (!IsGitProject(projectDir))
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
             {
                 return new CommitChangeStats();
             }
@@ -23,7 +23,7 @@ namespace SoftwareCo
 
         public static CommitChangeStats GetTodaysCommits(string projectDir, string email)
         {
-            if (!IsGitProject(projectDir))
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
             {
                 return new CommitChangeStats();
             }
@@ -32,7 +32,7 @@ namespace SoftwareCo
 
         public static CommitChangeStats GetYesterdayCommits(string projectDir, string email)
         {
-            if (!IsGitProject(projectDir))
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
             {
                 return new CommitChangeStats();
             }
@@ -41,7 +41,7 @@ namespace SoftwareCo
 
         public static CommitChangeStats GetThisWeeksCommits(string projectDir, string email)
         {
-            if (!IsGitProject(projectDir))
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
             {
                 return new CommitChangeStats();
             }
@@ -50,7 +50,7 @@ namespace SoftwareCo
 
         public static CommitChangeStats GetCommitsForRange(string rangeType, string projectDir, string email)
         {
-            if (!IsGitProject(projectDir))
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
             {
                 return new CommitChangeStats();
             }
@@ -81,7 +81,7 @@ namespace SoftwareCo
 
         private static CommitChangeStats GetChangeStats(string cmd, string projectDir)
         {
-            if (!IsGitProject(projectDir))
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
             {
                 return new CommitChangeStats();
             }
@@ -150,7 +150,7 @@ namespace SoftwareCo
 
         public static RepoResourceInfo GetResourceInfo(string projectDir, bool includeMembers)
         {
-            if (!IsGitProject(projectDir))
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
             {
                 return new RepoResourceInfo();
             }
@@ -240,7 +240,7 @@ namespace SoftwareCo
 
         public static string GetUsersEmail(string projectDir)
         {
-            if (!IsGitProject(projectDir))
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
             {
                 return "";
             }
@@ -249,7 +249,7 @@ namespace SoftwareCo
 
         public static string GetRepoUrlLink(string projectDir)
         {
-            if (!IsGitProject(projectDir))
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
             {
                 return "";
             }
@@ -263,7 +263,7 @@ namespace SoftwareCo
 
         public static CommitInfo GetLastCommitInfo(string projectDir, string email)
         {
-            if (!IsGitProject(projectDir))
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
             {
                 return new CommitInfo();
             }
@@ -288,21 +288,11 @@ namespace SoftwareCo
             return commitInfo;
         }
 
-        public static bool IsGitProject(string projDir)
-        {
-            if (projDir == null || projDir.Equals("") || !projDir.EndsWith(".git"))
-            {
-                return false;
-            }
-
-            return true;
-        }
-
         public static async Task<RepoCommit> GetLatestCommitAsync(string projectDir)
         {
             try
             {
-                if (!IsGitProject(projectDir))
+                if (!SoftwareCoUtil.IsGitProject(projectDir))
                 {
                     return null;
                 }
@@ -358,7 +348,7 @@ namespace SoftwareCo
         {
             try
             {
-                if (!IsGitProject(projectDir))
+                if (!SoftwareCoUtil.IsGitProject(projectDir))
                 {
                     return;
                 }
@@ -561,7 +551,7 @@ namespace SoftwareCo
 
         public static async Task ProcessRepoMembers(string projectDir)
         {
-            if (!GitUtil.IsGitProject(projectDir))
+            if (!SoftwareCoUtil.IsGitProject(projectDir))
             {
                 return;
             }

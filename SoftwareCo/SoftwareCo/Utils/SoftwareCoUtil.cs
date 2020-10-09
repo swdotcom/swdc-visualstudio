@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -40,13 +41,25 @@ namespace SoftwareCo
                 process.StartInfo.RedirectStandardOutput = true;
                 process.StartInfo.RedirectStandardError = true;
                 process.Start();
+
                 //* Read the output (or the error)
-                string output = process.StandardOutput.ReadToEnd();
-                string err = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-                if (output != null)
+                List<string> output = new List<string>();
+
+                while (process.StandardOutput.Peek() > -1)
                 {
-                    return output.Trim();
+                    output.Add(process.StandardOutput.ReadLine().TrimEnd('\n'));
+                }
+
+                while (process.StandardError.Peek() > -1)
+                {
+                    output.Add(process.StandardError.ReadLine().TrimEnd('\n'));
+                }
+                process.WaitForExit();
+
+                // all of the callers are expecting a 1 line response. return the 1st line
+                if (output.Count > 0)
+                {
+                    return output[0];
                 }
             }
             catch (Exception e)
@@ -572,10 +585,9 @@ namespace SoftwareCo
             {
                 return false;
             }
-            // string sessionFile = projDir + "\\.git";
-            // return File.Exists(sessionFile);
-
-            return true;
+            string gitDir = projDir + "\\.git";
+            bool hasGitDir = Directory.Exists(gitDir);
+            return hasGitDir;
         }
 
         public static string CleanJsonString(string data)

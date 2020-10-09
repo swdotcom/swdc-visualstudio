@@ -158,7 +158,6 @@ namespace SoftwareCo
                     }
                     if (readmeFile != null)
                     {
-                        // SoftwareCoPackage.ObjDte.ItemOperations.OpenFile(readmeFile);
                         StreamReader _textStreamReader = new StreamReader(_assembly.GetManifestResourceStream(readmeFile));
                         string readmeContents = _textStreamReader.ReadToEnd();
                         File.WriteAllText(vsReadmeFile, readmeContents, System.Text.Encoding.UTF8);

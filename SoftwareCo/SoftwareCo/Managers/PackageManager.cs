@@ -132,9 +132,9 @@ namespace SoftwareCo
             }
 
             try {
-                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
                 if (!_addedStatusBarButton)
                 {
+                    await package.JoinableTaskFactory.SwitchToMainThreadAsync();
                     // initialize it
                     await InitializeStatusBar();
                 }
