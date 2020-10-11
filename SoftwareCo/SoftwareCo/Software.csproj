@@ -57,6 +57,7 @@
   <ItemGroup>
     <Compile Include="Managers\FileInfoManager.cs" />
     <Compile Include="Managers\TrackerEventManager.cs" />
+    <Compile Include="Models\CacheValue.cs" />
     <Compile Include="Models\FileDetails.cs" />
     <Compile Include="Models\RepoCommit.cs" />
     <Compile Include="Models\RepoCommitChanges.cs" />

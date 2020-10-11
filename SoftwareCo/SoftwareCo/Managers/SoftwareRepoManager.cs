@@ -230,148 +230,124 @@ namespace SoftwareCo
 
                         string cmd = "git log --stat --pretty=COMMIT:%H,%ct,%cI,%s --author=" + email + "" + sinceOption;
 
-                        string gitCommitData = SoftwareCoUtil.RunCommand(cmd, projectDir);
+                        List<string> lines = SoftwareCoUtil.RunCommand(cmd, projectDir);
 
-                        if (gitCommitData != null && !gitCommitData.Equals(""))
+                        RepoCommit currentRepoCommit = null;
+                        List<RepoCommit> repoCommits = new List<RepoCommit>();
+                        if (lines != null && lines.Count > 0)
                         {
-                            string[] lines = gitCommitData.Split(
-                                new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-                            RepoCommit currentRepoCommit = null;
-                            List<RepoCommit> repoCommits = new List<RepoCommit>();
-                            if (lines != null && lines.Length > 0)
+                            for (int i = 0; i < lines.Count; i++)
                             {
-                                for (int i = 0; i < lines.Length; i++)
+                                string line = lines[i];
+                                if (line.Length > 0)
                                 {
-                                    string line = lines[i].Trim();
-                                    if (line.Length > 0)
+                                    bool hasPipe = line.IndexOf("|") != -1 ? true : false;
+                                    bool isBin = line.ToLower().IndexOf("bin") != -1 ? true : false;
+                                    if (line.IndexOf("COMMIT:") == 0)
                                     {
-                                        bool hasPipe = line.IndexOf("|") != -1 ? true : false;
-                                        bool isBin = line.ToLower().IndexOf("bin") != -1 ? true : false;
-                                        if (line.IndexOf("COMMIT:") == 0)
+                                        line = line.Substring("COMMIT:".Length);
+                                        if (currentRepoCommit != null)
                                         {
-                                            line = line.Substring("COMMIT:".Length);
-                                            if (currentRepoCommit != null)
+                                            repoCommits.Add(currentRepoCommit);
+                                        }
+
+                                        string[] commitInfos = line.Split(',');
+                                        if (commitInfos != null && commitInfos.Length > 0)
+                                        {
+                                            string commitId = commitInfos[0].Trim();
+                                            // go to the next line if we've already processed this commitId
+                                            if (latestCommit != null && commitId.Equals(latestCommit.commitId))
                                             {
-                                                repoCommits.Add(currentRepoCommit);
+                                                currentRepoCommit = null;
+                                                continue;
                                             }
 
-                                            string[] commitInfos = line.Split(',');
-                                            if (commitInfos != null && commitInfos.Length > 0)
+                                            // get the other attributes now
+                                            long timestamp = Convert.ToInt64(commitInfos[1].Trim());
+                                            string date = commitInfos[2].Trim();
+                                            string message = commitInfos[3].Trim();
+                                            currentRepoCommit = new RepoCommit(commitId, message, timestamp);
+                                            currentRepoCommit.date = date;
+
+                                            RepoCommitChanges changesObj = new RepoCommitChanges(0, 0);
+                                            currentRepoCommit.changes.Add("__sftwTotal__", changesObj);
+                                        }
+                                    }
+                                    else if (currentRepoCommit != null && hasPipe && !isBin)
+                                    {
+                                        // get the file and changes
+                                        // i.e. somefile.cs                             | 20 +++++++++---------
+                                        line = string.Join(" ", line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+                                        string[] lineInfos = line.Split('|');
+                                        if (lineInfos != null && lineInfos.Length > 1)
+                                        {
+                                            string file = lineInfos[0].Trim();
+                                            string[] metricInfos = lineInfos[1].Trim().Split(' ');
+                                            if (metricInfos != null && metricInfos.Length > 1)
                                             {
-                                                string commitId = commitInfos[0].Trim();
-                                                // go to the next line if we've already processed this commitId
-                                                if (latestCommit != null && commitId.Equals(latestCommit.commitId))
+                                                string addAndDeletes = metricInfos[1].Trim();
+                                                int len = addAndDeletes.Length;
+                                                int lastPlusIdx = addAndDeletes.LastIndexOf('+');
+                                                int insertions = 0;
+                                                int deletions = 0;
+                                                if (lastPlusIdx != -1)
                                                 {
-                                                    currentRepoCommit = null;
-                                                    continue;
+                                                    insertions = lastPlusIdx + 1;
+                                                    deletions = len - insertions;
+                                                }
+                                                else if (len > 0)
+                                                {
+                                                    // all deletions
+                                                    deletions = len;
                                                 }
 
-                                                // get the other attributes now
-                                                long timestamp = Convert.ToInt64(commitInfos[1].Trim());
-                                                string date = commitInfos[2].Trim();
-                                                string message = commitInfos[3].Trim();
-                                                currentRepoCommit = new RepoCommit(commitId, message, timestamp);
-                                                currentRepoCommit.date = date;
-
-                                                RepoCommitChanges changesObj = new RepoCommitChanges(0, 0);
-                                                currentRepoCommit.changes.Add("__sftwTotal__", changesObj);
-                                            }
-                                        }
-                                        else if (currentRepoCommit != null && hasPipe && !isBin)
-                                        {
-                                            // get the file and changes
-                                            // i.e. somefile.cs                             | 20 +++++++++---------
-                                            line = string.Join(" ", line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
-                                            string[] lineInfos = line.Split('|');
-                                            if (lineInfos != null && lineInfos.Length > 1)
-                                            {
-                                                string file = lineInfos[0].Trim();
-                                                string[] metricInfos = lineInfos[1].Trim().Split(' ');
-                                                if (metricInfos != null && metricInfos.Length > 1)
+                                                if (!currentRepoCommit.changes.ContainsKey(file))
                                                 {
-                                                    string addAndDeletes = metricInfos[1].Trim();
-                                                    int len = addAndDeletes.Length;
-                                                    int lastPlusIdx = addAndDeletes.LastIndexOf('+');
-                                                    int insertions = 0;
-                                                    int deletions = 0;
-                                                    if (lastPlusIdx != -1)
+                                                    RepoCommitChanges changesObj = new RepoCommitChanges(insertions, deletions);
+                                                    currentRepoCommit.changes.Add(file, changesObj);
+                                                }
+                                                else
+                                                {
+                                                    RepoCommitChanges fileCommitChanges;
+                                                    currentRepoCommit.changes.TryGetValue(file, out fileCommitChanges);
+                                                    if (fileCommitChanges != null)
                                                     {
-                                                        insertions = lastPlusIdx + 1;
-                                                        deletions = len - insertions;
+                                                        fileCommitChanges.deletions += deletions;
+                                                        fileCommitChanges.insertions += insertions;
                                                     }
-                                                    else if (len > 0)
-                                                    {
-                                                        // all deletions
-                                                        deletions = len;
-                                                    }
-
-                                                    if (!currentRepoCommit.changes.ContainsKey(file))
-                                                    {
-                                                        RepoCommitChanges changesObj = new RepoCommitChanges(insertions, deletions);
-                                                        currentRepoCommit.changes.Add(file, changesObj);
-                                                    }
-                                                    else
-                                                    {
-                                                        RepoCommitChanges fileCommitChanges;
-                                                        currentRepoCommit.changes.TryGetValue(file, out fileCommitChanges);
-                                                        if (fileCommitChanges != null)
-                                                        {
-                                                            fileCommitChanges.deletions += deletions;
-                                                            fileCommitChanges.insertions += insertions;
-                                                        }
-                                                    }
+                                                }
 
 
-                                                    RepoCommitChanges totalRepoCommit;
-                                                    currentRepoCommit.changes.TryGetValue("__sftwTotal__", out totalRepoCommit);
-                                                    if (totalRepoCommit != null)
-                                                    {
-                                                        totalRepoCommit.deletions += deletions;
-                                                        totalRepoCommit.insertions += insertions;
-                                                    }
+                                                RepoCommitChanges totalRepoCommit;
+                                                currentRepoCommit.changes.TryGetValue("__sftwTotal__", out totalRepoCommit);
+                                                if (totalRepoCommit != null)
+                                                {
+                                                    totalRepoCommit.deletions += deletions;
+                                                    totalRepoCommit.insertions += insertions;
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
+                        }
 
-                            if (currentRepoCommit != null)
+                        if (currentRepoCommit != null)
+                        {
+                            repoCommits.Add(currentRepoCommit);
+                        }
+
+                        if (repoCommits != null && repoCommits.Count > 0)
+                        {
+                            // batch 10 at a time
+                            int batch_size = 10;
+                            List<RepoCommit> batch = new List<RepoCommit>();
+                            for (int i = 0; i < repoCommits.Count; i++)
                             {
-                                repoCommits.Add(currentRepoCommit);
-                            }
-
-                            if (repoCommits != null && repoCommits.Count > 0)
-                            {
-                                // batch 10 at a time
-                                int batch_size = 10;
-                                List<RepoCommit> batch = new List<RepoCommit>();
-                                for (int i = 0; i < repoCommits.Count; i++)
+                                batch.Add(repoCommits[i]);
+                                if (i > 0 && i % batch_size == 0)
                                 {
-                                    batch.Add(repoCommits[i]);
-                                    if (i > 0 && i % batch_size == 0)
-                                    {
-                                        // send this batch.
-                                        RepoCommitData commitData = new RepoCommitData(identifier, tag, branch, batch);
-
-                                        string jsonContent = commitData.GetAsJson();// SimpleJson.SerializeObject(commitData);
-                                                                                    // send the members
-                                        HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
-                                            HttpMethod.Post, "/commits", jsonContent);
-
-                                        if (SoftwareHttpManager.IsOk(response))
-                                        {
-                                            Logger.Info(response.ToString());
-                                        }
-                                        else
-                                        {
-                                            Logger.Error(response.ToString());
-                                        }
-                                    }
-                                }
-
-                                if (batch.Count > 0)
-                                {
+                                    // send this batch.
                                     RepoCommitData commitData = new RepoCommitData(identifier, tag, branch, batch);
 
                                     string jsonContent = commitData.GetAsJson();// SimpleJson.SerializeObject(commitData);
@@ -383,10 +359,29 @@ namespace SoftwareCo
                                     {
                                         Logger.Info(response.ToString());
                                     }
-                                    else if (response != null)
+                                    else
                                     {
-                                        Logger.Error("Unable to complete commit request, status: " + response.StatusCode);
+                                        Logger.Error(response.ToString());
                                     }
+                                }
+                            }
+
+                            if (batch.Count > 0)
+                            {
+                                RepoCommitData commitData = new RepoCommitData(identifier, tag, branch, batch);
+
+                                string jsonContent = commitData.GetAsJson();// SimpleJson.SerializeObject(commitData);
+                                                                            // send the members
+                                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
+                                    HttpMethod.Post, "/commits", jsonContent);
+
+                                if (SoftwareHttpManager.IsOk(response))
+                                {
+                                    Logger.Info(response.ToString());
+                                }
+                                else if (response != null)
+                                {
+                                    Logger.Error("Unable to complete commit request, status: " + response.StatusCode);
                                 }
                             }
                         }

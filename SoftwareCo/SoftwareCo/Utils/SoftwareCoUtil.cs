@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -23,8 +24,19 @@ namespace SoftwareCo
 
         public static string workspace_name = Guid.NewGuid().ToString();
 
-        public static string RunCommand(string cmd, string dir)
+        public static string GetFirstCommandResult(string cmd, string dir)
         {
+            List<string> result = RunCommand(cmd, dir);
+            string firstResult = result != null && result.Count > 0 ? result[0] : null;
+            return firstResult;
+        }
+
+        public static List<string> RunCommand(string cmd, string dir)
+        {
+            List<string> result = CacheManager.GetCmdResultCachedValue(dir, cmd);
+            if (result != null) {
+                return result;
+            }
             try
             {
                 Process process = new Process();
@@ -40,34 +52,38 @@ namespace SoftwareCo
                 process.StartInfo.RedirectStandardOutput = true;
                 process.StartInfo.RedirectStandardError = true;
                 process.Start();
+
                 //* Read the output (or the error)
-                string output = process.StandardOutput.ReadToEnd();
-                string err = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-                if (output != null)
+                List<string> output = new List<string>();
+
+                while (process.StandardOutput.Peek() > -1)
                 {
-                    return output.Trim();
+                    output.Add(process.StandardOutput.ReadLine().TrimEnd());
+                }
+
+                while (process.StandardError.Peek() > -1)
+                {
+                    output.Add(process.StandardError.ReadLine().TrimEnd());
+                }
+                process.WaitForExit();
+
+                // all of the callers are expecting a 1 line response. return the 1st line
+                if (output.Count > 0)
+                {
+                    CacheManager.UpdateCmdResult(dir, cmd, output);
+                    return output;
                 }
             }
             catch (Exception e)
             {
                 Logger.Error("Code Time: Unable to execute command, error: " + e.Message);
             }
-            return "";
+            return null;
         }
 
         public static List<string> GetCommandResultList(string cmd, string dir)
         {
-            List<string> resultList = new List<string>();
-            string commandResult = SoftwareCoUtil.RunCommand(cmd, dir);
-
-            if (commandResult != null && !commandResult.Equals(""))
-            {
-                string[] lines = commandResult.Split(
-                    new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-                resultList = new List<string>(lines);
-                resultList = new List<string>(lines);
-            }
+            List<string> resultList = RunCommand(cmd, dir);
             return resultList;
         }
 
@@ -83,8 +99,7 @@ namespace SoftwareCo
 
         public static string getHostname()
         {
-            string hostname = SoftwareCoUtil.RunCommand("hostname", null);
-            return hostname;
+            return GetFirstCommandResult("hostname", null);
         }
 
         public static IDictionary<string, object> ConvertObjectToSource(IDictionary<string, object> dict)
@@ -572,10 +587,9 @@ namespace SoftwareCo
             {
                 return false;
             }
-            // string sessionFile = projDir + "\\.git";
-            // return File.Exists(sessionFile);
-
-            return true;
+            string gitDir = projDir + "\\.git";
+            bool hasGitDir = Directory.Exists(gitDir);
+            return hasGitDir;
         }
 
         public static string CleanJsonString(string data)

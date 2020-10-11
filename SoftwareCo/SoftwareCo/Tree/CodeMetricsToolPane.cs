@@ -59,7 +59,6 @@
             {
                 ((CodeMetricsTree)this.Content).RebuildCodeMetricsAsync();
             }
-            SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
         }
 
         public void RebuildGitMetricsAsync()
