@@ -155,24 +155,24 @@ namespace SoftwareCo
             RepoResourceInfo info = new RepoResourceInfo();
             try
             {
-                string identifier = SoftwareCoUtil.RunCommand("git config remote.origin.url", projectDir);
+                string identifier = SoftwareCoUtil.GetFirstCommandResult("git config remote.origin.url", projectDir);
                 if (identifier != null && !identifier.Equals(""))
                 {
                     info.identifier = identifier;
 
                     // only get these since identifier is available
-                    string email = SoftwareCoUtil.RunCommand("git config user.email", projectDir);
+                    string email = SoftwareCoUtil.GetFirstCommandResult("git config user.email", projectDir);
                     if (email != null && !email.Equals(""))
                     {
                         info.email = email;
 
                     }
-                    string branch = SoftwareCoUtil.RunCommand("git symbolic-ref --short HEAD", projectDir);
+                    string branch = SoftwareCoUtil.GetFirstCommandResult("git symbolic-ref --short HEAD", projectDir);
                     if (branch != null && !branch.Equals(""))
                     {
                         info.branch = branch;
                     }
-                    string tag = SoftwareCoUtil.RunCommand("git describe --all", projectDir);
+                    string tag = SoftwareCoUtil.GetFirstCommandResult("git describe --all", projectDir);
 
                     if (tag != null && !tag.Equals(""))
                     {
@@ -182,7 +182,7 @@ namespace SoftwareCo
                     if (includeMembers)
                     {
                         List<RepoMember> repoMembers = new List<RepoMember>();
-                        string gitLogData = SoftwareCoUtil.RunCommand("git log --pretty=%an,%ae | sort", projectDir);
+                        string gitLogData = SoftwareCoUtil.GetFirstCommandResult("git log --pretty=%an,%ae | sort", projectDir);
 
                         IDictionary<string, string> memberMap = new Dictionary<string, string>();
 
@@ -228,7 +228,7 @@ namespace SoftwareCo
             {
                 return "";
             }
-            return SoftwareCoUtil.RunCommand("git config user.email", projectDir);
+            return SoftwareCoUtil.GetFirstCommandResult("git config user.email", projectDir);
         }
 
         public static string GetRepoUrlLink(string projectDir)
@@ -237,7 +237,7 @@ namespace SoftwareCo
             {
                 return "";
             }
-            string repoUrl = SoftwareCoUtil.RunCommand("git config --get remote.origin.url", projectDir);
+            string repoUrl = SoftwareCoUtil.GetFirstCommandResult("git config --get remote.origin.url", projectDir);
             if (repoUrl != null)
             {
                 repoUrl = repoUrl.Substring(0, repoUrl.LastIndexOf(".git"));
