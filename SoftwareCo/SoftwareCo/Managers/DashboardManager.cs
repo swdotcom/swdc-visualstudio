@@ -29,7 +29,7 @@ namespace SoftwareCo
 
 
             HttpResponseMessage resp =
-            await SoftwareHttpManager.SendDashboardRequestAsync(HttpMethod.Get, "/dashboard?showMusic=false&showGit=false&showRank=false&showToday=false");
+            await SoftwareHttpManager.SendDashboardRequestAsync(HttpMethod.Get, "/dashboard?showToday=true");
 
             if (SoftwareHttpManager.IsOk(resp))
             {
@@ -58,32 +58,6 @@ namespace SoftwareCo
 
             string dashboardFile = FileManager.getDashboardFile();
             string dashboardContent = "";
-            string suffix = SoftwareCoUtil.CreateDateSuffix(DateTime.Now);
-            string formattedDate = DateTime.Now.ToString("ddd, MMM ") + suffix + DateTime.Now.ToString(" h:mm tt");
-
-            dashboardContent = "CODE TIME          " + "(Last updated on " + formattedDate + " )";
-            dashboardContent += "\n\n";
-
-            string todayDate = DateTime.Now.ToString("ddd, MMM ") + suffix;
-            string today_date = "Today " + "(" + todayDate + ")";
-            dashboardContent += SoftwareCoUtil.getSectionHeader(today_date);
-
-            SessionSummary _sessionSummary = SessionSummaryManager.Instance.GetSessionSummayData();
-            CodeTimeSummary ctSummary = TimeDataManager.Instance.GetCodeTimeSummary();
-
-            string codeTimeMinutes = SoftwareCoUtil.HumanizeMinutes(ctSummary.codeTimeMinutes);
-            dashboardContent += SoftwareCoUtil.getDashboardRow("Code time today", codeTimeMinutes);
-            string activeCodeTimeMinutes = SoftwareCoUtil.HumanizeMinutes(ctSummary.activeCodeTimeMinutes);
-            dashboardContent += SoftwareCoUtil.getDashboardRow("Active code time today", activeCodeTimeMinutes);
-            if (_sessionSummary != null)
-            {
-
-                string averageTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.averageDailyMinutes);
-
-                dashboardContent += SoftwareCoUtil.getDashboardRow("90-day avg", averageTime);
-
-                dashboardContent += "\n";
-            }
 
             if (FileManager.SessionSummaryInfoFileExists())
             {
