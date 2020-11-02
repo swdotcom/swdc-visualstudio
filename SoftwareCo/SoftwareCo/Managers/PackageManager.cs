@@ -163,7 +163,7 @@ namespace SoftwareCo
             try
             {
                 await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-                DockPanel statusBarObj = FindChildControl<DockPanel>(System.Windows.Application.Current.MainWindow, "StatusBarPanel");
+                DockPanel statusBarObj = FindChildControl<DockPanel>(Application.Current.MainWindow, "StatusBarPanel");
                 if (statusBarObj != null)
                 {
                     statusBarObj.Children.Insert(0, _statusBarButton);

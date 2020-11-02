@@ -119,12 +119,10 @@ namespace SoftwareCo
             {
                 SessionSummaryManager.Instance.ÇlearSessionSummaryData();
 
-                // send the offline data
-                SoftwareCoPackage.SendOfflinePluginBatchData(null);
 
                 // send the offline TimeData payloads
                 // this will clear the time data summary as well
-                TimeDataManager.Instance.SendTimeDataAsync();
+                TimeDataManager.Instance.ClearTimeDataSummary();
 
                 // day does't match. clear the wall clock time,
                 // the session summary, time data summary,

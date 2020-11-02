@@ -370,8 +370,6 @@ namespace SoftwareCo
 
                 TrackerEventManager.TrackCodeTimeEventAsync(_pluginData);
 
-                FileManager.AppendPluginData(softwareDataContent);
-
                 // update the latestPayloadTimestampEndUtc
                 FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
 

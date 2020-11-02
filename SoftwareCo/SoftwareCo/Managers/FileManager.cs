@@ -7,8 +7,6 @@ namespace SoftwareCo
 {
     class FileManager
     {
-        private static Object dataFileLock = new object();
-
 
         public static string getDashboardFile()
         {
@@ -178,16 +176,6 @@ namespace SoftwareCo
                 }
             }
             return jsonLines;
-        }
-
-        public static void AppendPluginData(string pluginDataContent)
-        {
-            string datastoreFile = getSoftwareDataStoreFile();
-            lock (dataFileLock)
-            {
-                // append to the file
-                File.AppendAllText(datastoreFile, pluginDataContent + Environment.NewLine);
-            }
         }
 
         public static long getItemAsLong(string key)
