@@ -24,18 +24,6 @@ namespace SoftwareCo
         public long globalAverageLinesAdded { get; set; }
         public long globalAverageLinesRemoved { get; set; }
 
-        public bool inflow { get; set; }
-        public double timePercent { get; set; }
-        public double volumePercent { get; set; }
-        public double velocityPercent { get; set; }
-
-        public int liveshareMinutes { get; set; }
-        public long latestPayloadTimestamp { get; set; }
-        public long latestPayloadTimestampEndUtc { get; set; }
-        public bool lastUpdatedToday { get; set; }
-
-        public int dailyMinutesGoal { get; set; }
-
 
         public JsonObject GetSessionSummaryJson()
         {
@@ -59,17 +47,6 @@ namespace SoftwareCo
             jsonObj.Add("globalAverageLinesAdded", this.globalAverageLinesAdded);
             jsonObj.Add("globalAverageLinesRemoved", this.globalAverageLinesRemoved);
 
-            jsonObj.Add("inflow", this.inflow);
-            jsonObj.Add("timePercent", this.timePercent);
-            jsonObj.Add("volumePercent", this.volumePercent);
-            jsonObj.Add("velocityPercent", this.velocityPercent);
-
-            jsonObj.Add("liveshareMinutes", this.liveshareMinutes);
-            jsonObj.Add("latestPayloadTimestamp", this.latestPayloadTimestamp);
-            jsonObj.Add("latestPayloadTimestampEndUtc", this.latestPayloadTimestampEndUtc);
-            jsonObj.Add("lastUpdatedToday", this.lastUpdatedToday);
-
-            jsonObj.Add("dailyMinutesGoal", this.dailyMinutesGoal);
             return jsonObj;
         }
 
@@ -100,17 +77,6 @@ namespace SoftwareCo
             dict.Add("globalAverageLinesAdded", this.globalAverageLinesAdded);
             dict.Add("globalAverageLinesRemoved", this.globalAverageLinesRemoved);
 
-            dict.Add("inflow", this.inflow);
-            dict.Add("timePercent", this.timePercent);
-            dict.Add("volumePercent", this.volumePercent);
-            dict.Add("velocityPercent", this.velocityPercent);
-
-            dict.Add("liveshareMinutes", this.liveshareMinutes);
-            dict.Add("latestPayloadTimestamp", this.latestPayloadTimestamp);
-            dict.Add("latestPayloadTimestampEndUtc", this.latestPayloadTimestampEndUtc);
-            dict.Add("lastUpdatedToday", this.lastUpdatedToday);
-
-            dict.Add("dailyMinutesGoal", this.dailyMinutesGoal);
             return dict;
         }
 
@@ -137,17 +103,6 @@ namespace SoftwareCo
             sessionSummary.globalAverageLinesRemoved = SoftwareCoUtil.ConvertObjectToLong(dict, "globalAverageLinesRemoved");
             sessionSummary.globalAverageSeconds = SoftwareCoUtil.ConvertObjectToLong(dict, "globalAverageSeconds");
 
-            sessionSummary.latestPayloadTimestamp = SoftwareCoUtil.ConvertObjectToLong(dict, "latestPayloadTimestamp");
-            sessionSummary.latestPayloadTimestampEndUtc = SoftwareCoUtil.ConvertObjectToLong(dict, "latestPayloadTimestampEndUtc");
-            sessionSummary.timePercent = SoftwareCoUtil.ConvertObjectToDouble(dict, "timePercent");
-            sessionSummary.velocityPercent = SoftwareCoUtil.ConvertObjectToDouble(dict, "velocityPercent");
-            sessionSummary.volumePercent = SoftwareCoUtil.ConvertObjectToDouble(dict, "volumePercent");
-            sessionSummary.dailyMinutesGoal = SoftwareCoUtil.ConvertObjectToInt(dict, "dailyMinutesGoal");
-            sessionSummary.liveshareMinutes = SoftwareCoUtil.ConvertObjectToInt(dict, "liveshareMinutes");
-
-            sessionSummary.inflow = SoftwareCoUtil.ConvertObjectToBool(dict, "inflow");
-            sessionSummary.lastUpdatedToday = SoftwareCoUtil.ConvertObjectToBool(dict, "lastUpdatedToday");
-
             return sessionSummary;
         }
 
@@ -172,18 +127,6 @@ namespace SoftwareCo
             this.globalAverageDailyKeystrokes = summary.globalAverageDailyKeystrokes;
             this.globalAverageLinesAdded = summary.globalAverageLinesAdded;
             this.globalAverageLinesRemoved = summary.globalAverageLinesRemoved;
-
-            this.inflow = summary.inflow;
-            this.timePercent = summary.timePercent;
-            this.volumePercent = summary.volumePercent;
-            this.velocityPercent = summary.velocityPercent;
-
-            this.liveshareMinutes = summary.liveshareMinutes;
-            this.latestPayloadTimestamp = summary.latestPayloadTimestamp;
-            this.latestPayloadTimestampEndUtc = summary.latestPayloadTimestampEndUtc;
-            this.lastUpdatedToday = summary.lastUpdatedToday;
-
-            this.dailyMinutesGoal = summary.dailyMinutesGoal;
         }
 
     }

@@ -3,12 +3,8 @@ using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
 
 namespace SoftwareCo
@@ -34,13 +30,10 @@ namespace SoftwareCo
         private TextDocumentKeyPressEvents _textDocKeyEvents;
         private WindowVisibilityEvents _windowVisibilityEvents;
 
-        private Timer offlineDataTimer;
-
         // Used by Constants for version info
         public static DTE ObjDte;
         private DocEventManager docEventMgr;
 
-        private static int ONE_MINUTE = 1000 * 60;
         public static bool INITIALIZED = false;
 
         private int solutionTryThreshold = 6;
@@ -140,25 +133,17 @@ namespace SoftwareCo
                 SoftwareLaunchCommand.UpdateEnabledState(true);
             }
 
-            // create a 5 minute timer to send offline data
-            long BatchDataIntervalMillis = ONE_MINUTE * 5;
-            offlineDataTimer = new Timer(
-                    SendOfflinePluginBatchData,
-                    null,
-                    BatchDataIntervalMillis,
-                    BatchDataIntervalMillis);
-
-            // show the readme if it's the initial install
-            InitializeReadme();
-
-            // initialize the tracker manager
-            System.Threading.Tasks.Task.Delay(5000).ContinueWith((task) => { InitializeTracker(); });
-
             Logger.Info(string.Format("Initialized Code Time v{0}", EnvUtil.GetVersion()));
+
+            // initialize the tracker event manager
+            TrackerEventManager.init();
 
             INITIALIZED = true;
 
             InitializeStatusBarAndWallClock();
+
+            // show the readme if it's the initial install
+            InitializeReadme();
         }
 
         private async void InitializeTracker()
@@ -205,16 +190,10 @@ namespace SoftwareCo
 
             TrackerManager.Dispose();
 
-            if (offlineDataTimer != null)
-            {
-                _textDocKeyEvents.BeforeKeyPress -= this.BeforeKeyPress;
-                _docEvents.DocumentClosing -= docEventMgr.DocEventsOnDocumentClosedAsync;
-                _textEditorEvents.LineChanged -= docEventMgr.LineChangedAsync;
-                _windowVisibilityEvents.WindowShowing -= docEventMgr.WindowVisibilityEventAsync;
-
-                offlineDataTimer.Dispose();
-                offlineDataTimer = null;
-            }
+            _textDocKeyEvents.BeforeKeyPress -= this.BeforeKeyPress;
+            _docEvents.DocumentClosing -= docEventMgr.DocEventsOnDocumentClosedAsync;
+            _textEditorEvents.LineChanged -= docEventMgr.LineChangedAsync;
+            _windowVisibilityEvents.WindowShowing -= docEventMgr.WindowVisibilityEventAsync;
 
             INITIALIZED = false;
         }
@@ -225,44 +204,6 @@ namespace SoftwareCo
         public void ProcessKeystrokePayload(Object stateInfo)
         {
             DocEventManager.Instance.PostData();
-        }
-
-        public static async void SendOfflinePluginBatchData(object stateinfo)
-        {
-
-            int batch_limit = 25;
-            List<string> offlinePluginData = FileManager.GetOfflinePayloadList();
-            List<string> batchList = new List<string>();
-            if (offlinePluginData != null && offlinePluginData.Count > 0)
-            {
-                for (int i = 0; i < offlinePluginData.Count; i++)
-                {
-                    string line = offlinePluginData[i];
-                    if (i >= batch_limit)
-                    {
-                        // send this batch off
-                        SendBatchData(batchList);
-                    }
-                    batchList.Add(line);
-                }
-
-                if (batchList.Count > 0)
-                {
-                    SendBatchData(batchList);
-                }
-
-                // delete the file
-                File.Delete(FileManager.getSoftwareDataStoreFile());
-            }
-        }
-
-        private static async Task<bool> SendBatchData(List<string> batchList)
-        {
-            // send this batch off
-            string jsonData = "[" + string.Join(",", batchList) + "]";
-            SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, "/data/batch", jsonData);
-            batchList.Clear();
-            return true;
         }
 
         private async Task InitializeUserInfoAsync()

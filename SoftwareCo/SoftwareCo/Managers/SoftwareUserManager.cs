@@ -254,8 +254,6 @@ namespace SoftwareCo
 
                         // fetch the session summary to get the user's averages
                         WallclockManager.UpdateSessionSummaryFromServerAsync(false);
-
-                        SoftwareCoPackage.SendOfflinePluginBatchData(null);
                     }
                 }
             }

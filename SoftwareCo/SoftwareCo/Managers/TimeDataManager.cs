@@ -174,18 +174,6 @@ namespace SoftwareCo
 
         }
 
-        private JsonArray BuildJsonObjectFromList(List<TimeData> tdList)
-        {
-            JsonArray jsonArr = new JsonArray();
-
-            foreach (TimeData info in tdList)
-            {
-                jsonArr.Add(info);
-            }
-
-            return jsonArr;
-        }
-
         public async Task<TimeData> GetTodayTimeDataSummary(PluginDataProject proj)
         {
             NowTime nowTime = SoftwareCoUtil.GetNowTime();
@@ -295,25 +283,6 @@ namespace SoftwareCo
             }
 
             return ctSummary;
-        }
-
-        public async Task SendTimeDataAsync()
-        {
-            string timeDataSummary = GetTimeDataFileData();
-            if (timeDataSummary != null)
-            {
-                if (!timeDataSummary.StartsWith("["))
-                {
-                    // join array around the json string
-                    timeDataSummary = "[" + string.Join(",", timeDataSummary) + "]";
-                }
-                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
-                    HttpMethod.Post, "/data/time", timeDataSummary);
-                if (SoftwareHttpManager.IsOk(response))
-                {
-                    ClearTimeDataSummary();
-                }
-            }
         }
     }
 }
