@@ -116,27 +116,6 @@ namespace SoftwareCo
             return new List<RepoMember>();
         }
 
-        public async Task ProcessRepoMembers(string projectDir)
-        {
-            if (!SoftwareCoUtil.IsGitProject(projectDir))
-            {
-                return;
-            }
-            RepoResourceInfo info = GitUtilManager.GetResourceInfo(projectDir, true);
-            if (info != null && info.members.Count > 0)
-            {
-                string jsonContent = SimpleJson.SerializeObject(info);
-                // send the members
-                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
-                    HttpMethod.Post, "/repo/members", jsonContent);
-
-                if (!SoftwareHttpManager.IsOk(response))
-                {
-                    Logger.Error(response.ToString());
-                }
-            }
-        }
-
         /**
          * Get the latest repo commit
          **/
