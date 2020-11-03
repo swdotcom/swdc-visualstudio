@@ -548,26 +548,5 @@ namespace SoftwareCo
             }
 
         }
-
-        public static async Task ProcessRepoMembers(string projectDir)
-        {
-            if (!SoftwareCoUtil.IsGitProject(projectDir))
-            {
-                return;
-            }
-            RepoResourceInfo info = GitUtil.GetResourceInfo(projectDir, true);
-            if (info != null && info.members.Count > 0)
-            {
-                string jsonContent = JsonConvert.SerializeObject(info);
-                // send the members
-                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
-                    HttpMethod.Post, "/repo/members", jsonContent);
-
-                if (!SoftwareHttpManager.IsOk(response))
-                {
-                    Logger.Error(response.ToString());
-                }
-            }
-        }
     }
 }
