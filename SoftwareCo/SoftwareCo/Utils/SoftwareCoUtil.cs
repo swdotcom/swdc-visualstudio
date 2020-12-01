@@ -296,14 +296,14 @@ namespace SoftwareCo
                 string cta_text = "Sign up with Google";
                 if (loginType.Equals("google"))
                 {
-                    url = Constants.api_endpoint + "/auth/google?token=" + jwt + "&plugin=codetime&redirect=" + Constants.url_endpoint;
+                    url = Constants.api_endpoint + "/auth/google?plugin_token=" + jwt + "&plugin=codetime&redirect=" + Constants.url_endpoint;
                 }
                 else if (loginType.Equals("github"))
                 {
                     element_name = "ct_sign_up_github_btn";
                     icon_name = "github";
                     cta_text = "Sign up with GitHub";
-                    url = Constants.api_endpoint + "/auth/github?token=" + jwt + "&plugin=codetime&redirect=" + Constants.url_endpoint;
+                    url = Constants.api_endpoint + "/auth/github?plugin_token=" + jwt + "&plugin=codetime&redirect=" + Constants.url_endpoint;
                 }
                 else
                 {
