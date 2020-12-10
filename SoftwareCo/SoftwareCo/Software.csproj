@@ -78,6 +78,9 @@
     <Compile Include="tracker\managers\CacheManager.cs" />
     <Compile Include="tracker\managers\HashManager.cs" />
     <Compile Include="tracker\managers\TrackerManager.cs" />
+    <Compile Include="Tree\SwitchAccountDialog.xaml.cs">
+      <DependentUpon>SwitchAccountDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Utils\Constants.cs" />
     <Compile Include="Utils\DictionaryUtil.cs" />
     <Compile Include="Utils\EnvUtil.cs" />
@@ -380,6 +383,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Tree\CodeMetricsTree.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Tree\SwitchAccountDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

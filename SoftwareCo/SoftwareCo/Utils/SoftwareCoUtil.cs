@@ -10,6 +10,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 
@@ -285,10 +286,21 @@ namespace SoftwareCo
             Process.Start(url);
         }
 
-        public static async void launchLogin(string loginType)
+        public static async void launchLogin(string loginType, bool switching_account)
         {
             try
             {
+                string auth_callback_state = Guid.NewGuid().ToString();
+                FileManager.setAuthCallbackState(auth_callback_state);
+                FileManager.setItem("authType", loginType);
+
+                JsonObject jsonObj = new JsonObject();
+                jsonObj.Add("plugin", "codetime");
+                jsonObj.Add("plugin_uuid", FileManager.getPluginUuid());
+                jsonObj.Add("pluginVersion", EnvUtil.GetVersion());
+                jsonObj.Add("plugin_id", EnvUtil.getPluginId());
+                jsonObj.Add("auth_callback_state", auth_callback_state);
+
                 string jwt = FileManager.getItemAsString("jwt");
                 string url = "";
                 string element_name = "ct_sign_up_google_btn";
@@ -296,22 +308,39 @@ namespace SoftwareCo
                 string cta_text = "Sign up with Google";
                 if (loginType.Equals("google"))
                 {
-                    url = Constants.api_endpoint + "/auth/google?plugin_token=" + jwt + "&plugin=codetime&redirect=" + Constants.url_endpoint;
+                    jsonObj.Add("redirect", Constants.url_endpoint);
+                    url = Constants.api_endpoint + "/auth/google";
                 }
                 else if (loginType.Equals("github"))
                 {
+                    jsonObj.Add("redirect", Constants.url_endpoint);
                     element_name = "ct_sign_up_github_btn";
                     icon_name = "github";
                     cta_text = "Sign up with GitHub";
-                    url = Constants.api_endpoint + "/auth/github?plugin_token=" + jwt + "&plugin=codetime&redirect=" + Constants.url_endpoint;
+                    url = Constants.api_endpoint + "/auth/github";
                 }
                 else
                 {
+                    jsonObj.Add("token", jwt);
+                    jsonObj.Add("auth", "software");
                     element_name = "ct_sign_up_email_btn";
                     icon_name = "evelope";
                     cta_text = "Sign up with email";
-                    url = Constants.url_endpoint + "/email-signup?token=" + jwt + "&plugin=codetime&ath=software";
+                    url = Constants.url_endpoint + "/email-signup";
                 }
+
+                StringBuilder sb = new StringBuilder();
+                // create the query string from the json object
+                foreach (KeyValuePair<string, object> kvp in jsonObj)
+                {
+                    if (sb.Length > 0)
+                    {
+                        sb.Append("&");
+                    }
+                    sb.Append(kvp.Key).Append("=").Append(System.Web.HttpUtility.UrlEncode(kvp.Value.ToString(), System.Text.Encoding.UTF8));
+                }
+
+                url += "?" + sb.ToString();
 
                 Process.Start(url);
 
@@ -325,7 +354,8 @@ namespace SoftwareCo
 
                 if (!SoftwareUserManager.checkingLoginState)
                 {
-                    SoftwareUserManager.RefetchUserStatusLazily(40);
+                    FileManager.setBoolItem("switching_account", switching_account);
+                    Task.Delay(1000 * 10).ContinueWith((task) => { SoftwareUserManager.RefetchUserStatusLazily(40); });
                 }
             }
             catch (Exception ex)

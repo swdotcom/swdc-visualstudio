@@ -13,18 +13,6 @@ namespace SoftwareCo
         public static bool isOnline = true;
         public static long lastOnlineCheck = 0;
 
-        public class UserStatus
-        {
-            public bool loggedIn;
-        }
-
-        public class User
-        {
-            public long id;
-            public string email;
-            public string plugin_jwt;
-        }
-
         public static async Task<bool> IsOnlineAsync()
         {
             long nowInSec = SoftwareCoUtil.GetNowInSeconds();
@@ -40,15 +28,21 @@ namespace SoftwareCo
             return isOnline;
         }
 
-        public static async Task<string> CreateAnonymousUserAsync()
+        public static async Task<string> CreateAnonymousUserAsync(bool ignoreJwt)
         {
             // get the app jwt
             try
             {
-                string app_jwt = await GetAppJwtAsync();
-                if (app_jwt != null)
+                string jwt = FileManager.getItemAsString("jwt");
+                if (String.IsNullOrEmpty(jwt))
                 {
-                    string creation_annotation = "NO_SESSION_FILE";
+                    string plugin_uuid = FileManager.getPluginUuid();
+                    string auth_callback_state = FileManager.getAuthCallbackState();
+                    if (String.IsNullOrEmpty(auth_callback_state))
+                    {
+                        auth_callback_state = Guid.NewGuid().ToString();
+                        FileManager.setAuthCallbackState(auth_callback_state);
+                    }
                     string osUsername = Environment.UserName;
                     string timezone = "";
                     if (TimeZone.CurrentTimeZone.DaylightName != null
@@ -65,11 +59,12 @@ namespace SoftwareCo
                     jsonObj.Add("timezone", timezone);
                     jsonObj.Add("username", osUsername);
                     jsonObj.Add("hostname", SoftwareCoUtil.getHostname());
-                    jsonObj.Add("creation_annotation", creation_annotation);
+                    jsonObj.Add("plugin_uuid", plugin_uuid);
+                    jsonObj.Add("auth_callback_state", auth_callback_state);
 
-                    string api = "/data/onboard";
+                    string api = "/plugins/onboard";
                     string jsonData = jsonObj.ToString();
-                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, api, jsonData, app_jwt);
+                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, api, jsonData, null, false);
 
                     if (SoftwareHttpManager.IsOk(response))
                     {
@@ -77,10 +72,12 @@ namespace SoftwareCo
 
                         IDictionary<string, object> respObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(responseBody);
                         respObj.TryGetValue("jwt", out object jwtObj);
-                        string jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
+                        jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
                         if (jwt != null)
                         {
                             FileManager.setItem("jwt", jwt);
+                            FileManager.setBoolItem("switching_account", false);
+                            FileManager.setAuthCallbackState(null);
                             return jwt;
                         }
                     }
@@ -96,130 +93,83 @@ namespace SoftwareCo
             return null;
         }
 
-        public static async Task<string> GetAppJwtAsync()
+        private static async Task<IDictionary<string, object>> GetUserFromResponseAsync(HttpResponseMessage response)
         {
-            try
+            if (!SoftwareHttpManager.IsOk(response))
             {
-
-                long seconds = SoftwareCoUtil.GetNowInSeconds();
-                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(
-                        HttpMethod.Get, "/data/apptoken?token=" + seconds);
-
-                if (SoftwareHttpManager.IsOk(response))
-                {
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody, new Dictionary<string, object>());
-                    jsonObj.TryGetValue("jwt", out object jwtObj);
-                    string app_jwt = (jwtObj == null) ? null : Convert.ToString(jwtObj);
-                    return app_jwt;
-                }
-
-            }
-            catch (Exception ex)
-            {
-
-                Logger.Error("GetAppJwtAsync, error: " + ex.Message, ex);
+                return null;
             }
 
-            return null;
-        }
-
-        private static async Task<User> GetUserAsync()
-        {
-            string jwt = FileManager.getItemAsString("jwt");
             try
             {
-                if (jwt != null)
+                string responseBody = await response.Content.ReadAsStringAsync();
+                IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody, new Dictionary<string, object>());
+                if (jsonObj != null)
                 {
-                    string api = "/users/me";
-                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api);
-                    if (SoftwareHttpManager.IsOk(response))
+                    jsonObj.TryGetValue("user", out object userObj);
+                    if (userObj != null)
                     {
-                        string responseBody = await response.Content.ReadAsStringAsync();
-                        IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody, new Dictionary<string, object>());
-                        if (jsonObj != null)
-                        {
-                            jsonObj.TryGetValue("data", out object userObj);
-                            if (userObj != null)
-                            {
-                                IDictionary<string, object> userData = (IDictionary<string, object>)userObj;
-
-                                userData.TryGetValue("email", out object emailObj);
-                                string email = (emailObj == null) ? null : Convert.ToString(emailObj);
-                                userData.TryGetValue("plugin_jwt", out object pluginJwtObj);
-                                string pluginJwt = (pluginJwtObj == null) ? null : Convert.ToString(pluginJwtObj);
-                                userData.TryGetValue("id", out object idObj);
-                                long userId = (idObj == null) ? 0L : Convert.ToInt64(idObj);
-
-                                User user = new User();
-                                user.email = email;
-                                user.plugin_jwt = pluginJwt;
-                                user.id = userId;
-                                return user;
-                            }
-                        }
+                        IDictionary<string, object> userData = (IDictionary<string, object>)userObj;
+                        return userData;
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("GetUserAsync, error: " + ex.Message, ex);
-
-            }
-
+            } catch (Exception e) { }
             return null;
         }
 
         public static async Task<bool> IsLoggedOn()
         {
-            try
+            string jwt = FileManager.getItemAsString("jwt");
+            string authType = FileManager.getItemAsString("authType");
+
+            string auth_callback_state = FileManager.getAuthCallbackState();
+
+            string api = "/users/plugin/state";
+
+            string token = (!String.IsNullOrEmpty(auth_callback_state)) ? auth_callback_state : jwt;
+            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, null, token);
+
+            // check to see if we found the user or not
+            IDictionary < string, object> user = await GetUserFromResponseAsync(response);
+
+            if (user == null && !String.IsNullOrEmpty(authType) && (authType.Equals("software") || authType.Equals("email")))
             {
-                string jwt = FileManager.getItemAsString("jwt");
-                if (jwt != null)
-                {
-                    User user = await GetUserAsync();
-                    if (user != null && SoftwareCoUtil.IsValidEmail(user.email))
-                    {
-                        FileManager.setItem("name", user.email);
-                        FileManager.setItem("jwt", user.plugin_jwt);
-                        return true;
-                    }
-
-                    string api = "/users/plugin/state";
-                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api);
-                    if (SoftwareHttpManager.IsOk(response))
-                    {
-                        string responseBody = await response.Content.ReadAsStringAsync();
-                        IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody, new Dictionary<string, object>());
-                        if (jsonObj != null)
-                        {
-                            jsonObj.TryGetValue("state", out object stateObj);
-                            string state = (stateObj == null) ? "NONE" : Convert.ToString(stateObj);
-                            jsonObj.TryGetValue("jwt", out object pluginJwtObj);
-                            string pluginJwt = (pluginJwtObj == null) ? null : Convert.ToString(pluginJwtObj);
-                            if (state.Equals("OK") && pluginJwt != null)
-                            {
-                                jsonObj.TryGetValue("email", out object nameObj);
-                                string name = (nameObj == null) ? null : Convert.ToString(nameObj);
-                                if (name != null)
-                                {
-                                    FileManager.setItem("name", name);
-                                }
-                                FileManager.setItem("jwt", pluginJwt);
-                            }
-                            else if (state.Equals("NOT_FOUND"))
-                            {
-                                FileManager.setItem("jwt", null);
-                            }
-                        }
-                    }
-
-                }
-                FileManager.setItem("name", null);
+                // use the jwt
+                response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, null, jwt);
+                user = await GetUserFromResponseAsync(response);
             }
-            catch (Exception ex)
+
+            if (user != null)
             {
-                //
+                user.TryGetValue("email", out object emailObj);
+                string email = (emailObj == null) ? null : Convert.ToString(emailObj);
+                user.TryGetValue("registered", out object registeredObj);
+                int registered = (registeredObj == null) ? 0 : Convert.ToInt32(registeredObj);
+                user.TryGetValue("plugin_jwt", out object pluginJwtObj);
+                string pluginJwt = (pluginJwtObj == null) ? null : Convert.ToString(pluginJwtObj);
+
+                if (registered == 1)
+                {
+                    // set the name since we found a registered user
+                    FileManager.setItem("name", email);
+                }
+
+                if (String.IsNullOrEmpty(authType))
+                {
+                    // default to software if auth type is null or empty
+                    FileManager.setItem("authType", "software");
+                }
+
+                if (!String.IsNullOrEmpty(pluginJwt))
+                {
+                    // set the jwt since its found
+                    FileManager.setItem("jwt", pluginJwt);
+                }
+
+                FileManager.setBoolItem("switching_account", false);
+                FileManager.setAuthCallbackState(null);
+
+                return true;
             }
 
             return false;
@@ -232,35 +182,51 @@ namespace SoftwareCo
             {
                 bool loggedIn = await IsLoggedOn();
 
-                if (!loggedIn && tryCountUntilFoundUser > 0)
+                if (!loggedIn)
                 {
-                    tryCountUntilFoundUser -= 1;
+                    if (tryCountUntilFoundUser > 0)
+                    {
+                        tryCountUntilFoundUser -= 1;
 
-                    Task.Delay(1000 * 8).ContinueWith((task) => { RefetchUserStatusLazily(tryCountUntilFoundUser); });
+                        Task.Delay(1000 * 10).ContinueWith((task) => { RefetchUserStatusLazily(tryCountUntilFoundUser); });
+                    } else
+                    {
+                        // clear the auth, we've tried enough
+                        FileManager.setBoolItem("switching_account", false);
+                        FileManager.setAuthCallbackState(null);
+                        checkingLoginState = false;
+                    }
                 }
                 else
                 {
                     checkingLoginState = false;
-                    if (loggedIn)
-                    {
-                        // disable login command
-                        SoftwareLoginCommand.UpdateEnabledState(false);
-                        // enable web dashboard command
-                        SoftwareLaunchCommand.UpdateEnabledState(true);
-                        // show they've logged on
-                        string msg = "Successfully logged on to Code Time.";
-                        const string caption = "Code Time";
-                        MessageBox.Show(msg, caption, MessageBoxButtons.OK);
+                    // clear the auth, we've tried enough
+                    FileManager.setBoolItem("switching_account", false);
+                    FileManager.setAuthCallbackState(null);
 
-                        // fetch the session summary to get the user's averages
-                        WallclockManager.UpdateSessionSummaryFromServerAsync(false);
-                    }
+                    // disable login command
+                    SoftwareLoginCommand.UpdateEnabledState(false);
+                    // enable web dashboard command
+                    SoftwareLaunchCommand.UpdateEnabledState(true);
+
+                    // clear the time data summary and session summary
+                    SessionSummaryManager.Instance.ÇlearSessionSummaryData();
+                    TimeDataManager.Instance.ClearTimeDataSummary();
+
+                    // fetch the session summary to get the user's averages
+                    WallclockManager.UpdateSessionSummaryFromServerAsync(true);
+
+                    // show they've logged on
+                    string msg = "Successfully logged on to Code Time.";
+                    const string caption = "Code Time";
+                    MessageBox.Show(msg, caption, MessageBoxButtons.OK);
+
                 }
             }
             catch (Exception ex)
             {
                 Logger.Error("RefetchUserStatusLazily ,error : " + ex.Message, ex);
-
+                checkingLoginState = false;
             }
 
         }

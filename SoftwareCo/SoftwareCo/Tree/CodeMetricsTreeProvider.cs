@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace SoftwareCo
@@ -25,8 +26,7 @@ namespace SoftwareCo
             return parent as CodeMetricsTreeItem;
         }
 
-        public static TreeViewItem BuildTreeItem(string id, string text, string iconName = null)
-        {
+        public static TreeViewItem BuildTreeItem(string id, string text, string iconName = null, MouseButtonEventHandler handler = null) {
             CodeMetricsTreeItem treeItem = new CodeMetricsTreeItem(id);
 
             // create a stack panel
@@ -41,6 +41,11 @@ namespace SoftwareCo
             Label label = new Label();
             label.Content = text;
             label.Foreground = Brushes.DarkCyan;
+            if (handler != null)
+            {
+                label.MouseDown += handler;
+            }
+            
 
             // add to the stack
             stack.Children.Add(label);

@@ -79,6 +79,11 @@ namespace SoftwareCo
             return getSoftwareDataDir(true) + "\\session.json";
         }
 
+        public static string getDeviceFile()
+        {
+            return getSoftwareDataDir(true) + "\\device.json";
+        }
+
         public static bool FileChangeInfoSummaryFileExists()
         {
             string file = getSoftwareDataDir(false) + "\\fileChangeSummary.json";
@@ -283,6 +288,117 @@ namespace SoftwareCo
                 content = JsonConvert.SerializeObject(dict);
 
                 File.WriteAllText(sessionFile, content, System.Text.Encoding.UTF8);
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        public static string getPluginUuid()
+        {
+            try
+            {
+                string content = getDeviceFileContent();
+                if (content != null)
+                {
+                    object jsonVal = SimpleJson.GetValue(content, "plugin_uuid");
+                    if (jsonVal != null)
+                    {
+                        return jsonVal.ToString();
+                    }
+                }
+
+            }
+            catch (Exception)
+            {
+                //
+            }
+            // unable to save/retrieve the plugin uuid
+            return null;
+        }
+
+        private static void setPluginUuid(string value)
+        {
+            writeContentToDeviceFile("plugin_uuid", value);
+        }
+
+        public static string getAuthCallbackState()
+        {
+            try
+            {
+                string content = getDeviceFileContent();
+                if (content != null)
+                {
+                    object jsonVal = SimpleJson.GetValue(content, "auth_callback_state");
+                    if (jsonVal != null)
+                    {
+                        return jsonVal.ToString();
+                    }
+                }
+
+            }
+            catch (Exception)
+            {
+                //
+            }
+            // unable to save/retrieve the auth_callback_state
+            return null;
+        }
+
+        public static void setAuthCallbackState(string value)
+        {
+            writeContentToDeviceFile("auth_callback_state", value);
+        }
+
+        private static string getDeviceFileContent()
+        {
+            string deviceFile = getDeviceFile();
+            if (!File.Exists(deviceFile))
+            {
+                createDeviceFile();
+            }
+            try
+            {
+                string content = File.ReadAllText(deviceFile, System.Text.Encoding.UTF8);
+
+                return content;
+            }
+            catch (Exception)
+            {
+                //
+            }
+            return null;
+        }
+
+        private static void createDeviceFile()
+        {
+            string deviceFile = getDeviceFile();
+            if (!File.Exists(deviceFile))
+            {
+                // create it
+                // set the plugin_uuid
+                string plugin_uuid = Guid.NewGuid().ToString();
+                writeContentToDeviceFile("plugin_uuid", plugin_uuid);
+            }
+        }
+
+        private static void writeContentToDeviceFile(string key, string value)
+        {
+            string deviceFile = getDeviceFile();
+            try
+            {
+                string content = "";
+                IDictionary<string, object> dict = new Dictionary<string, object>();
+                if (File.Exists(deviceFile))
+                {
+
+                    content = File.ReadAllText(deviceFile, System.Text.Encoding.UTF8);
+                    dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
+                }
+                dict[key] = value;
+                content = JsonConvert.SerializeObject(dict);
+
+                File.WriteAllText(deviceFile, content, System.Text.Encoding.UTF8);
             }
             catch (Exception)
             {
