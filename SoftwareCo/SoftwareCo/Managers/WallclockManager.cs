@@ -6,7 +6,6 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace SoftwareCo
 {
@@ -161,6 +160,9 @@ namespace SoftwareCo
                         try
                         {
                             SessionSummary incomingSummary = summary.GetSessionSummaryFromDictionary(jsonObj, useCurrentDayMetrics);
+
+                            TimeDataManager.Instance.UpdateSessionFromSummaryApiAsync(incomingSummary.currentDayMinutes);
+
                             summary.CloneSessionSummary(incomingSummary);
                             SessionSummaryManager.Instance.SaveSessionSummaryToDisk(summary);
 
@@ -172,7 +174,6 @@ namespace SoftwareCo
                         }
                     }
                 }
-                PackageManager.RebuildMenuButtonsAsync();
             }
         }
     }

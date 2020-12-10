@@ -43,15 +43,9 @@ namespace SoftwareCo
 
         public async Task RebuildMenuButtonsAsync()
         {
-            SignupPanel.Children.Clear();
-            List<StackPanel> signupPanels = BuildSignupPanels();
-            if (signupPanels.Count > 0)
-            {
-                foreach (StackPanel panel in signupPanels)
-                {
-                    SignupPanel.Children.Add(panel);
-                }
-            }
+            BuildSignupPanels();
+
+            BuildLoggedInPanel();
 
             string email = FileManager.getItemAsString("name");
             if (!string.IsNullOrEmpty(email))
@@ -101,17 +95,29 @@ namespace SoftwareCo
             FeedbackImage.Source = FeedbackImageSrc;
         }
 
-        private List<StackPanel> BuildSignupPanels()
+        private void BuildSignupPanels()
         {
-            List<StackPanel> panels = new List<StackPanel>();
+            SignupPanel.Children.Clear();
             string email = FileManager.getItemAsString("name");
-            if (string.IsNullOrEmpty(email))
-            {
-                panels.Add(BuildClickLabel("GoogleSignupPanel", "google.png", "Sign up with Google", GoogleConnectClickHandler));
-                panels.Add(BuildClickLabel("GitHubSignupPanel", "github.png", "Sign up with GitHub", GitHubConnectClickHandler));
-                panels.Add(BuildClickLabel("EmailSignupPanel", "icons8-envelope-16.png", "Sign up using email", EmailConnectClickHandler));
+            if (string.IsNullOrEmpty(email)) {
+                SignupPanel.Visibility = Visibility.Visible;
+                SignupPanel.Children.Add(BuildClickLabel("GoogleSignupPanel", "google.png", "Sign up with Google", GoogleConnectClickHandler));
+                SignupPanel.Children.Add(BuildClickLabel("GitHubSignupPanel", "github.png", "Sign up with GitHub", GitHubConnectClickHandler));
+                SignupPanel.Children.Add(BuildClickLabel("EmailSignupPanel", "icons8-envelope-16.png", "Sign up using email", EmailConnectClickHandler));
             }
-            return panels;
+        }
+
+        private void BuildLoggedInPanel()
+        {
+            LoggedInTree.Items.Clear();
+            string email = FileManager.getItemAsString("name");
+            if (!string.IsNullOrEmpty(email))
+            {
+                List<TreeViewItem> loggedInChildren = new List<TreeViewItem>();
+                loggedInChildren.Add(CodeMetricsTreeProvider.BuildTreeItem("switch_account_node", "Switch account", "cpaw.png", SwitchAccountsClickHandler));
+                TreeViewItem loggedInTreeItem = BuildMetricNodes("logged_in_node", email, loggedInChildren);
+                LoggedInTree.Items.Add(loggedInTreeItem);
+            }
         }
 
         private StackPanel BuildClickLabel(string panelName, string iconName, string content, MouseButtonEventHandler handler)
@@ -463,6 +469,20 @@ namespace SoftwareCo
             }
         }
 
+        private void SwitchAccountsClickHandler(object sender, MouseButtonEventArgs args)
+        {
+            System.Console.WriteLine("here");
+            SwitchAccountDialog dialog = new SwitchAccountDialog();
+            dialog.ShowDialog();
+
+            string authType = dialog.getSelection();
+            if (!string.IsNullOrEmpty(authType))
+            {
+                ConnectClickHandler(authType.ToLower(), true);
+            }
+
+        }
+
         private void GoogleConnectClickHandler(object sender, MouseButtonEventArgs args)
         {
             ConnectClickHandler("google");
@@ -478,13 +498,13 @@ namespace SoftwareCo
             ConnectClickHandler("email");
         }
 
-        private void ConnectClickHandler(string loginType)
+        private void ConnectClickHandler(string loginType, bool switch_account = false)
         {
             if (!SoftwareCoPackage.INITIALIZED)
             {
                 return;
             }
-            SoftwareCoUtil.launchLogin(loginType);
+            SoftwareCoUtil.launchLogin(loginType, switch_account);
         }
 
         private void LaunchWebDashboard(object sender, MouseButtonEventArgs args)

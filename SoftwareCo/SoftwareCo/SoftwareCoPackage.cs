@@ -53,7 +53,7 @@ namespace SoftwareCo
                 base.Initialize();
 
                 // create the anon user if it's a new install (async)
-                InitializeUserInfoAsync();
+                await InitializeUserInfoAsync();
 
                 // obtain the DTE service to track doc changes
                 ObjDte = await GetServiceAsync(typeof(DTE)) as DTE;
@@ -97,12 +97,12 @@ namespace SoftwareCo
                 {
                     solutionTryCount++;
                     // no solution, try again later
-                    System.Threading.Tasks.Task.Delay(5000).ContinueWith((task) => { CheckSolutionActivation(); });
+                    _ = System.Threading.Tasks.Task.Delay(5000).ContinueWith((task) => { CheckSolutionActivation(); });
                 }
                 else
                 {
                     // solution is activated or it's empty, initialize
-                    System.Threading.Tasks.Task.Delay(1000).ContinueWith((task) => { InitializePlugin(); });
+                    _ = System.Threading.Tasks.Task.Delay(1000).ContinueWith((task) => { InitializePlugin(); });
                 }
             }
         }
@@ -214,7 +214,7 @@ namespace SoftwareCo
                 string jwt = FileManager.getItemAsString("jwt");
                 if (string.IsNullOrEmpty(jwt))
                 {
-                    SoftwareUserManager.CreateAnonymousUserAsync();
+                    SoftwareUserManager.CreateAnonymousUserAsync(false);
                 }
 
                 long sessionTresholdSeconds = FileManager.getItemAsLong("sessionThresholdInSec");
