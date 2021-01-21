@@ -2,6 +2,7 @@
 using Slack.NetStandard.WebApi;
 using Slack.NetStandard.WebApi.Dnd;
 using Slack.NetStandard.WebApi.Users;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
@@ -186,8 +187,7 @@ namespace SoftwareCo
             if (updated)
             {
                 string msg = "Slack notifications are pause for 2 hours";
-                const string caption = "Code Time";
-                Task.Delay(0).ContinueWith((task) => { MessageBox.Show(msg, caption, MessageBoxButtons.OK); });
+                ShowNotification(msg);
 
                 slackDndStatus = null;
                 PackageManager.RebuildFlowButtons();
@@ -222,8 +222,7 @@ namespace SoftwareCo
             if (updated)
             {
                 string msg = "Slack notifications enabled";
-                const string caption = "Code Time";
-                Task.Delay(0).ContinueWith((task) => { MessageBox.Show(msg, caption, MessageBoxButtons.OK); });
+                ShowNotification(msg);
 
                 slackDndStatus = null;
                 PackageManager.RebuildFlowButtons();
@@ -308,8 +307,7 @@ namespace SoftwareCo
             if (updated)
             {
                 string msg = "Slack presence updated";
-                const string caption = "Code Time";
-                Task.Delay(0).ContinueWith((task) => { MessageBox.Show(msg, caption, MessageBoxButtons.OK); });
+                ShowNotification(msg);
 
                 slackPresence = null;
                 PackageManager.RebuildFlowButtons();
@@ -370,8 +368,7 @@ namespace SoftwareCo
             if (updated)
             {
                 string msg = "Slack status message updated";
-                const string caption = "Code Time";
-                Task.Delay(0).ContinueWith((task) => { MessageBox.Show(msg, caption, MessageBoxButtons.OK); });
+                ShowNotification(msg);
 
                 slackStatusText = null;
                 PackageManager.RebuildFlowButtons();
@@ -424,8 +421,7 @@ namespace SoftwareCo
                 connectTryCount = 0;
 
                 string msg = "Successfully connected to Slack.";
-                const string caption = "Code Time";
-                Task.Delay(0).ContinueWith((task) => { MessageBox.Show(msg, caption, MessageBoxButtons.OK); });
+                ShowNotification(msg);
 
                 // refresh the tree view
                 clearSlackInfoCache();
@@ -467,33 +463,17 @@ namespace SoftwareCo
             DialogResult res = MessageBox.Show(msg, "Registration", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1);
             if (res == DialogResult.OK)
             {
-                // show the sign up flow
-                SwitchAccountDialog dialog = new SwitchAccountDialog();
-                dialog.ShowDialog();
-
-                string authType = dialog.getSelection();
-                if (!string.IsNullOrEmpty(authType))
-                {
-                    SoftwareCoUtil.launchLogin(authType.ToLower(), true);
-                }
+                ShowSignUpDialog();
             }
         }
 
-        private static void InitiateSlackConnectFlow()
+        private async static void InitiateSlackConnectFlow()
         {
             string msg = "Connect a Slack workspace to continue.";
             DialogResult res = MessageBox.Show(msg, "Slack connect", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1);
             if (res == DialogResult.OK)
             {
-                // show the sign up flow
-                SwitchAccountDialog dialog = new SwitchAccountDialog();
-                dialog.ShowDialog();
-
-                string authType = dialog.getSelection();
-                if (!string.IsNullOrEmpty(authType))
-                {
-                    ConnectSlackWorkspace();
-                }
+                ConnectSlackWorkspace();
             }
         }
 
@@ -519,6 +499,29 @@ namespace SoftwareCo
             }
 
             return integration_id;
+        }
+
+        [STAThread]
+        private static void ShowNotification(string message)
+        {
+            Task.Delay(0).ContinueWith((task) =>
+            {
+                Notification.Show("Slack status", message);
+            });
+        }
+
+        [STAThread]
+        private static void ShowSignUpDialog()
+        {
+            // show the sign up flow
+            SwitchAccountDialog dialog = new SwitchAccountDialog();
+            dialog.ShowDialog();
+
+            string authType = dialog.getSelection();
+            if (!string.IsNullOrEmpty(authType))
+            {
+                ConnectSlackWorkspace();
+            }
         }
     }
 

@@ -148,12 +148,6 @@ namespace SoftwareCo
             WallclockManager.UpdateSessionSummaryFromServerAsync();
         }
 
-        private async void InitializeTracker()
-        {
-            // initialize the tracker event manager
-            TrackerEventManager.init();
-        }
-
         private async void InitializeStatusBarAndWallClock()
         {
             PackageManager.InitializeStatusBar();

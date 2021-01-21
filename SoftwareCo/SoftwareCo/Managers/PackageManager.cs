@@ -30,6 +30,7 @@ namespace SoftwareCo
             return package;
         }
 
+        [STAThread]
         public static async Task RebuildTreeAsync()
         {
             if (package == null || !SoftwareCoPackage.INITIALIZED)
@@ -49,6 +50,7 @@ namespace SoftwareCo
             catch (Exception) { }
         }
 
+        [STAThread]
         public static async Task RebuildFlowButtons()
         {
             if (package == null || !SoftwareCoPackage.INITIALIZED)
@@ -68,6 +70,7 @@ namespace SoftwareCo
             catch (Exception) { }
         }
 
+        [STAThread]
         public static async Task OpenCodeMetricsPaneAsync()
         {
             if (package == null || !SoftwareCoPackage.INITIALIZED)
@@ -88,6 +91,7 @@ namespace SoftwareCo
             catch (Exception) { }
         }
 
+        [STAThread]
         public static async Task ToggleStatusbarMetrics()
         {
             if (package == null || !SoftwareCoPackage.INITIALIZED)
@@ -107,6 +111,7 @@ namespace SoftwareCo
             catch (Exception) { }
         }
 
+        [STAThread]
         public static async Task UpdateStatusBarButtonText(string text, string iconName = null)
         {
             if (package == null || !SoftwareCoPackage.INITIALIZED)
@@ -130,6 +135,7 @@ namespace SoftwareCo
             }
         }
 
+        [STAThread]
         public static async Task InitializeStatusBar()
         {
 

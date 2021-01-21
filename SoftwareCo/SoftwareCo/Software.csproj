@@ -56,6 +56,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="forms\InputBox.cs" />
+    <Compile Include="forms\Notification.cs" />
     <Compile Include="forms\OptionListDialog.xaml.cs">
       <DependentUpon>OptionListDialog.xaml</DependentUpon>
     </Compile>
