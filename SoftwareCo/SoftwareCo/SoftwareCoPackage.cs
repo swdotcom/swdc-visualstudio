@@ -144,6 +144,8 @@ namespace SoftwareCo
 
             // show the readme if it's the initial install
             InitializeReadme();
+
+            WallclockManager.UpdateSessionSummaryFromServerAsync();
         }
 
         private async void InitializeTracker()

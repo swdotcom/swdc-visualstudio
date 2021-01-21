@@ -107,9 +107,7 @@ namespace SoftwareCo
         public static async Task DispatchUpdatesProcessorAsync()
         {
             SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
-            PackageManager.RebuildMenuButtonsAsync();
-            PackageManager.RebuildCodeMetricsAsync();
-            PackageManager.RebuildGitMetricsAsync();
+            PackageManager.RebuildTreeAsync();
         }
 
         public static async Task GetNewDayCheckerAsync()
@@ -138,12 +136,12 @@ namespace SoftwareCo
                 FileManager.setNumericItem("latestPayloadTimestampEndUtc", 0);
 
                 // update the session summary global and averages for the new day
-                UpdateSessionSummaryFromServerAsync(true);
+                UpdateSessionSummaryFromServerAsync();
 
             }
         }
 
-        public static async Task UpdateSessionSummaryFromServerAsync(bool useCurrentDayMetrics)
+        public static async Task UpdateSessionSummaryFromServerAsync()
         {
             object jwt = FileManager.getItem("jwt");
             if (jwt != null)
@@ -154,12 +152,13 @@ namespace SoftwareCo
                 {
                     SessionSummary summary = SessionSummaryManager.Instance.GetSessionSummayData();
                     string responseBody = await response.Content.ReadAsStringAsync();
+                    responseBody = SoftwareCoUtil.CleanJsonToDeserialize(responseBody);
                     IDictionary<string, object> jsonObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(responseBody);
                     if (jsonObj != null)
                     {
                         try
                         {
-                            SessionSummary incomingSummary = summary.GetSessionSummaryFromDictionary(jsonObj, useCurrentDayMetrics);
+                            SessionSummary incomingSummary = summary.GetSessionSummaryFromDictionary(jsonObj);
 
                             TimeDataManager.Instance.UpdateSessionFromSummaryApiAsync(incomingSummary.currentDayMinutes);
 

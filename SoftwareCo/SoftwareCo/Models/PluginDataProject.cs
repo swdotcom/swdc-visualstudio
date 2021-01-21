@@ -22,9 +22,9 @@ namespace SoftwareCo
 
         public static PluginDataProject GetPluginDataFromDictionary(IDictionary<string, object> dict)
         {
-            string projName = SoftwareCoUtil.ConvertObjectToString(dict, "name");
-            string projDir = SoftwareCoUtil.ConvertObjectToString(dict, "directory");
-            string identifierVal = SoftwareCoUtil.ConvertObjectToString(dict, "identifier");
+            string projName = SoftwareCoUtil.GetStringVal(dict, "name");
+            string projDir = SoftwareCoUtil.GetStringVal(dict, "directory");
+            string identifierVal = SoftwareCoUtil.GetStringVal(dict, "identifier");
             PluginDataProject project = new PluginDataProject(projName, projDir);
             project.identifier = identifierVal;
             return project;

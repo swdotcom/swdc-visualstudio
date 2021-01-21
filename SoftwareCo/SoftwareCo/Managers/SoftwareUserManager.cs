@@ -34,15 +34,10 @@ namespace SoftwareCo
             try
             {
                 string jwt = FileManager.getItemAsString("jwt");
-                if (String.IsNullOrEmpty(jwt))
+                if (string.IsNullOrEmpty(jwt))
                 {
                     string plugin_uuid = FileManager.getPluginUuid();
-                    string auth_callback_state = FileManager.getAuthCallbackState();
-                    if (String.IsNullOrEmpty(auth_callback_state))
-                    {
-                        auth_callback_state = Guid.NewGuid().ToString();
-                        FileManager.setAuthCallbackState(auth_callback_state);
-                    }
+                    string auth_callback_state = FileManager.getAuthCallbackState(true);
                     string osUsername = Environment.UserName;
                     string timezone = "";
                     if (TimeZone.CurrentTimeZone.DaylightName != null
@@ -93,7 +88,7 @@ namespace SoftwareCo
             return null;
         }
 
-        private static async Task<IDictionary<string, object>> GetUserFromResponseAsync(HttpResponseMessage response)
+        private static async Task<PluginStateInfo> GetPluginStateInfoFromResponseAsync(HttpResponseMessage response)
         {
             if (!SoftwareHttpManager.IsOk(response))
             {
@@ -103,76 +98,67 @@ namespace SoftwareCo
             try
             {
                 string responseBody = await response.Content.ReadAsStringAsync();
-                IDictionary<string, object> jsonObj = (IDictionary<string, object>)SimpleJson.DeserializeObject(responseBody, new Dictionary<string, object>());
-                if (jsonObj != null)
-                {
-                    jsonObj.TryGetValue("user", out object userObj);
-                    if (userObj != null)
-                    {
-                        IDictionary<string, object> userData = (IDictionary<string, object>)userObj;
-                        return userData;
-                    }
-                }
-            } catch (Exception e) { }
+                string cleanJson = SoftwareCoUtil.CleanJsonToDeserialize(responseBody);
+                PluginStateInfo pluginStateInfo = JsonConvert.DeserializeObject<PluginStateInfo>(cleanJson);
+                return pluginStateInfo;
+            } catch (Exception e) {
+                Logger.Warning("Error retrieving plugin state info: " + e.Message);
+            }
             return null;
         }
 
-        public static async Task<bool> IsLoggedOn()
+        public static async Task<UserState> GetRegistrationState(bool isIntegration)
         {
+            UserState userState = new UserState();
             string jwt = FileManager.getItemAsString("jwt");
             string authType = FileManager.getItemAsString("authType");
 
-            string auth_callback_state = FileManager.getAuthCallbackState();
+            string auth_callback_state = FileManager.getAuthCallbackState(false);
 
             string api = "/users/plugin/state";
 
-            string token = (!String.IsNullOrEmpty(auth_callback_state)) ? auth_callback_state : jwt;
+            string token = (!string.IsNullOrEmpty(auth_callback_state)) ? auth_callback_state : jwt;
             HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, null, token);
 
             // check to see if we found the user or not
-            IDictionary < string, object> user = await GetUserFromResponseAsync(response);
+            PluginStateInfo pluginStateInfo = await GetPluginStateInfoFromResponseAsync(response);
 
-            if (user == null && !String.IsNullOrEmpty(authType) && (authType.Equals("software") || authType.Equals("email")))
+            if (pluginStateInfo == null && !string.IsNullOrEmpty(authType) && (authType.Equals("software") || authType.Equals("email")))
             {
                 // use the jwt
                 response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, null, jwt);
-                user = await GetUserFromResponseAsync(response);
+                pluginStateInfo = await GetPluginStateInfoFromResponseAsync(response);
             }
 
-            if (user != null)
+            if (pluginStateInfo != null && pluginStateInfo.user != null)
             {
-                user.TryGetValue("email", out object emailObj);
-                string email = (emailObj == null) ? null : Convert.ToString(emailObj);
-                user.TryGetValue("registered", out object registeredObj);
-                int registered = (registeredObj == null) ? 0 : Convert.ToInt32(registeredObj);
-                user.TryGetValue("plugin_jwt", out object pluginJwtObj);
-                string pluginJwt = (pluginJwtObj == null) ? null : Convert.ToString(pluginJwtObj);
 
-                if (registered == 1)
+                if (pluginStateInfo.user.registered == 1)
                 {
                     // set the name since we found a registered user
-                    FileManager.setItem("name", email);
+                    FileManager.setItem("name", pluginStateInfo.user.email);
+                    userState.loggedIn = true;
+                    userState.user = pluginStateInfo.user;
                 }
 
-                if (String.IsNullOrEmpty(authType))
+                if (string.IsNullOrEmpty(authType))
                 {
                     // default to software if auth type is null or empty
                     FileManager.setItem("authType", "software");
                 }
 
-                if (!String.IsNullOrEmpty(pluginJwt))
+                if (!string.IsNullOrEmpty(pluginStateInfo.user.plugin_jwt) && !isIntegration)
                 {
                     // set the jwt since its found
-                    FileManager.setItem("jwt", pluginJwt);
+                    FileManager.setItem("jwt", pluginStateInfo.user.plugin_jwt);
                 }
 
                 FileManager.setBoolItem("switching_account", false);
                 FileManager.setAuthCallbackState(null);
-
-                return true;
+                
             }
 
-            return false;
+            return userState;
         }
 
         public static async void RefetchUserStatusLazily(int tryCountUntilFoundUser)
@@ -180,9 +166,9 @@ namespace SoftwareCo
             checkingLoginState = true;
             try
             {
-                bool loggedIn = await IsLoggedOn();
+                UserState userState = await GetRegistrationState(false);
 
-                if (!loggedIn)
+                if (!userState.loggedIn)
                 {
                     if (tryCountUntilFoundUser > 0)
                     {
@@ -213,8 +199,11 @@ namespace SoftwareCo
                     SessionSummaryManager.Instance.ÇlearSessionSummaryData();
                     TimeDataManager.Instance.ClearTimeDataSummary();
 
+                    // clear the integrations
+                    FileManager.syncIntegrations(new List<Integration>());
+
                     // fetch the session summary to get the user's averages
-                    WallclockManager.UpdateSessionSummaryFromServerAsync(true);
+                    WallclockManager.UpdateSessionSummaryFromServerAsync();
 
                     // show they've logged on
                     string msg = "Successfully logged on to Code Time.";

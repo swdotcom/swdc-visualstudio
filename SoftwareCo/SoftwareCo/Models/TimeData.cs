@@ -17,12 +17,12 @@ namespace SoftwareCo
         {
             TimeData summary = new TimeData();
 
-            summary.timestamp = SoftwareCoUtil.ConvertObjectToLong(dict, "timestamp");
-            summary.timestamp_local = SoftwareCoUtil.ConvertObjectToLong(dict, "timestamp_local");
-            summary.editor_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "editor_seconds");
-            summary.session_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "session_seconds");
-            summary.file_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "file_seconds");
-            summary.day = SoftwareCoUtil.ConvertObjectToString(dict, "day");
+            summary.timestamp = SoftwareCoUtil.GetLongVal(dict, "timestamp");
+            summary.timestamp_local = SoftwareCoUtil.GetLongVal(dict, "timestamp_local");
+            summary.editor_seconds = SoftwareCoUtil.GetLongVal(dict, "editor_seconds");
+            summary.session_seconds = SoftwareCoUtil.GetLongVal(dict, "session_seconds");
+            summary.file_seconds = SoftwareCoUtil.GetLongVal(dict, "file_seconds");
+            summary.day = SoftwareCoUtil.GetStringVal(dict, "day");
 
             summary.project = PluginDataProject.GetPluginDataFromDictionary(dict);
 
@@ -44,12 +44,12 @@ namespace SoftwareCo
 
         public void CloneFromDictionary(IDictionary<string, object> dict)
         {
-            this.timestamp = SoftwareCoUtil.ConvertObjectToLong(dict, "timestamp");
-            this.timestamp_local = SoftwareCoUtil.ConvertObjectToLong(dict, "timestamp_local");
-            this.editor_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "editor_seconds");
-            this.session_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "session_seconds");
-            this.file_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "file_seconds");
-            this.day = SoftwareCoUtil.ConvertObjectToString(dict, "day");
+            this.timestamp = SoftwareCoUtil.GetLongVal(dict, "timestamp");
+            this.timestamp_local = SoftwareCoUtil.GetLongVal(dict, "timestamp_local");
+            this.editor_seconds = SoftwareCoUtil.GetLongVal(dict, "editor_seconds");
+            this.session_seconds = SoftwareCoUtil.GetLongVal(dict, "session_seconds");
+            this.file_seconds = SoftwareCoUtil.GetLongVal(dict, "file_seconds");
+            this.day = SoftwareCoUtil.GetStringVal(dict, "day");
 
             dict.TryGetValue("project", out object projJson);
             try

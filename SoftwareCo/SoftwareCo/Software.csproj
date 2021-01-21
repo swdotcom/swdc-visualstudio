@@ -55,14 +55,23 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="forms\InputBox.cs" />
+    <Compile Include="forms\OptionListDialog.xaml.cs">
+      <DependentUpon>OptionListDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Managers\FileInfoManager.cs" />
+    <Compile Include="Managers\SlackManager.cs" />
     <Compile Include="Managers\TrackerEventManager.cs" />
     <Compile Include="Models\CacheValue.cs" />
     <Compile Include="Models\FileDetails.cs" />
+    <Compile Include="Models\Integration.cs" />
+    <Compile Include="Models\PluginStateInfo.cs" />
     <Compile Include="Models\RepoCommit.cs" />
     <Compile Include="Models\RepoCommitChanges.cs" />
     <Compile Include="Models\RepoCommitData.cs" />
+    <Compile Include="Models\SoftwareUser.cs" />
     <Compile Include="Models\UserEncryptedData.cs" />
+    <Compile Include="Models\UserState.cs" />
     <Compile Include="tracker\client\Http.cs" />
     <Compile Include="tracker\client\Response.cs" />
     <Compile Include="tracker\entities\AuthEntity.cs" />
@@ -193,7 +202,22 @@
     <Resource Include="Resources\envelope.png" />
     <Resource Include="Resources\google.png" />
     <Resource Include="Resources\icons8-envelope-16.png" />
-    <Content Include="Resources\Microsoft.VisualStudio.Services.Icons.Default.png" />
+    <Resource Include="Resources\bolt-grey - Copy.png" />
+    <Resource Include="Resources\bolt - Copy.png" />
+    <Resource Include="Resources\dashboard - Copy.png" />
+    <Resource Include="Resources\add.png" />
+    <Resource Include="Resources\adjust.png" />
+    <Resource Include="Resources\blue-line-250.png" />
+    <Resource Include="Resources\blue-line-96.png" />
+    <Resource Include="Resources\compress.png" />
+    <Resource Include="Resources\dark-mode.png" />
+    <Resource Include="Resources\email.png" />
+    <Resource Include="Resources\expand.png" />
+    <Resource Include="Resources\folder.png" />
+    <Resource Include="Resources\icons8-night-16.png" />
+    <Resource Include="Resources\icons8-slack-new-16.png" />
+    <Resource Include="Resources\light-mode.png" />
+    <Resource Include="Resources\Microsoft.VisualStudio.Services.Icons.Default.png" />
     <Resource Include="Resources\next.png" />
     <Resource Include="Resources\pause.png" />
     <Resource Include="Resources\play.png" />
@@ -204,20 +228,37 @@
     <Resource Include="Resources\rocket-grey.png" />
     <Resource Include="Resources\rocket.png" />
     <Resource Include="Resources\software-paw.png" />
-    <Content Include="Resources\SoftwareCoPackage.ico" />
+    <Resource Include="Resources\notifications-off.png" />
+    <Resource Include="Resources\notifications-on.png" />
+    <Resource Include="Resources\paw-grey-rotated.png" />
+    <Resource Include="Resources\paw-grey.png" />
+    <Resource Include="Resources\paw.png" />
+    <Resource Include="Resources\position.png" />
+    <Resource Include="Resources\presence.png" />
+    <Resource Include="Resources\profile.png" />
+    <Resource Include="Resources\separator.png" />
+    <Resource Include="Resources\settings.png" />
+    <Resource Include="Resources\signup.png" />
+    <Resource Include="Resources\slack.png" />
+    <Resource Include="Resources\slack20.png" />
+    <Resource Include="Resources\software-paw-grey.png" />
+    <Resource Include="Resources\SoftwareCoPackage.ico" />
     <VSCTCompile Include="SoftwareCoPackage.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
       <SubType>Designer</SubType>
     </VSCTCompile>
-    <Content Include="Resources\SoftwareDashboardLaunchCommand.png" />
-    <Content Include="Resources\SoftwareLaunchCommand.png" />
-    <Content Include="Resources\SoftwareLoginCommand.png" />
-    <Content Include="Resources\SoftwareTopFortyCommand.png" />
+    <Resource Include="Resources\SoftwareDashboardLaunchCommand.png" />
+    <Resource Include="Resources\SoftwareLaunchCommand.png" />
+    <Resource Include="Resources\SoftwareLoginCommand.png" />
+    <Resource Include="Resources\SoftwareTopFortyCommand.png" />
     <Resource Include="Resources\spotify.png" />
     <Resource Include="Resources\sw.png" />
     <Resource Include="Resources\unlike.png" />
     <Resource Include="Resources\visible.png" />
     <Resource Include="Resources\warning.png" />
+    <Resource Include="Resources\status-clock.png" />
+    <Resource Include="Resources\today.png" />
+    <Resource Include="Resources\zen.png" />
     <Content Include="stylesheet.css" />
   </ItemGroup>
   <ItemGroup>
@@ -370,6 +411,9 @@
     <PackageReference Include="Newtonsoft.Json">
       <Version>12.0.3</Version>
     </PackageReference>
+    <PackageReference Include="Slack.NetStandard">
+      <Version>2.9.1</Version>
+    </PackageReference>
     <PackageReference Include="Snowplow.Tracker">
       <Version>1.0.2</Version>
     </PackageReference>
@@ -378,6 +422,10 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="forms\OptionListDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Statusbar\StatusBarButton.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

@@ -9,12 +9,9 @@ namespace SoftwareCo
     {
         private static readonly Lazy<DocEventManager> lazy = new Lazy<DocEventManager>(() => new DocEventManager());
 
-        // private SoftwareData _softwareData;
         private PluginData _pluginData;
         private Document doc = null;
-        private Scheduler scheduler = null;
         private string currentSolutionDirectory = "";
-        private static int ACTIVITY_LAG_THRESHOLD_SEC = 30;
         private static bool _initializingPluginPayload = false;
         public static DocEventManager Instance { get { return lazy.Value; } }
 

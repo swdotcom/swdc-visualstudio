@@ -78,15 +78,16 @@ namespace SoftwareCo
             _sessionSummary = new SessionSummary();
             try
             {
+                sessionSummary = SoftwareCoUtil.CleanJsonToDeserialize(sessionSummary);
                 IDictionary<string, object> jsonObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(sessionSummary);
 
-                _sessionSummary = _sessionSummary.GetSessionSummaryFromDictionary(jsonObj, true);
+                _sessionSummary = _sessionSummary.GetSessionSummaryFromDictionary(jsonObj);
             }
             catch (Exception) { }
             return _sessionSummary;
         }
 
-        private async Task<SessionSummaryResult> GetSessionSummaryStatusAsync(bool forceRefresh = false)
+        private async Task<SessionSummaryResult> GetSessionSummaryStatusAsync()
         {
             SessionSummaryResult sessionSummaryResult = new SessionSummaryResult();
             _sessionSummary = GetSessionSummayData();

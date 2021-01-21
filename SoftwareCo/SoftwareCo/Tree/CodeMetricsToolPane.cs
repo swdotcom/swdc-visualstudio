@@ -9,7 +9,6 @@
     {
         private long lastMetricsRebuild = 0;
         private long lastMenuRebuild = 0;
-        private long lastGitMetricsRebuild = 0;
         private static long TREE_REBUILD_THRESHOLD_SECONDS = 10;
 
         /// <summary>
@@ -25,27 +24,45 @@
             this.Content = new CodeMetricsTree();
         }
 
-        public void RebuildMenuButtons()
+        public void RebuildTree()
+        {
+            if (this.Content != null && SoftwareCoPackage.INITIALIZED)
+            {
+                ((CodeMetricsTree)this.Content).RebuildAccountButtons();
+                ((CodeMetricsTree)this.Content).RebuildFlowButtonsAsync();
+                ((CodeMetricsTree)this.Content).RebuildStatsButtonsAsync();
+            }
+        }
+
+        public void RebuildAccountButtons()
         {
             if (this.Content != null)
             {
                 long now = DateTimeOffset.Now.ToUnixTimeSeconds();
                 if (now - lastMenuRebuild > TREE_REBUILD_THRESHOLD_SECONDS)
                 {
-                    ((CodeMetricsTree)this.Content).RebuildMenuButtonsAsync();
+                    ((CodeMetricsTree)this.Content).RebuildAccountButtons();
                     lastMenuRebuild = now;
                 }
             }
         }
 
-        public void RebuildCodeMetrics()
+        public void RebuildFlowButtons()
+        {
+            if (this.Content != null)
+            {
+                ((CodeMetricsTree)this.Content).RebuildFlowButtonsAsync();
+            }
+        }
+
+        public void RebuildStatsButtons()
         {
             if (this.Content != null && SoftwareCoPackage.INITIALIZED)
             {
                 long now = DateTimeOffset.Now.ToUnixTimeSeconds();
                 if (now - lastMetricsRebuild > TREE_REBUILD_THRESHOLD_SECONDS)
                 {
-                    ((CodeMetricsTree)this.Content).RebuildCodeMetricsAsync();
+                    ((CodeMetricsTree)this.Content).RebuildStatsButtonsAsync();
                     lastMetricsRebuild = now;
                 }
             }
@@ -55,23 +72,9 @@
         {
             StatusBarButton.showingStatusbarMetrics = !StatusBarButton.showingStatusbarMetrics;
             long now = DateTimeOffset.Now.ToUnixTimeSeconds();
-            if (this.Content != null && SoftwareCoPackage.INITIALIZED && now - lastGitMetricsRebuild > TREE_REBUILD_THRESHOLD_SECONDS)
-            {
-                ((CodeMetricsTree)this.Content).RebuildCodeMetricsAsync();
-            }
-        }
-
-        public void RebuildGitMetricsAsync()
-        {
             if (this.Content != null && SoftwareCoPackage.INITIALIZED)
             {
-                long now = DateTimeOffset.Now.ToUnixTimeSeconds();
-                if (now - lastGitMetricsRebuild > TREE_REBUILD_THRESHOLD_SECONDS)
-                {
-                    ((CodeMetricsTree)this.Content).RebuildGitMetricsAsync();
-                    // ((CodeMetricsTree)this.Content).RebuildContributorMetricsAsync();
-                    lastGitMetricsRebuild = now;
-                }
+                ((CodeMetricsTree)this.Content).RebuildAccountButtons();
             }
         }
     }

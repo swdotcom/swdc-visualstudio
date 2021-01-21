@@ -211,6 +211,7 @@ namespace SoftwareCo
             {
                 try
                 {
+                    timeDataJson = SoftwareCoUtil.CleanJsonToDeserialize(timeDataJson);
                     existingList = JsonConvert.DeserializeObject<List<TimeData>>(timeDataJson);
                 }
                 catch (Exception) { }

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace SoftwareCo
 {
@@ -60,6 +61,11 @@ namespace SoftwareCo
         public static string getSessionSummaryFile()
         {
             return getSoftwareDataDir(true) + "\\sessionSummary.json";
+        }
+
+        private static String getIntegrationsFile()
+        {
+            return getSoftwareDataDir(true) + "\\integrations.json";
         }
 
         public static string getSessionSummaryFileData()
@@ -210,6 +216,23 @@ namespace SoftwareCo
             return null;
         }
 
+        public static string getItemAsString(string key, string defaultVal)
+        {
+            object val = getItem(key);
+            if (val != null)
+            {
+                try
+                {
+                    return val.ToString();
+                }
+                catch (Exception)
+                {
+                    return defaultVal;
+                }
+            }
+            return defaultVal;
+        }
+
         public static bool getItemAsBool(string key)
         {
             object val = getItem(key);
@@ -282,6 +305,7 @@ namespace SoftwareCo
                 {
 
                     content = File.ReadAllText(sessionFile, System.Text.Encoding.UTF8);
+                    content = SoftwareCoUtil.CleanJsonToDeserialize(content);
                     dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
                 }
                 dict[key] = val;
@@ -296,25 +320,27 @@ namespace SoftwareCo
 
         public static string getPluginUuid()
         {
+            string plugin_uuid = "";
             try
             {
                 string content = getDeviceFileContent();
-                if (content != null)
-                {
-                    object jsonVal = SimpleJson.GetValue(content, "plugin_uuid");
-                    if (jsonVal != null)
-                    {
-                        return jsonVal.ToString();
-                    }
-                }
 
+                object jsonVal = content != null ? SimpleJson.GetValue(content, "plugin_uuid") : null;
+                if (jsonVal != null)
+                {
+                    plugin_uuid = jsonVal.ToString();
+                }
+                if (string.IsNullOrEmpty(plugin_uuid))
+                {
+                    plugin_uuid = Guid.NewGuid().ToString();
+                    setPluginUuid(plugin_uuid);
+                }
             }
             catch (Exception)
             {
                 //
             }
-            // unable to save/retrieve the plugin uuid
-            return null;
+            return plugin_uuid;
         }
 
         private static void setPluginUuid(string value)
@@ -322,32 +348,74 @@ namespace SoftwareCo
             writeContentToDeviceFile("plugin_uuid", value);
         }
 
-        public static string getAuthCallbackState()
+        public static string getAuthCallbackState(bool autoCreate)
         {
+            string auth_callback_state = "";
             try
             {
                 string content = getDeviceFileContent();
-                if (content != null)
-                {
-                    object jsonVal = SimpleJson.GetValue(content, "auth_callback_state");
-                    if (jsonVal != null)
-                    {
-                        return jsonVal.ToString();
-                    }
-                }
 
+                object jsonVal = content != null ? SimpleJson.GetValue(content, "auth_callback_state") : null;
+                if (jsonVal != null)
+                {
+                    auth_callback_state = jsonVal.ToString();
+                }
+                if (string.IsNullOrEmpty(auth_callback_state) && autoCreate)
+                {
+                    auth_callback_state = Guid.NewGuid().ToString();
+                    setAuthCallbackState(auth_callback_state);
+                }
             }
             catch (Exception)
             {
                 //
             }
-            // unable to save/retrieve the auth_callback_state
-            return null;
+            return auth_callback_state;
         }
 
         public static void setAuthCallbackState(string value)
         {
             writeContentToDeviceFile("auth_callback_state", value);
+        }
+
+        public static List<Integration> GetIntegrations()
+        {
+            List<Integration> integrations = new List<Integration>();
+            // deserialize JSON directly from a file
+            try
+            {
+                string file = getIntegrationsFile();
+                string content = "";
+                // IDictionary<string, object> dict = new Dictionary<string, object>();
+                if (File.Exists(file))
+                {
+
+                    content = File.ReadAllText(file, Encoding.UTF8);
+                    content = SoftwareCoUtil.CleanJsonToDeserialize(content);
+                    integrations = JsonConvert.DeserializeObject<List<Integration>>(content);
+                }
+            } catch (Exception e) {
+                Logger.Warning("Error reading integrations file: " + e.Message);
+            }
+
+            return integrations;
+        }
+
+        public static void syncIntegrations(List<Integration> integrations)
+        {
+            try
+            {
+                string content = JsonConvert.SerializeObject(integrations);
+                File.WriteAllText(getIntegrationsFile(), content, Encoding.UTF8);
+            }
+            catch (Exception)
+            {
+                //
+            }
+            finally
+            {
+
+            }
         }
 
         private static string getDeviceFileContent()
@@ -393,6 +461,7 @@ namespace SoftwareCo
                 {
 
                     content = File.ReadAllText(deviceFile, System.Text.Encoding.UTF8);
+                    content = SoftwareCoUtil.CleanJsonToDeserialize(content);
                     dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
                 }
                 dict[key] = value;

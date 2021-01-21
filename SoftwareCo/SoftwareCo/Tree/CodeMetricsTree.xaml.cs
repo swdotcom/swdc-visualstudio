@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Slack.NetStandard.WebApi.Dnd;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,13 +14,8 @@ namespace SoftwareCo
     /// </summary>
     public partial class CodeMetricsTree : UserControl
     {
-        private TreeViewItem topKeystrokesParent;
-        private TreeViewItem topCodetimeParent;
 
-        private static ImageSource WebAnalyticsImageSrc = null;
-        private static ImageSource SummaryImageSrc = null;
-        private static ImageSource LearnMoreImageSrc = null;
-        private static ImageSource FeedbackImageSrc = null;
+        private static IDictionary<string, bool> expandMap = new Dictionary<string, bool>();
 
         public CodeMetricsTree()
         {
@@ -29,95 +26,148 @@ namespace SoftwareCo
             Seperator2.Visibility = Visibility.Hidden;
 
             // update the menu buttons
-            RebuildMenuButtonsAsync();
+            RebuildAccountButtons();
 
             // update the metric nodes
-            RebuildCodeMetricsAsync();
+            RebuildFlowButtonsAsync();
 
-            // update the git metric nodes
-            RebuildGitMetricsAsync();
-
-            // update the contributor metric nodes
-            // RebuildContributorMetricsAsync();
+            RebuildStatsButtonsAsync();
         }
 
-        public async Task RebuildMenuButtonsAsync()
+        public async Task RebuildAccountButtons()
         {
-            BuildSignupPanels();
-
-            BuildLoggedInPanel();
-
+            AccountPanel.Children.Clear();
             string email = FileManager.getItemAsString("name");
-            if (!string.IsNullOrEmpty(email))
+            if (string.IsNullOrEmpty(email))
             {
-                WebDashboardLabel.Content = "See advanced metrics";
-                if (WebAnalyticsImageSrc == null)
+                AccountPanel.Children.Add(BuildClickLabel("SignUpPanel", "paw.png", "Sign up", SwitchAccountsClickHandler));
+                AccountPanel.Children.Add(BuildClickLabel("LogInPanel", "paw.png", "Log up", SwitchAccountsClickHandler));
+            } else
+            {
+                string authType = FileManager.getItemAsString("authType");
+                string authIcon = "google.png";
+                if (string.IsNullOrEmpty(authType))
                 {
-                    WebAnalyticsImageSrc = SoftwareCoUtil.CreateImage("cpaw.png").Source;
+                    authIcon = "email.png";
                 }
-                WebDashboardImage.Source = WebAnalyticsImageSrc;
+                else if (authType.ToLower().Equals("github"))
+                {
+                    authIcon = "github.png";
+                }
+                AccountPanel.Children.Add(BuildLabelItem("LoggedInPanel", authIcon, email));
+                AccountPanel.Children.Add(BuildClickLabel("SwitchAccountPanel", "paw.png", "Switch account", SwitchAccountsClickHandler));
             }
 
-            // dashboard label
-            DashboardLabel.Content = "View summary";
-            if (SummaryImageSrc == null)
-            {
-                SummaryImageSrc = SoftwareCoUtil.CreateImage("dashboard.png").Source;
-            }
-            DashboardImage.Source = SummaryImageSrc;
+            // Learn more label
+            AccountPanel.Children.Add(BuildClickLabel("LearnMorePanel", "readme.png", "Documentation", LearnMoreClickHandler));
+
+            // Feedback label
+            AccountPanel.Children.Add(BuildClickLabel("SubmitIssuePanel", "message.png", "Submit an issue", FeedbackClickHandler));
 
             // Toggle status label
+            string toggleStatusLabel = "Hide status bar metrics";
             if (!StatusBarButton.showingStatusbarMetrics)
             {
-                ToggleStatusLabel.Content = "Show status bar metrics";
+                toggleStatusLabel = "Show status bar metrics";
+            }
+            AccountPanel.Children.Add(BuildClickLabel("ToggleStatusMetricsPanel", "visible.png", toggleStatusLabel, ToggleClickHandler));
+
+            // slack workspace tree
+            SlackWorkspaceTree.Items.Clear();
+            List<TreeViewItem> workspaceChildren = new List<TreeViewItem>();
+            foreach (Integration workspace in SlackManager.GetSlackWorkspaces())
+            {
+                workspaceChildren.Add(CodeMetricsTreeProvider.BuildContextItemButton(workspace.authId, workspace.team_domain + " (" + workspace.team_name + ")", "deletion.png", RemoveWorkspaceClickHandler));
+            }
+            workspaceChildren.Add(CodeMetricsTreeProvider.BuildTreeItem("AddWorkspaceItem", "Add workspace", "add.png", AddWorkspaceClickHandler));
+            TreeViewItem workspacesParent = BuildMetricNodes("workspaces", "Slack workspaces", workspaceChildren);
+            SlackWorkspaceTree.Items.Add(workspacesParent);
+        }
+
+        public async Task RebuildFlowButtonsAsync()
+        {
+            Seperator1.Visibility = Visibility.Visible;
+
+            FlowPanel.Children.Clear();
+
+            Task<string> slackStatusPromise = SlackManager.GetSlackStatusMessage();
+            Task<DndStatus> slackDndStatusPromise = SlackManager.GetSlackDndInfo();
+            Task<string> slackPresencePromise = SlackManager.GetSlackPresence();
+
+            string slackStatusMsg = await slackStatusPromise;
+
+            string updateProfileStatusLabel = (string.IsNullOrEmpty(slackStatusMsg)) ? "Update profile status" : "Update profile status" + " (" + slackStatusMsg + ")";
+            FlowPanel.Children.Add(BuildClickLabel("UpdateSlackStatusPanel", "profile.png", updateProfileStatusLabel, UpdateSlackStatusHandler));
+
+            DndStatus status = await slackDndStatusPromise;
+            if (status != null && status.SnoozeEnabled == true)
+            {
+                FlowPanel.Children.Add(BuildClickLabel("UpdateNotifcationsPanel", "notifications-on.png", "Turn on notifications", EnableSlackNotificationsHandler));
+            } else
+            {
+                FlowPanel.Children.Add(BuildClickLabel("UpdateNotifcationsPanel", "notifications-off.png", "Pause notifications", PauseSlackNotificationsHandler));
+            }
+
+            string presence = await slackPresencePromise;
+            if (string.IsNullOrEmpty(presence) || presence == "active")
+            {
+                FlowPanel.Children.Add(BuildClickLabel("UpdatePresencePanel", "presence.png", "Set presence to away", SetAwayPresenceHandler));
             }
             else
             {
-                ToggleStatusLabel.Content = "Hide status bar metrics";
-            }
-
-            ToggleStatusImage.Source = SoftwareCoUtil.CreateImage("visible.png").Source;
-
-            // Learn more label
-            LearnMoreLabel.Content = "Learn more";
-            if (LearnMoreImageSrc == null)
-            {
-                LearnMoreImageSrc = SoftwareCoUtil.CreateImage("readme.png").Source;
-            }
-            LearnMoreImage.Source = LearnMoreImageSrc;
-
-            // Feedback label
-            FeedbackLabel.Content = "Submit feedback";
-            if (FeedbackImageSrc == null)
-            {
-                FeedbackImageSrc = SoftwareCoUtil.CreateImage("message.png").Source;
-            }
-            FeedbackImage.Source = FeedbackImageSrc;
-        }
-
-        private void BuildSignupPanels()
-        {
-            SignupPanel.Children.Clear();
-            string email = FileManager.getItemAsString("name");
-            if (string.IsNullOrEmpty(email)) {
-                SignupPanel.Visibility = Visibility.Visible;
-                SignupPanel.Children.Add(BuildClickLabel("GoogleSignupPanel", "google.png", "Sign up with Google", GoogleConnectClickHandler));
-                SignupPanel.Children.Add(BuildClickLabel("GitHubSignupPanel", "github.png", "Sign up with GitHub", GitHubConnectClickHandler));
-                SignupPanel.Children.Add(BuildClickLabel("EmailSignupPanel", "icons8-envelope-16.png", "Sign up using email", EmailConnectClickHandler));
+                FlowPanel.Children.Add(BuildClickLabel("UpdatePresencePanel", "presence.png", "Set presence to active", SetActivePresenceHandler));
             }
         }
 
-        private void BuildLoggedInPanel()
-        {
-            LoggedInTree.Items.Clear();
-            string email = FileManager.getItemAsString("name");
-            if (!string.IsNullOrEmpty(email))
-            {
-                List<TreeViewItem> loggedInChildren = new List<TreeViewItem>();
-                loggedInChildren.Add(CodeMetricsTreeProvider.BuildTreeItem("switch_account_node", "Switch account", "cpaw.png", SwitchAccountsClickHandler));
-                TreeViewItem loggedInTreeItem = BuildMetricNodes("logged_in_node", email, loggedInChildren);
-                LoggedInTree.Items.Add(loggedInTreeItem);
-            }
+        public async Task RebuildStatsButtonsAsync() {
+
+            Seperator2.Visibility = Visibility.Visible;
+
+            StatsPanel.Children.Clear();
+
+            SessionSummary summary = SessionSummaryManager.Instance.GetSessionSummayData();
+            CodeTimeSummary ctSummary = TimeDataManager.Instance.GetCodeTimeSummary();
+
+            string refClass = FileManager.getItemAsString("reference-class", "user");
+
+            string todayVsLabel = refClass.Equals("user") ? "Today vs. your daily avg" : "Today vs your global avg";
+            StatsPanel.Children.Add(BuildClickLabel("TodayVsPanel", "today.png", todayVsLabel, TodayVsAvgHandler));
+
+            string codeTimeStr = "Code time: " + SoftwareCoUtil.HumanizeMinutes(ctSummary.codeTimeMinutes);
+            long avgCodeTimeMinutes = refClass.Equals("user") ? summary.averageDailyCodeTimeMinutes : summary.globalAverageDailyCodeTimeMinutes;
+            string codeTimeAvgStr = SoftwareCoUtil.HumanizeMinutes(avgCodeTimeMinutes);
+            string codeTimeIcon = ctSummary.codeTimeMinutes > avgCodeTimeMinutes ? "bolt.png" : "bolt-grey.png";
+            StatsPanel.Children.Add(BuildLabelItem("CodeTimeMinutesPanel", codeTimeIcon, codeTimeStr + " (" + codeTimeAvgStr + " avg)"));
+
+            string activeCodeTimeStr = "Active code time: " + SoftwareCoUtil.HumanizeMinutes(ctSummary.activeCodeTimeMinutes);
+            long avgActiveCodeTimeMinutes = refClass.Equals("user") ? summary.averageDailyMinutes : summary.globalAverageDailyMinutes;
+            string activeCodeTimeAvgStr = SoftwareCoUtil.HumanizeMinutes(avgActiveCodeTimeMinutes);
+            string activeCodeTimeIcon = ctSummary.activeCodeTimeMinutes > avgActiveCodeTimeMinutes ? "bolt.png" : "bolt-grey.png";
+            StatsPanel.Children.Add(BuildLabelItem("ActiveCodeTimeMinutesPanel", activeCodeTimeIcon, activeCodeTimeStr + " (" + activeCodeTimeAvgStr + " avg)"));
+
+            string linesAddedStr = "Lines added: " + SoftwareCoUtil.FormatNumber(summary.currentDayLinesAdded);
+            long avgLinesAdded = refClass.Equals("user") ? summary.averageDailyLinesAdded : summary.globalAverageLinesAdded;
+            string linesAddedAvgStr = SoftwareCoUtil.FormatNumber(avgLinesAdded);
+            string linesAddedIcon = summary.currentDayLinesAdded > avgLinesAdded ? "bolt.png" : "bolt-grey.png";
+            StatsPanel.Children.Add(BuildLabelItem("LinesAddedPanel", linesAddedIcon, linesAddedStr + " (" + linesAddedAvgStr + " avg)"));
+
+            string linesRemovedStr = "Lines removed: " + SoftwareCoUtil.FormatNumber(summary.currentDayLinesRemoved);
+            long avgLinesRemoved = refClass.Equals("user") ? summary.averageDailyLinesRemoved : summary.globalAverageLinesRemoved;
+            string linesRemovedAvgStr = SoftwareCoUtil.FormatNumber(avgLinesRemoved);
+            string linesRemovedIcon = summary.currentDayLinesRemoved > avgLinesRemoved ? "bolt.png" : "bolt-grey.png";
+            StatsPanel.Children.Add(BuildLabelItem("LinesRemovedPanel", linesRemovedIcon, linesRemovedStr + " (" + linesRemovedAvgStr + " avg)"));
+
+            string keystrokesStr = "Keystrokes: " + SoftwareCoUtil.FormatNumber(summary.currentDayKeystrokes);
+            long avgKeystrokes = refClass.Equals("user") ? summary.averageDailyKeystrokes : summary.globalAverageDailyKeystrokes;
+            string keystrokesAvgStr = SoftwareCoUtil.FormatNumber(avgKeystrokes);
+            string keystrokesIcon = summary.currentDayKeystrokes > avgKeystrokes ? "bolt.png" : "bolt-grey.png";
+            StatsPanel.Children.Add(BuildLabelItem("KeystrokesPanel", keystrokesIcon, keystrokesStr + " (" + keystrokesAvgStr + " avg)"));
+
+            // dashboard button
+            StatsPanel.Children.Add(BuildClickLabel("DashboardPanel", "dashboard.png", "Dashboard", DashboardClickHandler));
+
+            // more at software button
+            StatsPanel.Children.Add(BuildClickLabel("WebAnalyticsPanel", "paw.png", "More data at Software.com", LaunchWebDashboard));
         }
 
         private StackPanel BuildClickLabel(string panelName, string iconName, string content, MouseButtonEventHandler handler)
@@ -135,7 +185,33 @@ namespace SoftwareCo
 
             Label label = new Label();
             label.Content = content;
-            label.MouseDown += handler;
+            if (handler != null)
+            {
+                label.MouseDown += handler;
+            }
+            label.Foreground = Brushes.DarkCyan;
+            label.Background = Brushes.Transparent;
+            label.BorderThickness = new Thickness(0d);
+            label.Cursor = Cursors.Hand;
+            panel.Children.Add(label);
+            return panel;
+        }
+
+        private StackPanel BuildLabelItem(string panelName, string iconName, string content)
+        {
+            StackPanel panel = new StackPanel();
+            panel.Name = panelName;
+            panel.Orientation = Orientation.Horizontal;
+            panel.Margin = new Thickness(5, 0, 0, 0);
+
+            Image img = new Image();
+            img.Width = 15;
+            img.Height = 15;
+            img.Source = SoftwareCoUtil.CreateImage(iconName).Source;
+            panel.Children.Add(img);
+
+            Label label = new Label();
+            label.Content = content;
             label.Foreground = Brushes.DarkCyan;
             label.Background = Brushes.Transparent;
             label.BorderThickness = new Thickness(0d);
@@ -183,295 +259,47 @@ namespace SoftwareCo
             }
         }
 
-        public async Task RebuildCodeMetricsAsync()
+        private void UpdateSlackStatusHandler(object sender, MouseButtonEventArgs args)
         {
-            if (!SoftwareCoPackage.INITIALIZED)
-            {
-                return;
-            }
-
-            Seperator1.Visibility = Visibility.Visible;
-
-            SessionSummary summary = SessionSummaryManager.Instance.GetSessionSummayData();
-            CodeTimeSummary ctSummary = TimeDataManager.Instance.GetCodeTimeSummary();
-
-            string editortimeToday = "Today: " + SoftwareCoUtil.HumanizeMinutes(ctSummary.codeTimeMinutes);
-            if (Editortime.HasItems)
-            {
-                // update
-                TreeViewItem parentItem = await GetParent(Editortime, "editortime");
-                UpdateNodeValue(parentItem, "editortimetodayval", editortimeToday, "rocket.png");
-
-            }
-            else
-            {
-                List<TreeViewItem> editortimeChildren = new List<TreeViewItem>();
-                editortimeChildren.Add(BuildMetricNode("editortimetodayval", editortimeToday, "rocket.png"));
-                TreeViewItem editorParent = BuildMetricNodes("editortime", "Code time", editortimeChildren);
-                Editortime.Items.Add(editorParent);
-            }
-
-            string codetimeBoltIcon = ctSummary.activeCodeTimeMinutes > summary.averageDailyMinutes ? "bolt.png" : "bolt-grey.png";
-            string codetimeToday = "Today: " + SoftwareCoUtil.HumanizeMinutes(ctSummary.activeCodeTimeMinutes);
-            string codetimeAvg = "Your average: " + SoftwareCoUtil.HumanizeMinutes(summary.averageDailyMinutes);
-            string codetimeGlobal = "Global average: " + SoftwareCoUtil.HumanizeMinutes(summary.globalAverageDailyMinutes);
-            if (Codetime.HasItems)
-            {
-                // update
-                TreeViewItem parentItem = await GetParent(Codetime, "codetime");
-                UpdateNodeValue(parentItem, "codetimetodayval", codetimeToday, "rocket.png");
-                UpdateNodeValue(parentItem, "codetimeavgval", codetimeAvg, codetimeBoltIcon);
-                UpdateNodeValue(parentItem, "codetimeglobalval", codetimeGlobal, "global-grey.png");
-            }
-            else
-            {
-                List<TreeViewItem> codetimeChildren = new List<TreeViewItem>();
-                codetimeChildren.Add(BuildMetricNode("codetimetodayval", codetimeToday, "rocket.png"));
-                codetimeChildren.Add(BuildMetricNode("codetimeavgval", codetimeAvg, codetimeBoltIcon));
-                codetimeChildren.Add(BuildMetricNode("codetimeglobalval", codetimeGlobal, "global-grey.png"));
-                TreeViewItem codetimeParent = BuildMetricNodes("codetime", "Active code time", codetimeChildren);
-                Codetime.Items.Add(codetimeParent);
-            }
-
-            string linesaddedBoltIcon = summary.currentDayLinesAdded > summary.averageDailyLinesAdded ? "bolt.png" : "bolt-grey.png";
-            string linesaddedToday = "Today: " + SoftwareCoUtil.FormatNumber(summary.currentDayLinesAdded);
-            string linesaddedAvg = "Your average: " + SoftwareCoUtil.FormatNumber(summary.averageDailyLinesAdded);
-            string linesaddedGlobal = "Global average: " + SoftwareCoUtil.FormatNumber(summary.globalAverageLinesAdded);
-            if (Linesadded.HasItems)
-            {
-                // update
-                TreeViewItem parentItem = await GetParent(Linesadded, "linesadded");
-                UpdateNodeValue(parentItem, "linesaddedtodayval", linesaddedToday, "rocket.png");
-                UpdateNodeValue(parentItem, "linesaddedavgval", linesaddedAvg, linesaddedBoltIcon);
-                UpdateNodeValue(parentItem, "linesaddedglobalval", linesaddedGlobal, "global-grey.png");
-            }
-            else
-            {
-                List<TreeViewItem> linesaddedChildren = new List<TreeViewItem>();
-                linesaddedChildren.Add(BuildMetricNode("linesaddedtodayval", linesaddedToday, "rocket.png"));
-                linesaddedChildren.Add(BuildMetricNode("linesaddedavgval", linesaddedAvg, linesaddedBoltIcon));
-                linesaddedChildren.Add(BuildMetricNode("linesaddedglobalval", linesaddedGlobal, "global-grey.png"));
-                TreeViewItem linesaddedParent = BuildMetricNodes("linesadded", "Lines added", linesaddedChildren);
-                Linesadded.Items.Add(linesaddedParent);
-            }
-
-            string linesremovedBoltIcon = summary.currentDayLinesRemoved > summary.averageDailyLinesRemoved ? "bolt.png" : "bolt-grey.png";
-            string linesremovedToday = "Today: " + SoftwareCoUtil.FormatNumber(summary.currentDayLinesRemoved);
-            string linesremovedAvg = "Your average: " + SoftwareCoUtil.FormatNumber(summary.averageDailyLinesRemoved);
-            string linesremovedGlobal = "Global average: " + SoftwareCoUtil.FormatNumber(summary.globalAverageLinesRemoved);
-            if (Linesremoved.HasItems)
-            {
-                // update
-                TreeViewItem parentItem = await GetParent(Linesremoved, "linesremoved");
-                UpdateNodeValue(parentItem, "linesremovedtodayval", linesremovedToday, "rocket.png");
-                UpdateNodeValue(parentItem, "linesremovedavgval", linesremovedAvg, linesremovedBoltIcon);
-                UpdateNodeValue(parentItem, "linesremovedglobalval", linesremovedGlobal, "global-grey.png");
-            }
-            else
-            {
-                List<TreeViewItem> linesremovedChildren = new List<TreeViewItem>();
-                linesremovedChildren.Add(BuildMetricNode("linesremovedtodayval", linesremovedToday, "rocket.png"));
-                linesremovedChildren.Add(BuildMetricNode("linesremovedavgval", linesremovedAvg, linesremovedBoltIcon));
-                linesremovedChildren.Add(BuildMetricNode("linesremovedglobalval", linesremovedGlobal, "global-grey.png"));
-                TreeViewItem linesremovedParent = BuildMetricNodes("linesremoved", "Lines removed", linesremovedChildren);
-                Linesremoved.Items.Add(linesremovedParent);
-            }
-
-            string keystrokesBoltIcon = summary.currentDayKeystrokes > summary.averageDailyKeystrokes ? "bolt.png" : "bolt-grey.png";
-            string keystrokesToday = "Today: " + SoftwareCoUtil.FormatNumber(summary.currentDayKeystrokes);
-            string keystrokesAvg = "Your average: " + SoftwareCoUtil.FormatNumber(summary.averageDailyKeystrokes);
-            string keystrokesGlobal = "Global average: " + SoftwareCoUtil.FormatNumber(summary.globalAverageDailyKeystrokes);
-            if (Keystrokes.HasItems)
-            {
-                // update
-                TreeViewItem parentItem = await GetParent(Keystrokes, "keystrokes");
-                UpdateNodeValue(parentItem, "keystrokestodayval", keystrokesToday, "rocket.png");
-                UpdateNodeValue(parentItem, "keystrokesavgval", keystrokesAvg, keystrokesBoltIcon);
-                UpdateNodeValue(parentItem, "keystrokesglobalval", keystrokesGlobal, "global-grey.png");
-            }
-            else
-            {
-                List<TreeViewItem> keystrokeChildren = new List<TreeViewItem>();
-                keystrokeChildren.Add(BuildMetricNode("keystrokestodayval", keystrokesToday, "rocket.png"));
-                keystrokeChildren.Add(BuildMetricNode("keystrokesavgval", keystrokesAvg, keystrokesBoltIcon));
-                keystrokeChildren.Add(BuildMetricNode("keystrokesglobalval", keystrokesGlobal, "global-grey.png"));
-                TreeViewItem keystrokesParent = BuildMetricNodes("keystrokes", "Keystrokes", keystrokeChildren);
-                Keystrokes.Items.Add(keystrokesParent);
-            }
-
-            // get the top keystrokes and code time files
-            List<FileChangeInfo> topKeystrokeFiles = FileChangeInfoDataManager.Instance.GetTopKeystrokeFiles();
-            if (topKeystrokeFiles.Count == 0)
-            {
-                TopKeystrokeFiles.Visibility = Visibility.Hidden;
-            }
-            else
-            {
-                TopKeystrokeFiles.Visibility = Visibility.Visible;
-                // add or update
-
-                if (TopKeystrokeFiles.HasItems)
-                {
-                    /**
-                    TreeViewItem parentItem = await GetParent(TopKeystrokeFiles, "topcodetimefiles");
-                    foreach (FileChangeInfo changeInfo in topKeystrokeFiles)
-                    {
-                        string keystrokeNumStr = SoftwareCoUtil.FormatNumber(changeInfo.keystrokes);
-                        string label = changeInfo.name + " | " + keystrokeNumStr;
-                        UpdateNodeValue(parentItem, "topkeystrokes-" + changeInfo.name, label, "files.png");
-                    }
-                    **/
-                }
-                List<TreeViewItem> topKeystrokeChildren = new List<TreeViewItem>();
-                foreach (FileChangeInfo changeInfo in topKeystrokeFiles)
-                {
-                    string keystrokeNumStr = SoftwareCoUtil.FormatNumber(changeInfo.keystrokes);
-                    string label = changeInfo.name + " | " + keystrokeNumStr;
-                    topKeystrokeChildren.Add(BuildMetricNode("topkeystrokes-" + changeInfo.name, label, "files.png"));
-                }
-                if (topKeystrokesParent == null)
-                {
-                    topKeystrokesParent = BuildMetricNodes("topkeystrokesfiles", "Top files by keystrokes", topKeystrokeChildren);
-                    TopKeystrokeFiles.Items.Add(topKeystrokesParent);
-                }
-                else
-                {
-                    topKeystrokesParent.Items.Clear();
-                    foreach (TreeViewItem item in topKeystrokeChildren)
-                    {
-                        topKeystrokesParent.Items.Add(item);
-                    }
-                }
-
-            }
-            List<FileChangeInfo> topCodetimeFiles = FileChangeInfoDataManager.Instance.GetTopCodeTimeFiles();
-            if (topCodetimeFiles.Count == 0)
-            {
-                TopCodeTimeFiles.Visibility = Visibility.Hidden;
-            }
-            else
-            {
-                TopCodeTimeFiles.Visibility = Visibility.Visible;
-                // add or update
-
-                if (TopCodeTimeFiles.HasItems)
-                {
-                    /**
-                    TreeViewItem parentItem = await GetParent(TopCodeTimeFiles, "topcodetimefiles");
-                    foreach (FileChangeInfo changeInfo in topCodetimeFiles)
-                    {
-                        string codetimeMinStr = SoftwareCoUtil.HumanizeMinutes(changeInfo.duration_seconds / 60);
-                        string label = changeInfo.name + " | " + codetimeMinStr;
-                        UpdateNodeValue(parentItem, "topcodetime-" + changeInfo.name, label, "files.png");
-                    }
-                    **/
-                }
-                List<TreeViewItem> topCodetimeFilesChildren = new List<TreeViewItem>();
-                foreach (FileChangeInfo changeInfo in topCodetimeFiles)
-                {
-                    string codetimeMinStr = SoftwareCoUtil.HumanizeMinutes(changeInfo.duration_seconds / 60);
-                    string label = changeInfo.name + " | " + codetimeMinStr;
-                    topCodetimeFilesChildren.Add(BuildMetricNode("topcodetime-" + changeInfo.name, label, "files.png"));
-                }
-                if (topCodetimeParent == null)
-                {
-                    topCodetimeParent = BuildMetricNodes("topcodetimefiles", "Top files by code time", topCodetimeFilesChildren);
-                    TopCodeTimeFiles.Items.Add(topCodetimeParent);
-                }
-                else
-                {
-                    topCodetimeParent.Items.Clear();
-                    foreach (TreeViewItem item in topCodetimeFilesChildren)
-                    {
-                        topCodetimeParent.Items.Add(item);
-                    }
-                }
-
-            }
+            SlackManager.UpdateSlackStatusMessage();
         }
 
-        public async Task RebuildContributorMetricsAsync()
+        private void PauseSlackNotificationsHandler(object sender, MouseButtonEventArgs args)
         {
-            if (!SoftwareCoPackage.INITIALIZED)
-            {
-                return;
-            }
-
-            Seperator2.Visibility = Visibility.Visible;
-
-            string dir = await PackageManager.GetSolutionDirectory();
-
-            RepoResourceInfo resourceInfo = GitUtilManager.GetResourceInfo(dir, true);
-
-            // clear the children
-            ContributorsMetricsPanel.Children.Clear();
-
-            if (resourceInfo != null && resourceInfo.identifier != null)
-            {
-                StackPanel identifierPanel = BuildClickLabel("IdentifierPanel", "github.png", resourceInfo.identifier, RepoIdentifierClickHandler);
-                ContributorsMetricsPanel.Children.Add(identifierPanel);
-
-                // build the repo contributors
-            }
+            SlackManager.PauseSlackNotificationsAsync();
         }
 
-        public async Task RebuildGitMetricsAsync()
+        private void EnableSlackNotificationsHandler(object sender, MouseButtonEventArgs args)
         {
-            if (!SoftwareCoPackage.INITIALIZED)
-            {
-                return;
-            }
-            string dir = await PackageManager.GetSolutionDirectory();
+            SlackManager.EnableSlackNotifications();
+        }
 
-            CommitChangeStats uncommited = GitUtilManager.GetUncommitedChanges(dir);
-            string uncommittedInsertions = "Insertion(s): " + uncommited.insertions;
-            string uncommittedDeletions = "Deletion(s): " + uncommited.deletions;
-            if (Uncommitted.HasItems)
-            {
-                // update
-                TreeViewItem parentItem = await GetParent(Uncommitted, "uncommitted");
-                UpdateNodeValue(parentItem, "uncommittedinsertions", uncommittedInsertions, "insertion.png");
-                UpdateNodeValue(parentItem, "uncommitteddeletions", uncommittedDeletions, "deletion.png");
-            }
-            else
-            {
-                List<TreeViewItem> uncommitedChilren = new List<TreeViewItem>();
-                uncommitedChilren.Add(BuildMetricNode("uncommittedinsertions", uncommittedInsertions, "insertion.png"));
-                uncommitedChilren.Add(BuildMetricNode("uncommitteddeletions", uncommittedDeletions, "deletion.png"));
-                TreeViewItem uncommittedParent = BuildMetricNodes("uncommitted", "Open changes", uncommitedChilren);
-                Uncommitted.Items.Add(uncommittedParent);
-            }
+        private void SetAwayPresenceHandler(object sender, MouseButtonEventArgs args)
+        {
+            SlackManager.UpdateSlackPresence("away");
+        }
 
-            string email = GitUtilManager.GetUsersEmail(dir);
-            CommitChangeStats todaysStats = GitUtilManager.GetTodaysCommits(dir, email);
-            string committedInsertions = "Insertion(s): " + todaysStats.insertions;
-            string committedDeletions = "Deletion(s): " + todaysStats.deletions;
-            string committedCount = "Commit(s): " + todaysStats.commitCount;
-            string committedFilecount = "Files changed: " + todaysStats.fileCount;
-            if (CommittedToday.HasItems)
+        private void SetActivePresenceHandler(object sender, MouseButtonEventArgs args)
+        {
+            SlackManager.UpdateSlackPresence("auto");
+        }
+
+        private void TodayVsAvgHandler(object sender, MouseButtonEventArgs args)
+        {
+            string refClass = FileManager.getItemAsString("reference-class", "user");
+            if (refClass.Equals("user"))
             {
-                // update
-                TreeViewItem parentItem = await GetParent(CommittedToday, "committed");
-                UpdateNodeValue(parentItem, "committedinsertions", committedInsertions, "insertion.png");
-                UpdateNodeValue(parentItem, "committeddeletions", committedDeletions, "deletion.png");
-                UpdateNodeValue(parentItem, "committedcount", committedCount, "commit.png");
-                UpdateNodeValue(parentItem, "committedfilecount", committedFilecount, "files.png");
-            }
-            else
+                refClass = "global";
+            } else
             {
-                List<TreeViewItem> committedChilren = new List<TreeViewItem>();
-                committedChilren.Add(BuildMetricNode("committedinsertions", committedInsertions, "insertion.png"));
-                committedChilren.Add(BuildMetricNode("committeddeletions", committedDeletions, "deletion.png"));
-                committedChilren.Add(BuildMetricNode("committedcount", committedCount, "commit.png"));
-                committedChilren.Add(BuildMetricNode("committedfilecount", committedFilecount, "files.png"));
-                TreeViewItem committedParent = BuildMetricNodes("committed", "Committed today", committedChilren);
-                CommittedToday.Items.Add(committedParent);
+                refClass = "user";
             }
+            FileManager.setItem("reference-class", refClass);
+            RebuildStatsButtonsAsync();
         }
 
         private void SwitchAccountsClickHandler(object sender, MouseButtonEventArgs args)
         {
-            System.Console.WriteLine("here");
             SwitchAccountDialog dialog = new SwitchAccountDialog();
             dialog.ShowDialog();
 
@@ -523,7 +351,7 @@ namespace SoftwareCo
             TrackerEventManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
         }
 
-        private void DashboardClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
+        private void DashboardClickHandler(object sender, MouseButtonEventArgs args)
         {
             if (!SoftwareCoPackage.INITIALIZED)
             {
@@ -544,14 +372,19 @@ namespace SoftwareCo
             ReportManager.Instance.DisplayProjectContributorSummaryDashboard();
         }
 
-        public void ToggleClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
+        public void ToggleClickHandler(object sender, MouseButtonEventArgs args)
         {
             StatusBarButton.showingStatusbarMetrics = !StatusBarButton.showingStatusbarMetrics;
-            RebuildMenuButtonsAsync();
+            RebuildAccountButtons();
             SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
         }
 
-        private void LearnMoreClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
+        public void AddWorkspaceClickHandler(object sender, MouseButtonEventArgs args)
+        {
+            SlackManager.ConnectSlackWorkspace();
+        }
+
+        private void LearnMoreClickHandler(object sender, MouseButtonEventArgs args)
         {
             if (!SoftwareCoPackage.INITIALIZED)
             {
@@ -567,7 +400,7 @@ namespace SoftwareCo
             TrackerEventManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
         }
 
-        private void FeedbackClickHandler(object sender, System.Windows.Input.MouseButtonEventArgs args)
+        private void FeedbackClickHandler(object sender, MouseButtonEventArgs args)
         {
             if (!SoftwareCoPackage.INITIALIZED)
             {
@@ -583,6 +416,19 @@ namespace SoftwareCo
             TrackerEventManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
         }
 
+        private void RemoveWorkspaceClickHandler(object sender, MouseButtonEventArgs args)
+        {
+            try
+            {
+                Image deleteImage = (Image)args.Source;
+                if (deleteImage != null)
+                {
+                    SlackManager.DisconnectSlackAuth(deleteImage.Name);
+                }
+            }
+            catch (Exception e) { };
+        }
+
         private TreeViewItem BuildMetricNode(string id, string label, string iconName = null)
         {
             TreeViewItem item = CodeMetricsTreeProvider.BuildTreeItem(id, label, iconName);
@@ -596,7 +442,35 @@ namespace SoftwareCo
             {
                 item.Items.Add(child);
             }
+            item.Expanded += OnExpanded;
+            item.Collapsed += OnCollapsed;
+            if (expandMap.ContainsKey(id))
+            {
+                item.IsExpanded = true;
+            }
             return item;
+        }
+
+        private void OnExpanded(object sender, RoutedEventArgs args)
+        {
+            try
+            {
+                CodeMetricsTreeItem treeItem = (CodeMetricsTreeItem)sender;
+                expandMap.Add(treeItem.ItemId, true);
+
+            }
+            catch (Exception e) { };
+        }
+
+        private void OnCollapsed(object sender, RoutedEventArgs args)
+        {
+            try
+            {
+                CodeMetricsTreeItem treeItem = (CodeMetricsTreeItem)sender;
+                expandMap.Remove(treeItem.ItemId);
+
+            }
+            catch (Exception e) { };
         }
     }
 }

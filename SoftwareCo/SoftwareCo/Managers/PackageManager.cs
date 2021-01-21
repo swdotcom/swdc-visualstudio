@@ -30,7 +30,7 @@ namespace SoftwareCo
             return package;
         }
 
-        public static async Task RebuildMenuButtonsAsync()
+        public static async Task RebuildTreeAsync()
         {
             if (package == null || !SoftwareCoPackage.INITIALIZED)
             {
@@ -41,14 +41,15 @@ namespace SoftwareCo
             {
                 await package.JoinableTaskFactory.SwitchToMainThreadAsync();
                 _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
-                if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null) {
-                    _codeMetricsWindow.RebuildMenuButtons();
+                if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
+                {
+                    _codeMetricsWindow.RebuildTree();
                 }
             }
             catch (Exception) { }
         }
 
-        public static async Task RebuildCodeMetricsAsync()
+        public static async Task RebuildFlowButtons()
         {
             if (package == null || !SoftwareCoPackage.INITIALIZED)
             {
@@ -61,25 +62,7 @@ namespace SoftwareCo
                 _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
                 if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
                 {
-                    _codeMetricsWindow.RebuildCodeMetrics();
-                }
-            } catch (Exception) { }
-        }
-
-        public static async Task RebuildGitMetricsAsync()
-        {
-            if (package == null || !SoftwareCoPackage.INITIALIZED)
-            {
-                return;
-            }
-
-            try
-            {
-                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-                _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
-                if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
-                {
-                    _codeMetricsWindow.RebuildGitMetricsAsync();
+                    _codeMetricsWindow.RebuildFlowButtons();
                 }
             }
             catch (Exception) { }
