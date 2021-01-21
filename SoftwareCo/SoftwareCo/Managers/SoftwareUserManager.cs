@@ -207,8 +207,7 @@ namespace SoftwareCo
 
                     // show they've logged on
                     string msg = "Successfully logged on to Code Time.";
-                    const string caption = "Code Time";
-                    MessageBox.Show(msg, caption, MessageBoxButtons.OK);
+                    SoftwareCoUtil.ShowNotification("Code Time", msg);
 
                 }
             }

@@ -25,7 +25,7 @@ namespace SoftwareCo
             buttonOk.DialogResult = DialogResult.OK;
 
             label.SetBounds(9, 20, 372, 13);
-            buttonOk.SetBounds(228, 72, 75, 23);
+            buttonOk.SetBounds(309, 72, 75, 23);
 
             label.AutoSize = true;
             buttonOk.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;

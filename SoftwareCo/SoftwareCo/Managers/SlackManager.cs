@@ -187,7 +187,7 @@ namespace SoftwareCo
             if (updated)
             {
                 string msg = "Slack notifications are pause for 2 hours";
-                ShowNotification(msg);
+                SoftwareCoUtil.ShowNotification("Code Time", msg);
 
                 slackDndStatus = null;
                 PackageManager.RebuildFlowButtons();
@@ -222,7 +222,7 @@ namespace SoftwareCo
             if (updated)
             {
                 string msg = "Slack notifications enabled";
-                ShowNotification(msg);
+                SoftwareCoUtil.ShowNotification("Code Time", msg);
 
                 slackDndStatus = null;
                 PackageManager.RebuildFlowButtons();
@@ -307,7 +307,7 @@ namespace SoftwareCo
             if (updated)
             {
                 string msg = "Slack presence updated";
-                ShowNotification(msg);
+                SoftwareCoUtil.ShowNotification("Code Time", msg);
 
                 slackPresence = null;
                 PackageManager.RebuildFlowButtons();
@@ -368,7 +368,7 @@ namespace SoftwareCo
             if (updated)
             {
                 string msg = "Slack status message updated";
-                ShowNotification(msg);
+                SoftwareCoUtil.ShowNotification("Code Time", msg);
 
                 slackStatusText = null;
                 PackageManager.RebuildFlowButtons();
@@ -421,7 +421,7 @@ namespace SoftwareCo
                 connectTryCount = 0;
 
                 string msg = "Successfully connected to Slack.";
-                ShowNotification(msg);
+                SoftwareCoUtil.ShowNotification("Code Time", msg);
 
                 // refresh the tree view
                 clearSlackInfoCache();
@@ -499,15 +499,6 @@ namespace SoftwareCo
             }
 
             return integration_id;
-        }
-
-        [STAThread]
-        private static void ShowNotification(string message)
-        {
-            Task.Delay(0).ContinueWith((task) =>
-            {
-                Notification.Show("Slack status", message);
-            });
         }
 
         [STAThread]

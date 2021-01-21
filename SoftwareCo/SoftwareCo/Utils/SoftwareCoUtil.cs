@@ -701,6 +701,15 @@ namespace SoftwareCo
 
             return data;
         }
+
+        [STAThread]
+        public static void ShowNotification(string title, string message)
+        {
+            Task.Delay(0).ContinueWith((task) =>
+            {
+                Notification.Show(title, message);
+            });
+        }
     }
 
     struct Date
