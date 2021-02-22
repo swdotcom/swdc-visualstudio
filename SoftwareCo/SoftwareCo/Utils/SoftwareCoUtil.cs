@@ -103,6 +103,40 @@ namespace SoftwareCo
             return GetFirstCommandResult("hostname", null);
         }
 
+        public static List<String> GetStringListVal(IDictionary<string, object> dict, string attribute)
+        {
+            List<String> list = new List<string>();
+            dict.TryGetValue(attribute, out object sourceJson);
+            try
+            {
+                Logger.Info("Got json list data: " + sourceJson.ToString());
+                /**
+                IDictionary<string, object> stringValDict = (sourceJson == null) ? null : (IDictionary<string, object>)sourceJson;
+                if (stringValDict != null && stringValDict.Count > 0)
+                {
+                    foreach (KeyValuePair<string, object> entry in stringValDict)
+                    {
+                        IDictionary<string, object> fileInfoDict = new Dictionary<string, object>();
+                        try
+                        {
+                            PluginDataFileInfo fileInfo = PluginDataFileInfo.GetPluginDataFromDict((JsonObject)entry.Value);
+                            pd.source.Add(fileInfo);
+                        }
+                        catch (Exception e)
+                        {
+                            //
+                        }
+                    }
+                }
+                **/
+            }
+            catch (Exception e)
+            {
+                //
+            }
+            return list;
+        }
+
         public static IDictionary<string, object> ConvertObjectToSource(IDictionary<string, object> dict)
         {
             dict.TryGetValue("source", out object sourceJson);
@@ -136,7 +170,7 @@ namespace SoftwareCo
             return new PluginDataProject("Unnamed", "Untitled");
         }
 
-        public static string ConvertObjectToString(IDictionary<string, object> dict, string key)
+        public static string GetStringVal(IDictionary<string, object> dict, string key)
         {
             if (!dict.ContainsKey(key))
             {
@@ -153,7 +187,7 @@ namespace SoftwareCo
             return "";
         }
 
-        public static long ConvertObjectToLong(IDictionary<string, object> dict, string key)
+        public static long GetLongVal(IDictionary<string, object> dict, string key)
         {
             if (!dict.ContainsKey(key))
             {
@@ -290,7 +324,7 @@ namespace SoftwareCo
         {
             try
             {
-                string auth_callback_state = Guid.NewGuid().ToString();
+                string auth_callback_state = FileManager.getAuthCallbackState(true);
                 FileManager.setAuthCallbackState(auth_callback_state);
                 FileManager.setItem("authType", loginType);
 
@@ -506,6 +540,20 @@ namespace SoftwareCo
             return minutesStr;
         }
 
+        public static string GetPercentOfReferenceAvg(long curr, long refval, string refvalDisplay)
+        {
+            curr = curr > 0 ? curr : 0;
+            double quotient = 1;
+            if (refval > 0)
+            {
+                quotient = (double)curr / refval;
+                if (curr > 0 && quotient < 0.01) {
+                    quotient = 0.01;
+                }
+            }
+            return quotient.ToString("P", CultureInfo.InvariantCulture);
+        }
+
         public static string NormalizeGithubEmail(string email)
         {
             Regex regex = new Regex(@"^[0-9]+[\+]");
@@ -622,6 +670,11 @@ namespace SoftwareCo
             return hasGitDir;
         }
 
+        public static string CleanJsonToDeserialize(string json)
+        {
+            return json.Replace(@"\", string.Empty).Replace("\"[", "[").Replace("]\"", "]");
+        }
+
         public static string CleanJsonString(string data)
         {
             // byte order mark clean up
@@ -647,6 +700,15 @@ namespace SoftwareCo
             }
 
             return data;
+        }
+
+        [STAThread]
+        public static void ShowNotification(string title, string message)
+        {
+            Task.Delay(0).ContinueWith((task) =>
+            {
+                Notification.Show(title, message);
+            });
         }
     }
 

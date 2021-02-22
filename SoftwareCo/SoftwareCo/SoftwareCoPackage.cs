@@ -144,12 +144,8 @@ namespace SoftwareCo
 
             // show the readme if it's the initial install
             InitializeReadme();
-        }
 
-        private async void InitializeTracker()
-        {
-            // initialize the tracker event manager
-            TrackerEventManager.init();
+            WallclockManager.UpdateSessionSummaryFromServerAsync();
         }
 
         private async void InitializeStatusBarAndWallClock()

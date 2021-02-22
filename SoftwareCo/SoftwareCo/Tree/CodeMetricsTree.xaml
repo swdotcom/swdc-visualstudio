@@ -8,10 +8,10 @@
              Height="auto" Width="auto">
     <ScrollViewer Background="Transparent" BorderBrush="Transparent" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel>
-            <StackPanel x:Name="SignupPanel">
+            <StackPanel x:Name="AccountPanel">
             </StackPanel>
-            <StackPanel x:Name="LoggedInPanel">
-                <TreeView x:Name="LoggedInTree" Background="Transparent" BorderBrush="Transparent"
+            <StackPanel>
+                <TreeView x:Name="SlackWorkspaceTree" Background="Transparent" BorderBrush="Transparent"
                           Width="auto" Height="auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
                     <TreeView.Resources>
                         <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
@@ -25,167 +25,14 @@
                     </TreeView.Resources>
                 </TreeView>
             </StackPanel>
+
             <StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="5,0,0,0" x:Name="WebDashboardPanel">
-                    <Image x:Name="WebDashboardImage" Width="15" Height="15"></Image>
-                    <Label x:Name="WebDashboardLabel" Foreground="DarkCyan" MouseDown="LaunchWebDashboard" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" ></Label>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
-                    <Image x:Name="DashboardImage"  Width="15" Height="15"></Image>
-                    <Label x:Name="DashboardLabel" Foreground="DarkCyan" MouseDown="DashboardClickHandler" Background="Transparent" BorderBrush="Transparent" BorderThickness="0"></Label>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
-                    <Image x:Name="ToggleStatusImage" Width="15" Height="15"></Image>
-                    <Label x:Name="ToggleStatusLabel" Foreground="DarkCyan" MouseDown="ToggleClickHandler" Background="Transparent" BorderBrush="Transparent" BorderThickness="0"></Label>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
-                    <Image x:Name="LearnMoreImage" Width="15" Height="15"></Image>
-                    <Label x:Name="LearnMoreLabel" Foreground="DarkCyan" MouseDown="LearnMoreClickHandler" Background="Transparent" BorderBrush="Transparent" BorderThickness="0"></Label>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
-                    <Image x:Name="FeedbackImage" Width="15" Height="15"></Image>
-                    <Label x:Name="FeedbackLabel" Foreground="DarkCyan" MouseDown="FeedbackClickHandler" Background="Transparent" BorderBrush="Transparent" BorderThickness="0"></Label>
-                </StackPanel>
                 <ItemsControl>
                     <Separator x:Name="Seperator1" Visibility="Visible" Margin="0,5,0,5"></Separator>
                 </ItemsControl>
             </StackPanel>
 
-            <StackPanel>
-                <TreeView x:Name="Editortime" Background="Transparent" BorderBrush="Transparent"
-                          Width="auto" Height="auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
-                    <TreeView.Resources>
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
-                      Color="Transparent" />
-                    </TreeView.Resources>
-                </TreeView>
-            </StackPanel>
-
-            <StackPanel>
-                <TreeView x:Name="Codetime" Background="Transparent" BorderBrush="Transparent"
-                          Width="auto" Height="auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
-                    <TreeView.Resources>
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
-                      Color="Transparent" />
-                    </TreeView.Resources>
-                </TreeView>
-            </StackPanel>
-
-            <StackPanel>
-                <TreeView x:Name="Linesadded" Background="Transparent" BorderBrush="Transparent" Width="auto" Height="auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
-                    <TreeView.Resources>
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
-                      Color="Transparent" />
-                    </TreeView.Resources>
-                </TreeView>
-            </StackPanel>
-
-            <StackPanel>
-                <TreeView x:Name="Linesremoved" Background="Transparent" BorderBrush="Transparent" Width="auto" Height="auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
-                    <TreeView.Resources>
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
-                      Color="Transparent" />
-                    </TreeView.Resources>
-                </TreeView>
-            </StackPanel>
-
-            <StackPanel>
-                <TreeView x:Name="Keystrokes" Background="Transparent" BorderBrush="Transparent" Width="auto" Height="auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
-                    <TreeView.Resources>
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
-                      Color="Transparent" />
-                    </TreeView.Resources>
-                </TreeView>
-            </StackPanel>
-
-            <StackPanel>
-                <TreeView x:Name="TopKeystrokeFiles" Background="Transparent" BorderBrush="Transparent" Width="auto" Height="auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
-                    <TreeView.Resources>
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
-                      Color="Transparent" />
-                    </TreeView.Resources>
-                </TreeView>
-            </StackPanel>
-
-            <StackPanel>
-                <TreeView x:Name="TopCodeTimeFiles" Background="Transparent" BorderBrush="Transparent" Width="auto" Height="auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
-                    <TreeView.Resources>
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
-                      Color="Transparent" />
-                    </TreeView.Resources>
-                </TreeView>
-            </StackPanel>
-
-            <StackPanel>
-                <TreeView x:Name="Uncommitted" Background="Transparent" BorderBrush="Transparent" Width="auto" Height="auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
-                    <TreeView.Resources>
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
-                      Color="Transparent" />
-                    </TreeView.Resources>
-                </TreeView>
-            </StackPanel>
-
-            <StackPanel>
-                <TreeView x:Name="CommittedToday" Background="Transparent" BorderBrush="Transparent" Width="auto" Height="auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
-                    <TreeView.Resources>
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
-                      Color="Transparent" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
-                      Color="Transparent" />
-                    </TreeView.Resources>
-                </TreeView>
+            <StackPanel x:Name="FlowPanel">
             </StackPanel>
 
             <StackPanel>
@@ -194,7 +41,7 @@
                 </ItemsControl>
             </StackPanel>
 
-            <StackPanel x:Name="ContributorsMetricsPanel"></StackPanel>
+            <StackPanel x:Name="StatsPanel"></StackPanel>
 
         </StackPanel>
     </ScrollViewer>

@@ -5,9 +5,9 @@ namespace SoftwareCo
 {
     class Scheduler
     {
-        private readonly ConcurrentDictionary<Action, ScheduledTask> _scheduledTasks = new ConcurrentDictionary<Action, ScheduledTask>();
+        private static readonly ConcurrentDictionary<Action, ScheduledTask> _scheduledTasks = new ConcurrentDictionary<Action, ScheduledTask>();
 
-        public void Execute(Action action, int timeoutMs)
+        public static void Execute(Action action, int timeoutMs)
         {
             ScheduledTask task = new ScheduledTask(action, timeoutMs);
             task.TaskComplete += RemoveTask;
@@ -15,7 +15,7 @@ namespace SoftwareCo
             task.Timer.Start();
         }
 
-        public void CancelAll()
+        public static void CancelAll()
         {
             foreach (ScheduledTask task in _scheduledTasks.Values)
             {
@@ -23,13 +23,13 @@ namespace SoftwareCo
             }
         }
 
-        private void RemoveTask(object sender, EventArgs e)
+        private static void RemoveTask(object sender, EventArgs e)
         {
             ScheduledTask task = (ScheduledTask)sender;
             DisposeTask(task);
         }
 
-        private void DisposeTask(ScheduledTask task)
+        private static void DisposeTask(ScheduledTask task)
         {
             task.TaskComplete -= RemoveTask;
             ScheduledTask deleted;

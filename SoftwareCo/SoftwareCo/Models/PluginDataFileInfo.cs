@@ -79,13 +79,13 @@ namespace SoftwareCo
 
         public static PluginDataFileInfo GetPluginDataFromDict(IDictionary<string, object> dict)
         {
-            string file = SoftwareCoUtil.ConvertObjectToString(dict, "file");
+            string file = SoftwareCoUtil.GetStringVal(dict, "file");
             PluginDataFileInfo fileInfo = new PluginDataFileInfo(file);
-            fileInfo.start = SoftwareCoUtil.ConvertObjectToLong(dict, "start");
-            fileInfo.length = SoftwareCoUtil.ConvertObjectToLong(dict, "length");
-            fileInfo.local_start = SoftwareCoUtil.ConvertObjectToLong(dict, "local_start");
-            fileInfo.end = SoftwareCoUtil.ConvertObjectToLong(dict, "end");
-            fileInfo.local_end = SoftwareCoUtil.ConvertObjectToLong(dict, "local_end");
+            fileInfo.start = SoftwareCoUtil.GetLongVal(dict, "start");
+            fileInfo.length = SoftwareCoUtil.GetLongVal(dict, "length");
+            fileInfo.local_start = SoftwareCoUtil.GetLongVal(dict, "local_start");
+            fileInfo.end = SoftwareCoUtil.GetLongVal(dict, "end");
+            fileInfo.local_end = SoftwareCoUtil.GetLongVal(dict, "local_end");
             fileInfo.lines = SoftwareCoUtil.ConvertObjectToInt(dict, "lines");
             fileInfo.charsPasted = SoftwareCoUtil.ConvertObjectToInt(dict, "charsPasted");
             fileInfo.add = SoftwareCoUtil.ConvertObjectToInt(dict, "add");
@@ -96,7 +96,7 @@ namespace SoftwareCo
             fileInfo.linesAdded = SoftwareCoUtil.ConvertObjectToInt(dict, "linesAdded");
             fileInfo.linesRemoved = SoftwareCoUtil.ConvertObjectToInt(dict, "linesRemoved");
             fileInfo.delete = SoftwareCoUtil.ConvertObjectToInt(dict, "delete");
-            fileInfo.syntax = SoftwareCoUtil.ConvertObjectToString(dict, "syntax");
+            fileInfo.syntax = SoftwareCoUtil.GetStringVal(dict, "syntax");
 
             fileInfo.characters_added = SoftwareCoUtil.ConvertObjectToInt(dict, "characters_added");
             fileInfo.characters_deleted = SoftwareCoUtil.ConvertObjectToInt(dict, "characters_deleted");

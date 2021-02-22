@@ -30,24 +30,24 @@ namespace SoftwareCo
 
         public void CloneFromDictionary(IDictionary<string, object> dict)
         {
-            this.fsPath = SoftwareCoUtil.ConvertObjectToString(dict, "fsPath");
-            this.name = SoftwareCoUtil.ConvertObjectToString(dict, "name");
-            this.add = SoftwareCoUtil.ConvertObjectToLong(dict, "add");
-            this.close = SoftwareCoUtil.ConvertObjectToLong(dict, "close");
-            this.delete = SoftwareCoUtil.ConvertObjectToLong(dict, "delete");
-            this.linesAdded = SoftwareCoUtil.ConvertObjectToLong(dict, "linesAdded");
-            this.linesRemoved = SoftwareCoUtil.ConvertObjectToLong(dict, "linesRemoved");
-            this.open = SoftwareCoUtil.ConvertObjectToLong(dict, "open");
-            this.paste = SoftwareCoUtil.ConvertObjectToLong(dict, "paste");
-            this.keystrokes = SoftwareCoUtil.ConvertObjectToLong(dict, "keystrokes");
-            this.netkeys = SoftwareCoUtil.ConvertObjectToLong(dict, "netkeys");
-            this.syntax = SoftwareCoUtil.ConvertObjectToString(dict, "syntax");
-            this.start = SoftwareCoUtil.ConvertObjectToLong(dict, "start");
-            this.local_start = SoftwareCoUtil.ConvertObjectToLong(dict, "local_start");
-            this.local_end = SoftwareCoUtil.ConvertObjectToLong(dict, "local_end");
-            this.duration_seconds = SoftwareCoUtil.ConvertObjectToLong(dict, "duration_seconds");
-            this.projectDir = SoftwareCoUtil.ConvertObjectToString(dict, "projectDir");
-            this.update_count = SoftwareCoUtil.ConvertObjectToLong(dict, "update_count");
+            this.fsPath = SoftwareCoUtil.GetStringVal(dict, "fsPath");
+            this.name = SoftwareCoUtil.GetStringVal(dict, "name");
+            this.add = SoftwareCoUtil.GetLongVal(dict, "add");
+            this.close = SoftwareCoUtil.GetLongVal(dict, "close");
+            this.delete = SoftwareCoUtil.GetLongVal(dict, "delete");
+            this.linesAdded = SoftwareCoUtil.GetLongVal(dict, "linesAdded");
+            this.linesRemoved = SoftwareCoUtil.GetLongVal(dict, "linesRemoved");
+            this.open = SoftwareCoUtil.GetLongVal(dict, "open");
+            this.paste = SoftwareCoUtil.GetLongVal(dict, "paste");
+            this.keystrokes = SoftwareCoUtil.GetLongVal(dict, "keystrokes");
+            this.netkeys = SoftwareCoUtil.GetLongVal(dict, "netkeys");
+            this.syntax = SoftwareCoUtil.GetStringVal(dict, "syntax");
+            this.start = SoftwareCoUtil.GetLongVal(dict, "start");
+            this.local_start = SoftwareCoUtil.GetLongVal(dict, "local_start");
+            this.local_end = SoftwareCoUtil.GetLongVal(dict, "local_end");
+            this.duration_seconds = SoftwareCoUtil.GetLongVal(dict, "duration_seconds");
+            this.projectDir = SoftwareCoUtil.GetStringVal(dict, "projectDir");
+            this.update_count = SoftwareCoUtil.GetLongVal(dict, "update_count");
             this.fileAgeDays = SoftwareCoUtil.ConvertObjectToInt(dict, "fileAgeDays");
             this.repoFileContributorCount = SoftwareCoUtil.ConvertObjectToInt(dict, "repoFileContributorCount");
             this.UpdateName();

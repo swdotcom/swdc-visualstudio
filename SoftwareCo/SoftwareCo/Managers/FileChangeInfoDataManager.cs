@@ -160,6 +160,7 @@ namespace SoftwareCo
             string fileChangeInfoSummary = FileManager.getFileChangeInfoSummaryData();
             try
             {
+                fileChangeInfoSummary = SoftwareCoUtil.CleanJsonToDeserialize(fileChangeInfoSummary);
                 if (fileChangeInfoSummary.StartsWith("["))
                 {
                     _fileChangeInfos = JsonConvert.DeserializeObject<List<FileChangeInfo>>(fileChangeInfoSummary);

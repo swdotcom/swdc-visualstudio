@@ -30,25 +30,8 @@ namespace SoftwareCo
             return package;
         }
 
-        public static async Task RebuildMenuButtonsAsync()
-        {
-            if (package == null || !SoftwareCoPackage.INITIALIZED)
-            {
-                return;
-            }
-
-            try
-            {
-                await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-                _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
-                if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null) {
-                    _codeMetricsWindow.RebuildMenuButtons();
-                }
-            }
-            catch (Exception) { }
-        }
-
-        public static async Task RebuildCodeMetricsAsync()
+        [STAThread]
+        public static async Task RebuildTreeAsync()
         {
             if (package == null || !SoftwareCoPackage.INITIALIZED)
             {
@@ -61,12 +44,14 @@ namespace SoftwareCo
                 _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
                 if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
                 {
-                    _codeMetricsWindow.RebuildCodeMetrics();
+                    _codeMetricsWindow.RebuildTree();
                 }
-            } catch (Exception) { }
+            }
+            catch (Exception) { }
         }
 
-        public static async Task RebuildGitMetricsAsync()
+        [STAThread]
+        public static async Task RebuildFlowButtons()
         {
             if (package == null || !SoftwareCoPackage.INITIALIZED)
             {
@@ -79,12 +64,13 @@ namespace SoftwareCo
                 _codeMetricsWindow = (CodeMetricsToolPane)package.FindToolWindow(typeof(CodeMetricsToolPane), 0, true);
                 if (_codeMetricsWindow != null && _codeMetricsWindow.Frame != null)
                 {
-                    _codeMetricsWindow.RebuildGitMetricsAsync();
+                    _codeMetricsWindow.RebuildFlowButtons();
                 }
             }
             catch (Exception) { }
         }
 
+        [STAThread]
         public static async Task OpenCodeMetricsPaneAsync()
         {
             if (package == null || !SoftwareCoPackage.INITIALIZED)
@@ -105,6 +91,7 @@ namespace SoftwareCo
             catch (Exception) { }
         }
 
+        [STAThread]
         public static async Task ToggleStatusbarMetrics()
         {
             if (package == null || !SoftwareCoPackage.INITIALIZED)
@@ -124,6 +111,7 @@ namespace SoftwareCo
             catch (Exception) { }
         }
 
+        [STAThread]
         public static async Task UpdateStatusBarButtonText(string text, string iconName = null)
         {
             if (package == null || !SoftwareCoPackage.INITIALIZED)
@@ -147,6 +135,7 @@ namespace SoftwareCo
             }
         }
 
+        [STAThread]
         public static async Task InitializeStatusBar()
         {
 
