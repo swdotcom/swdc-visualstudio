@@ -500,23 +500,23 @@ namespace SoftwareCo
 
     public static string HumanizeMinutes(long minutes)
     {
-      string str = "";
+      string str;
       if (minutes == 60)
       {
         str = "1h";
       }
       else if (minutes > 60)
       {
-        float hours = Math.Floor((float)minutes / 60);
-        float minutes = (float)minutes % 60;
-        string formatedHrs = String.Format("{0:0.00}", Math.Floor(hours)) + "h";
-        if (((float)minutes / 60) % 1 == 0)
+        double hours = Math.Floor((float)minutes / 60);
+        double remainder_minutes = (minutes % 60);
+        string formatedHrs = String.Format("{0:0}", Math.Floor(hours)) + "h";
+        if ((remainder_minutes / 60) % 1 == 0)
         {
           str = formatedHrs;
         }
         else
         {
-          str = formatedHrs + " " + minutes + "m";
+          str = formatedHrs + " " + remainder_minutes + "m";
         }
       }
       else if (minutes == 1)

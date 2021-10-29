@@ -41,7 +41,10 @@ namespace SoftwareCo
                 JsonObject jsonObj = new JsonObject();
                 jsonObj.Add("automated", automated);
                 await SoftwareHttpManager.MetricsRequest(HttpMethod.Post, "/v1/flow_sessions", jsonObj.ToString());
+                FileManager.UpdateFlowChange(true);
             }
+
+            PackageManager.RebuildTreeAsync();
         }
 
         public async void DisableFlow()
@@ -49,7 +52,10 @@ namespace SoftwareCo
             if (FileManager.IsInFlow())
             {
                 await SoftwareHttpManager.MetricsRequest(HttpMethod.Delete, "/v1/flow_sessions", null);
+                FileManager.UpdateFlowChange(false);
             }
+
+            PackageManager.RebuildTreeAsync();
         }
 
     }

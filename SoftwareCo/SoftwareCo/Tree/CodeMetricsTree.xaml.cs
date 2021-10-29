@@ -90,32 +90,13 @@ namespace SoftwareCo
 
             FlowPanel.Children.Clear();
 
-            Task<string> slackStatusPromise = SlackManager.GetSlackStatusMessage();
-            Task<DndStatus> slackDndStatusPromise = SlackManager.GetSlackDndInfo();
-            Task<string> slackPresencePromise = SlackManager.GetSlackPresence();
-
-            string slackStatusMsg = await slackStatusPromise;
-
-            string updateProfileStatusLabel = (string.IsNullOrEmpty(slackStatusMsg)) ? "Update profile status" : "Update profile status" + " (" + slackStatusMsg + ")";
-            FlowPanel.Children.Add(BuildClickLabel("UpdateSlackStatusPanel", "profile.png", updateProfileStatusLabel, UpdateSlackStatusHandler));
-
-            DndStatus status = await slackDndStatusPromise;
-            if (status != null && status.SnoozeEnabled == true)
+            if (FileManager.IsInFlow())
             {
-                FlowPanel.Children.Add(BuildClickLabel("UpdateNotifcationsPanel", "notifications-on.png", "Turn on notifications", EnableSlackNotificationsHandler));
-            } else
-            {
-                FlowPanel.Children.Add(BuildClickLabel("UpdateNotifcationsPanel", "notifications-off.png", "Pause notifications", PauseSlackNotificationsHandler));
-            }
-
-            string presence = await slackPresencePromise;
-            if (string.IsNullOrEmpty(presence) || presence == "active")
-            {
-                FlowPanel.Children.Add(BuildClickLabel("UpdatePresencePanel", "presence.png", "Set presence to away", SetAwayPresenceHandler));
+                FlowPanel.Children.Add(BuildClickLabel("FlowModePanel", "dot.png", "Exit Flow Mode", ExitFlowModeHandler));
             }
             else
             {
-                FlowPanel.Children.Add(BuildClickLabel("UpdatePresencePanel", "presence.png", "Set presence to active", SetActivePresenceHandler));
+                FlowPanel.Children.Add(BuildClickLabel("FlowModePanel", "dot-outlined.png", "Enter Flow Mode", EnterFlowModeHandler));
             }
         }
 
@@ -126,7 +107,7 @@ namespace SoftwareCo
             StatsPanel.Children.Clear();
 
             // settings button
-            StatsPanel.Children.Add(BuildClickLabel("DashboardPanel", "dashboard.png", "Settings", SettingsClickHandler));
+            StatsPanel.Children.Add(BuildClickLabel("DashboardPanel", "files.png", "Settings", SettingsClickHandler));
 
             // dashboard button
             StatsPanel.Children.Add(BuildClickLabel("DashboardPanel", "dashboard.png", "Dashboard Summary", DashboardClickHandler));
@@ -300,6 +281,24 @@ namespace SoftwareCo
             entity.cta_text = "See rich data visualizations in the web app";
             entity.icon_name = "paw";
             TrackerEventManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
+        }
+
+        private void ExitFlowModeHandler(object sender, MouseButtonEventArgs args)
+        {
+            if (!SoftwareCoPackage.INITIALIZED)
+            {
+                return;
+            }
+            FlowManager.Instance.DisableFlow();
+        }
+
+        private void EnterFlowModeHandler(object sender, MouseButtonEventArgs args)
+        {
+            if (!SoftwareCoPackage.INITIALIZED)
+            {
+                return;
+            }
+            FlowManager.Instance.EnableFlow(false);
         }
 
         private void SettingsClickHandler(object sender, MouseButtonEventArgs args)

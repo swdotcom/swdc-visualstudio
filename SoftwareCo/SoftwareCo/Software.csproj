@@ -74,6 +74,11 @@
     <Compile Include="Models\SoftwareUser.cs" />
     <Compile Include="Models\UserEncryptedData.cs" />
     <Compile Include="Models\UserState.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="tracker\client\Http.cs" />
     <Compile Include="tracker\client\Response.cs" />
     <Compile Include="tracker\entities\AuthEntity.cs" />
@@ -198,6 +203,10 @@
     <Resource Include="Resources\insertion.png" />
     <Resource Include="Resources\like.png" />
     <Resource Include="Resources\message.png" />
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="README.txt" />
     <Resource Include="Resources\github.png" />
     <Resource Include="Resources\envelope.png" />
@@ -260,6 +269,8 @@
     <Resource Include="Resources\status-clock.png" />
     <Resource Include="Resources\today.png" />
     <Resource Include="Resources\zen.png" />
+    <Resource Include="Resources\dot-outlined.png" />
+    <Resource Include="Resources\dot.png" />
     <Content Include="stylesheet.css" />
   </ItemGroup>
   <ItemGroup>

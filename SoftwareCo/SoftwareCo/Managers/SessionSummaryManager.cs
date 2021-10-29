@@ -21,22 +21,6 @@ namespace SoftwareCo
             GetSessionSummayData();
         }
 
-        public void IncrementSessionSummaryData(KeystrokeAggregates aggregate, TimeGapData eTimeInfo)
-        {
-            _sessionSummary = GetSessionSummayData();
-
-            if (eTimeInfo.session_seconds > 0)
-            {
-                _sessionSummary.currentDayMinutes += (eTimeInfo.session_seconds / 60);
-            }
-
-            _sessionSummary.currentDayKeystrokes += aggregate.keystrokes;
-            _sessionSummary.currentDayLinesAdded += aggregate.linesAdded;
-            _sessionSummary.currentDayLinesRemoved += aggregate.linesRemoved;
-
-            SaveSessionSummaryToDisk(_sessionSummary);
-        }
-
         public TimeGapData GetTimeBetweenLastPayload()
         {
             TimeGapData eTimeInfo = new TimeGapData();
