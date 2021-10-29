@@ -103,40 +103,6 @@ namespace SoftwareCo
             return GetFirstCommandResult("hostname", null);
         }
 
-        public static List<String> GetStringListVal(IDictionary<string, object> dict, string attribute)
-        {
-            List<String> list = new List<string>();
-            dict.TryGetValue(attribute, out object sourceJson);
-            try
-            {
-                Logger.Info("Got json list data: " + sourceJson.ToString());
-                /**
-                IDictionary<string, object> stringValDict = (sourceJson == null) ? null : (IDictionary<string, object>)sourceJson;
-                if (stringValDict != null && stringValDict.Count > 0)
-                {
-                    foreach (KeyValuePair<string, object> entry in stringValDict)
-                    {
-                        IDictionary<string, object> fileInfoDict = new Dictionary<string, object>();
-                        try
-                        {
-                            PluginDataFileInfo fileInfo = PluginDataFileInfo.GetPluginDataFromDict((JsonObject)entry.Value);
-                            pd.source.Add(fileInfo);
-                        }
-                        catch (Exception e)
-                        {
-                            //
-                        }
-                    }
-                }
-                **/
-            }
-            catch (Exception e)
-            {
-                //
-            }
-            return list;
-        }
-
         public static IDictionary<string, object> ConvertObjectToSource(IDictionary<string, object> dict)
         {
             dict.TryGetValue("source", out object sourceJson);
@@ -312,6 +278,21 @@ namespace SoftwareCo
         {
             string url = Constants.url_endpoint;
             Process.Start(url);
+        }
+
+        public static void launchCodeTimeDashboard()
+        {
+            Process.Start(Constants.url_endpoint + "/dashboard/code_time?view=summary");
+        }
+
+        public static void launchReadme()
+        {
+            Process.Start("https://www.github.com/swdotcom/swdc-visualstudio");
+        }
+
+        public static void launchSettings()
+        {
+            Process.Start(Constants.url_endpoint + "/preferences");
         }
 
         public static void launchMailToCody()

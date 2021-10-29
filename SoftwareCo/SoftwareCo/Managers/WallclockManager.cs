@@ -68,7 +68,7 @@ namespace SoftwareCo
             {
                 DispatchUpdatesProcessorAsync();
             }
-            
+
         }
 
         private static bool ApplicationIsActivated()
@@ -146,8 +146,8 @@ namespace SoftwareCo
             object jwt = FileManager.getItem("jwt");
             if (jwt != null)
             {
-                string api = "/sessions/summary?refresh=true";
-                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api);
+                string api = "/sessions/summary";
+                HttpResponseMessage response = await SoftwareHttpManager.MetricsRequest(HttpMethod.Get, api);
                 if (SoftwareHttpManager.IsOk(response))
                 {
                     SessionSummary summary = SessionSummaryManager.Instance.GetSessionSummayData();

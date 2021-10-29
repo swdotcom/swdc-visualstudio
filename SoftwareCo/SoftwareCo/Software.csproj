@@ -60,6 +60,7 @@
     <Compile Include="forms\OptionListDialog.xaml.cs">
       <DependentUpon>OptionListDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Managers\FlowManager.cs" />
     <Compile Include="Managers\FileInfoManager.cs" />
     <Compile Include="Managers\SlackManager.cs" />
     <Compile Include="Managers\TrackerEventManager.cs" />

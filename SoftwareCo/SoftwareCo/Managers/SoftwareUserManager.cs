@@ -20,7 +20,7 @@ namespace SoftwareCo
             if (thresholdSeconds > 60)
             {
                 // 3 second timeout
-                HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, "/ping", null, null, false);
+                HttpResponseMessage response = await SoftwareHttpManager.MetricsRequest(HttpMethod.Get, "/ping", null);
                 isOnline = SoftwareHttpManager.IsOk(response);
                 lastOnlineCheck = nowInSec;
             }
@@ -59,7 +59,7 @@ namespace SoftwareCo
 
                     string api = "/plugins/onboard";
                     string jsonData = jsonObj.ToString();
-                    HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Post, api, jsonData, null, false);
+                    HttpResponseMessage response = await SoftwareHttpManager.MetricsRequest(HttpMethod.Post, api, jsonData);
 
                     if (SoftwareHttpManager.IsOk(response))
                     {
@@ -101,7 +101,9 @@ namespace SoftwareCo
                 string cleanJson = SoftwareCoUtil.CleanJsonToDeserialize(responseBody);
                 PluginStateInfo pluginStateInfo = JsonConvert.DeserializeObject<PluginStateInfo>(cleanJson);
                 return pluginStateInfo;
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 Logger.Warning("Error retrieving plugin state info: " + e.Message);
             }
             return null;
@@ -118,7 +120,7 @@ namespace SoftwareCo
             string api = "/users/plugin/state";
 
             string token = (!string.IsNullOrEmpty(auth_callback_state)) ? auth_callback_state : jwt;
-            HttpResponseMessage response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, null, token);
+            HttpResponseMessage response = await SoftwareHttpManager.MetricsRequest(HttpMethod.Get, api);
 
             // check to see if we found the user or not
             PluginStateInfo pluginStateInfo = await GetPluginStateInfoFromResponseAsync(response);
@@ -126,7 +128,7 @@ namespace SoftwareCo
             if (pluginStateInfo == null && !string.IsNullOrEmpty(authType) && (authType.Equals("software") || authType.Equals("email")))
             {
                 // use the jwt
-                response = await SoftwareHttpManager.SendRequestAsync(HttpMethod.Get, api, null, jwt);
+                response = await SoftwareHttpManager.MetricsRequest(HttpMethod.Get, api, null);
                 pluginStateInfo = await GetPluginStateInfoFromResponseAsync(response);
             }
 
@@ -155,7 +157,7 @@ namespace SoftwareCo
 
                 FileManager.setBoolItem("switching_account", false);
                 FileManager.setAuthCallbackState(null);
-                
+
             }
 
             return userState;
@@ -175,7 +177,8 @@ namespace SoftwareCo
                         tryCountUntilFoundUser -= 1;
 
                         Task.Delay(1000 * 10).ContinueWith((task) => { RefetchUserStatusLazily(tryCountUntilFoundUser); });
-                    } else
+                    }
+                    else
                     {
                         // clear the auth, we've tried enough
                         FileManager.setBoolItem("switching_account", false);

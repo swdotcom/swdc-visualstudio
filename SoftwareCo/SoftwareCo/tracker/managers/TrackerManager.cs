@@ -37,7 +37,7 @@ namespace SoftwareCo
             {
 
                 // fetch the tracker_api from the plugin config
-                HttpResponseMessage resp = await SoftwareHttpManager.SendRequestAsync(System.Net.Http.HttpMethod.Get, "/plugins/config", null, null, false);
+                HttpResponseMessage resp = await SoftwareHttpManager.MetricsRequest(System.Net.Http.HttpMethod.Get, "/plugins/config", null);
 
                 // if (resp.ok && resp.responseData != null)
                 if (SoftwareHttpManager.IsOk(resp))

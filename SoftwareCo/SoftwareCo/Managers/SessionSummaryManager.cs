@@ -124,7 +124,7 @@ namespace SoftwareCo
             _sessionSummary = GetSessionSummayData();
             long averageDailyMinutesVal = _sessionSummary.averageDailyMinutes;
 
-            string currentDayMinutesTime = SoftwareCoUtil.HumanizeMinutes(ctSummary.activeCodeTimeMinutes);
+            string currentDayMinutesTime = SoftwareCoUtil.HumanizeMinutes(ctSummary.currentDayMinutes);
 
             // Code time today:  4 hrs | Avg: 3 hrs 28 min
             string iconName = ctSummary.activeCodeTimeMinutes > averageDailyMinutesVal ? "rocket.png" : "cpaw.png";
