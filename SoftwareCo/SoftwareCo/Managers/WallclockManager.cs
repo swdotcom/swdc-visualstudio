@@ -13,26 +13,20 @@ namespace SoftwareCo
   {
 
     private static Timer timer;
-    private static int THIRTY_SECONDS = 30;
-    private static int THIRTY_SECONDS_MILLIS = 1000 * 30;
+    private static int FIVE_MINUTES_MILLIS = 1000 * 60 * 5;
 
     private static long _wctime = 0;
-    private static string _currentDay = "";
 
     public CancellationToken DisposalToken { get; private set; }
 
     public static void Initialize()
     {
-      // fetch the current day from the sessions.json
-      _currentDay = FileManager.getItemAsString("currentDay");
       // start the wall clock timer in 10 seconds, every 1 minute
       timer = new Timer(
                 WallclcockTimerHandlerAsync,
                 null,
-                3000,
-                THIRTY_SECONDS_MILLIS);
-
-      DispatchUpdatesProcessorAsync();
+                1000,
+                FIVE_MINUTES_MILLIS);
     }
 
     public static void Dispose()
@@ -48,23 +42,12 @@ namespace SoftwareCo
     {
       bool isWinActivated = ApplicationIsActivated();
 
-      if (isWinActivated || DocEventManager.Instance.hasData())
-      {
-        _wctime = FileManager.getItemAsLong("wctime");
-        _wctime += THIRTY_SECONDS;
-        FileManager.setNumericItem("wctime", _wctime);
-
-        GetNewDayCheckerAsync();
-
-      }
       if (!isWinActivated)
       {
         DocEventManager.Instance.PostData();
       }
-      else
-      {
-        DispatchUpdatesProcessorAsync();
-      }
+
+      UpdateSessionSummaryFromServerAsync();
 
     }
 
@@ -101,39 +84,6 @@ namespace SoftwareCo
       FileManager.setNumericItem("wctime", _wctime);
     }
 
-    public static async Task DispatchUpdatesProcessorAsync()
-    {
-      SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
-      PackageManager.RebuildTreeAsync();
-    }
-
-    public static async Task GetNewDayCheckerAsync()
-    {
-      if (SoftwareCoUtil.IsNewDay())
-      {
-        SessionSummaryManager.Instance.ÇlearSessionSummaryData();
-
-
-        // day does't match. clear the wall clock time,
-        // the session summary, time data summary,
-        // and the file change info summary data
-        ClearWcTime();
-
-        // set the current day
-        NowTime nowTime = SoftwareCoUtil.GetNowTime();
-        _currentDay = nowTime.day;
-
-        // update the current day
-        FileManager.setItem("currentDay", _currentDay);
-        // update the last payload timestamp
-        FileManager.setNumericItem("latestPayloadTimestampEndUtc", 0);
-
-        // update the session summary global and averages for the new day
-        UpdateSessionSummaryFromServerAsync();
-
-      }
-    }
-
     public static async Task UpdateSessionSummaryFromServerAsync()
     {
       object jwt = FileManager.getItem("jwt");
@@ -156,7 +106,7 @@ namespace SoftwareCo
               summary.CloneSessionSummary(incomingSummary);
               SessionSummaryManager.Instance.SaveSessionSummaryToDisk(summary);
 
-              DispatchUpdatesProcessorAsync();
+              SessionSummaryManager.Instance.UpdateStatusBarWithSummaryDataAsync();
             }
             catch (Exception e)
             {
