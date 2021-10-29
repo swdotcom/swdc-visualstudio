@@ -24,9 +24,7 @@ namespace SoftwareCo
         public long local_end { get; set; }
         public string timezone { get; set; }
         public double offset { get; set; }
-        public long cumulative_editor_seconds { get; set; }
         public long elapsed_seconds { get; set; }
-        public long cumulative_session_seconds { get; set; }
         public string project_null_error { get; set; }
         public string workspace_name { get; set; }
         public string hostname { get; set; }
@@ -44,9 +42,7 @@ namespace SoftwareCo
             os = EnvUtil.GetOs();
             source = new List<PluginDataFileInfo>();
             project = GetPluginProjectUsingDir(projectDirectory);
-            cumulative_editor_seconds = 0;
             elapsed_seconds = 0;
-            cumulative_session_seconds = 0;
             project_null_error = "";
             workspace_name = "";
             hostname = "";
@@ -61,12 +57,10 @@ namespace SoftwareCo
             pd.local_end = SoftwareCoUtil.GetLongVal(dict, "local_end");
             pd.local_start = SoftwareCoUtil.GetLongVal(dict, "local_start");
             pd.keystrokes = SoftwareCoUtil.GetLongVal(dict, "keystrokes");
-            pd.cumulative_editor_seconds = SoftwareCoUtil.GetLongVal(dict, "cumulative_editor_seconds");
             pd.os = SoftwareCoUtil.GetStringVal(dict, "os");
             pd.offset = SoftwareCoUtil.ConvertObjectToDouble(dict, "offset");
             pd.version = SoftwareCoUtil.GetStringVal(dict, "version");
             pd.timezone = SoftwareCoUtil.GetStringVal(dict, "timezone");
-            pd.cumulative_session_seconds = SoftwareCoUtil.GetLongVal(dict, "cumulative_session_seconds");
             pd.pluginId = SoftwareCoUtil.ConvertObjectToInt(dict, "pluginId");
             pd.elapsed_seconds = SoftwareCoUtil.GetLongVal(dict, "elapsed_seconds");
             pd.workspace_name = SoftwareCoUtil.GetStringVal(dict, "workspace_name");
@@ -148,10 +142,6 @@ namespace SoftwareCo
             this.end = nowTime.now;
             this.local_end = nowTime.local_now;
 
-            long payloadTimInSeconds = this.end - this.start;
-
-            // get the TimeData for this project dir
-            await ValidateAndUpdateCumulativeDataAsync(eTimeInfo.session_seconds, payloadTimInSeconds);
             this.elapsed_seconds = eTimeInfo.elapsed_seconds;
 
             // make sure all of the end times are set
@@ -191,9 +181,6 @@ namespace SoftwareCo
                 FileChangeInfoDataManager.Instance.SaveFileChangeInfoDataSummaryToDisk(fileChangeInfo);
             }
 
-            // increment the session summary minutes and other metrics
-            summaryMgr.IncrementSessionSummaryData(aggregates, eTimeInfo);
-
             // create the json payload
             JsonObject jsonObj = new JsonObject();
             jsonObj.Add("start", this.start);
@@ -208,8 +195,6 @@ namespace SoftwareCo
             jsonObj.Add("os", this.os);
             jsonObj.Add("end", this.end);
             jsonObj.Add("local_end", this.local_end);
-            jsonObj.Add("cumulative_editor_seconds", this.cumulative_editor_seconds);
-            jsonObj.Add("cumulative_session_seconds", this.cumulative_session_seconds);
             jsonObj.Add("elapsed_seconds", this.elapsed_seconds);
             jsonObj.Add("workspace_name", this.workspace_name);
             jsonObj.Add("hostname", this.hostname);
@@ -219,41 +204,6 @@ namespace SoftwareCo
             jsonObj.Add("source", BuildSourceJson());
 
             return jsonObj.ToString();
-        }
-
-        private async Task ValidateAndUpdateCumulativeDataAsync(long session_seconds, long payloadTimInSeconds)
-        {
-
-            TimeData td = await TimeDataManager.Instance.UpdateSessionAndFileSecondsAsync(this.project, session_seconds);
-
-            // get the current payloads so we can compare our last cumulative seconds
-            if (SoftwareCoUtil.IsNewDay())
-            {
-                // the days don't match. don't use the editor or session seconds for a different day
-                // clear out data from the previous day
-                await WallclockManager.GetNewDayCheckerAsync();
-                if (td != null)
-                {
-                    td = null;
-                    this.project_null_error = "TimeData should be null as its a new day";
-                }
-            }
-
-            this.workspace_name = SoftwareCoUtil.workspace_name;
-            this.hostname = SoftwareCoUtil.getHostname();
-            this.cumulative_session_seconds = payloadTimInSeconds;
-            this.cumulative_editor_seconds = payloadTimInSeconds;
-
-            if (td != null)
-            {
-                this.cumulative_editor_seconds = td.editor_seconds;
-                this.cumulative_session_seconds = td.session_seconds;
-            }
-
-            if (this.cumulative_editor_seconds < this.cumulative_session_seconds)
-            {
-                this.cumulative_editor_seconds = cumulative_session_seconds;
-            }
         }
 
         private JsonObject BuildSourceJson()

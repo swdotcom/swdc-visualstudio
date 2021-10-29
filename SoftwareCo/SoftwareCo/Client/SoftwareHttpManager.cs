@@ -14,21 +14,21 @@ namespace SoftwareCo
             return (response != null && response.StatusCode == HttpStatusCode.OK);
         }
 
-        public static async Task<HttpResponseMessage> SendDashboardRequestAsync(HttpMethod httpMethod, string uri)
+        public static async Task<HttpResponseMessage> AppRequest(HttpMethod httpMethod, string api, string optionalPayload = null)
         {
-            return await SendRequestAsync(httpMethod, uri, null);
+            return await RequestIt(httpMethod, Constants.url_endpoint + "" + api, optionalPayload);
         }
 
-        public static async Task<HttpResponseMessage> SendRequestAsync
-            (HttpMethod httpMethod, string uri, string optionalPayload = null, string jwt = null, bool useJwt = true)
+        public static async Task<HttpResponseMessage> MetricsRequest(HttpMethod httpMethod, string api, string optionalPayload = null)
+        {
+            return await RequestIt(httpMethod, Constants.api_endpoint + "" + api, optionalPayload);
+        }
+
+        public static async Task<HttpResponseMessage> RequestIt
+            (HttpMethod httpMethod, string api, string optionalPayload = null, string jwt = null)
         {
 
             if (!SoftwareCoUtil.isTelemetryOn())
-            {
-                return null;
-            }
-
-            if (!SoftwareUserManager.isOnline)
             {
                 return null;
             }
@@ -39,15 +39,7 @@ namespace SoftwareCo
             };
             var cts = new CancellationTokenSource();
             HttpResponseMessage response = null;
-            if (jwt == null && useJwt)
-            {
-                jwt = FileManager.getItemAsString("jwt");
-            }
-            if (jwt != null)
-            {
-                // add the authorizationn
-                client.DefaultRequestHeaders.Add("Authorization", jwt);
-            }
+            AddAuthorization(client);
             HttpContent contentPost = null;
             try
             {
@@ -63,14 +55,21 @@ namespace SoftwareCo
             bool isPost = (httpMethod.Equals(HttpMethod.Post));
             try
             {
-                string endpoint = Constants.api_endpoint + "" + uri;
-                if (isPost)
+                if (httpMethod.Equals(HttpMethod.Post))
                 {
-                    response = await client.PostAsync(endpoint, contentPost, cts.Token);
+                    response = await client.PostAsync(api, contentPost, cts.Token);
+                }
+                else if (httpMethod.Equals(HttpMethod.Get))
+                {
+                    response = await client.GetAsync(api, cts.Token);
+                }
+                else if (httpMethod.Equals(HttpMethod.Delete))
+                {
+                    response = await client.DeleteAsync(api, cts.Token);
                 }
                 else
                 {
-                    response = await client.GetAsync(endpoint, cts.Token);
+                    response = await client.PutAsync(api, contentPost, cts.Token);
                 }
             }
             catch (HttpRequestException e)
@@ -113,13 +112,18 @@ namespace SoftwareCo
         {
             Logger.Error("We are having trouble sending data to Software.com, reason: " + e.Message);
         }
-    }
 
-    public class SpotifyToken
-    {
-        public string Access_token { get; set; }
-        public string Token_type { get; set; }
-        public double Expires_in { get; set; }
-        public DateTime Expire_date { get; set; }
+        private static void AddAuthorization(HttpClient client)
+        {
+            string jwt = FileManager.getItemAsString("jwt");
+            if (!String.IsNullOrEmpty(jwt))
+            {
+                if (jwt.Contains("JWT "))
+                {
+                    jwt = "Bearer " + jwt.Substring("JWT ".Length);
+                }
+                client.DefaultRequestHeaders.Add("Authorization", jwt);
+            }
+        }
     }
 }

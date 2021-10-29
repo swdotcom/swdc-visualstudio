@@ -91,7 +91,8 @@ namespace SoftwareCo
             {
                 // it's currently fetching, raise it to the standard 40
                 connectTryCount = 40;
-            } else
+            }
+            else
             {
                 Task.Delay(1000 * 12).ContinueWith((task) => { RefetchSlackConnectStatusLazily(40); });
             }
@@ -106,7 +107,8 @@ namespace SoftwareCo
                 List<Integration> currentIntegrations = FileManager.GetIntegrations();
                 foreach (Integration integration in userState.user.integrations)
                 {
-                    if (integration.name.ToLower().Equals("slack") && integration.status.ToLower().Equals("active")) {
+                    if (integration.name.ToLower().Equals("slack") && integration.status.ToLower().Equals("active"))
+                    {
                         Integration foundIntegration = currentIntegrations.Find(delegate (Integration n) { return n.authId.Equals(integration.authId); });
                         if (foundIntegration == null)
                         {
@@ -141,7 +143,7 @@ namespace SoftwareCo
                 string jwt = FileManager.getItemAsString("jwt");
                 JsonObject jsonObj = new JsonObject();
                 jsonObj.Add("authId", foundIntegration.authId);
-                SoftwareHttpManager.SendRequestAsync(HttpMethod.Put, "/auth/slack/disconnect", jsonObj.ToString(), jwt);
+                SoftwareHttpManager.MetricsRequest(HttpMethod.Put, "/auth/slack/disconnect", jsonObj.ToString());
 
                 // remove it from the integrations list
                 List<Integration> newList = new List<Integration>();
@@ -328,7 +330,7 @@ namespace SoftwareCo
                 return;
             }
 
-            string[] options = new string[] { "Clear status message", "Update state message"};
+            string[] options = new string[] { "Clear status message", "Update state message" };
             OptionListDialog dialog = new OptionListDialog(options);
             dialog.ShowDialog();
 
@@ -410,12 +412,14 @@ namespace SoftwareCo
                 {
                     connectTryCount -= 1;
                     Task.Delay(1000 * 10).ContinueWith((task) => { RefetchSlackConnectStatusLazily(connectTryCount); });
-                } else
+                }
+                else
                 {
                     FileManager.setAuthCallbackState(null);
                     connectTryCount = 0;
                 }
-            } else
+            }
+            else
             {
                 FileManager.setAuthCallbackState(null);
                 connectTryCount = 0;

@@ -21,22 +21,6 @@ namespace SoftwareCo
             GetSessionSummayData();
         }
 
-        public void IncrementSessionSummaryData(KeystrokeAggregates aggregate, TimeGapData eTimeInfo)
-        {
-            _sessionSummary = GetSessionSummayData();
-
-            if (eTimeInfo.session_seconds > 0)
-            {
-                _sessionSummary.currentDayMinutes += (eTimeInfo.session_seconds / 60);
-            }
-
-            _sessionSummary.currentDayKeystrokes += aggregate.keystrokes;
-            _sessionSummary.currentDayLinesAdded += aggregate.linesAdded;
-            _sessionSummary.currentDayLinesRemoved += aggregate.linesRemoved;
-
-            SaveSessionSummaryToDisk(_sessionSummary);
-        }
-
         public TimeGapData GetTimeBetweenLastPayload()
         {
             TimeGapData eTimeInfo = new TimeGapData();
@@ -119,15 +103,13 @@ namespace SoftwareCo
 
         public async Task UpdateStatusBarWithSummaryDataAsync()
         {
-            CodeTimeSummary ctSummary = TimeDataManager.Instance.GetCodeTimeSummary();
-
             _sessionSummary = GetSessionSummayData();
             long averageDailyMinutesVal = _sessionSummary.averageDailyMinutes;
 
-            string currentDayMinutesTime = SoftwareCoUtil.HumanizeMinutes(ctSummary.activeCodeTimeMinutes);
+            string currentDayMinutesTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.currentDayMinutes);
 
             // Code time today:  4 hrs | Avg: 3 hrs 28 min
-            string iconName = ctSummary.activeCodeTimeMinutes > averageDailyMinutesVal ? "rocket.png" : "cpaw.png";
+            string iconName = _sessionSummary.currentDayMinutes > averageDailyMinutesVal ? "rocket.png" : "cpaw.png";
 
             // it's ok not to await on this
             PackageManager.UpdateStatusBarButtonText(currentDayMinutesTime, iconName);

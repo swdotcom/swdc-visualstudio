@@ -60,6 +60,7 @@
     <Compile Include="forms\OptionListDialog.xaml.cs">
       <DependentUpon>OptionListDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Managers\FlowManager.cs" />
     <Compile Include="Managers\FileInfoManager.cs" />
     <Compile Include="Managers\SlackManager.cs" />
     <Compile Include="Managers\TrackerEventManager.cs" />
@@ -73,6 +74,11 @@
     <Compile Include="Models\SoftwareUser.cs" />
     <Compile Include="Models\UserEncryptedData.cs" />
     <Compile Include="Models\UserState.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="tracker\client\Http.cs" />
     <Compile Include="tracker\client\Response.cs" />
     <Compile Include="tracker\entities\AuthEntity.cs" />
@@ -104,7 +110,6 @@
     <Compile Include="Managers\PackageManager.cs" />
     <Compile Include="Managers\ReportManager.cs" />
     <Compile Include="Managers\SessionSummaryManager.cs" />
-    <Compile Include="Managers\TimeDataManager.cs" />
     <Compile Include="Models\CodeTimeSummary.cs" />
     <Compile Include="Models\CommitChangeStats.cs" />
     <Compile Include="Models\CommitInfo.cs" />
@@ -198,6 +203,10 @@
     <Resource Include="Resources\insertion.png" />
     <Resource Include="Resources\like.png" />
     <Resource Include="Resources\message.png" />
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="README.txt" />
     <Resource Include="Resources\github.png" />
     <Resource Include="Resources\envelope.png" />
@@ -260,6 +269,8 @@
     <Resource Include="Resources\status-clock.png" />
     <Resource Include="Resources\today.png" />
     <Resource Include="Resources\zen.png" />
+    <Resource Include="Resources\dot-outlined.png" />
+    <Resource Include="Resources\dot.png" />
     <Content Include="stylesheet.css" />
   </ItemGroup>
   <ItemGroup>
@@ -443,7 +454,7 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>

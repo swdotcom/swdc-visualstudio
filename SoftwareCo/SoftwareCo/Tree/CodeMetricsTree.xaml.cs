@@ -90,32 +90,13 @@ namespace SoftwareCo
 
             FlowPanel.Children.Clear();
 
-            Task<string> slackStatusPromise = SlackManager.GetSlackStatusMessage();
-            Task<DndStatus> slackDndStatusPromise = SlackManager.GetSlackDndInfo();
-            Task<string> slackPresencePromise = SlackManager.GetSlackPresence();
-
-            string slackStatusMsg = await slackStatusPromise;
-
-            string updateProfileStatusLabel = (string.IsNullOrEmpty(slackStatusMsg)) ? "Update profile status" : "Update profile status" + " (" + slackStatusMsg + ")";
-            FlowPanel.Children.Add(BuildClickLabel("UpdateSlackStatusPanel", "profile.png", updateProfileStatusLabel, UpdateSlackStatusHandler));
-
-            DndStatus status = await slackDndStatusPromise;
-            if (status != null && status.SnoozeEnabled == true)
+            if (FileManager.IsInFlow())
             {
-                FlowPanel.Children.Add(BuildClickLabel("UpdateNotifcationsPanel", "notifications-on.png", "Turn on notifications", EnableSlackNotificationsHandler));
-            } else
-            {
-                FlowPanel.Children.Add(BuildClickLabel("UpdateNotifcationsPanel", "notifications-off.png", "Pause notifications", PauseSlackNotificationsHandler));
-            }
-
-            string presence = await slackPresencePromise;
-            if (string.IsNullOrEmpty(presence) || presence == "active")
-            {
-                FlowPanel.Children.Add(BuildClickLabel("UpdatePresencePanel", "presence.png", "Set presence to away", SetAwayPresenceHandler));
+                FlowPanel.Children.Add(BuildClickLabel("FlowModePanel", "dot.png", "Exit Flow Mode", ExitFlowModeHandler));
             }
             else
             {
-                FlowPanel.Children.Add(BuildClickLabel("UpdatePresencePanel", "presence.png", "Set presence to active", SetActivePresenceHandler));
+                FlowPanel.Children.Add(BuildClickLabel("FlowModePanel", "dot-outlined.png", "Enter Flow Mode", EnterFlowModeHandler));
             }
         }
 
@@ -125,46 +106,11 @@ namespace SoftwareCo
 
             StatsPanel.Children.Clear();
 
-            SessionSummary summary = SessionSummaryManager.Instance.GetSessionSummayData();
-            CodeTimeSummary ctSummary = TimeDataManager.Instance.GetCodeTimeSummary();
-
-            string refClass = FileManager.getItemAsString("reference-class", "user");
-
-            string todayVsLabel = refClass.Equals("user") ? "Today vs. your daily avg" : "Today vs your global avg";
-            StatsPanel.Children.Add(BuildClickLabel("TodayVsPanel", "today.png", todayVsLabel, TodayVsAvgHandler));
-
-            string codeTimeStr = "Code time: " + SoftwareCoUtil.HumanizeMinutes(ctSummary.codeTimeMinutes);
-            long avgCodeTimeMinutes = refClass.Equals("user") ? summary.averageDailyCodeTimeMinutes : summary.globalAverageDailyCodeTimeMinutes;
-            string codeTimeAvgStr = SoftwareCoUtil.HumanizeMinutes(avgCodeTimeMinutes);
-            string codeTimeIcon = ctSummary.codeTimeMinutes > avgCodeTimeMinutes ? "bolt.png" : "bolt-grey.png";
-            StatsPanel.Children.Add(BuildLabelItem("CodeTimeMinutesPanel", codeTimeIcon, codeTimeStr + " (" + codeTimeAvgStr + " avg)"));
-
-            string activeCodeTimeStr = "Active code time: " + SoftwareCoUtil.HumanizeMinutes(ctSummary.activeCodeTimeMinutes);
-            long avgActiveCodeTimeMinutes = refClass.Equals("user") ? summary.averageDailyMinutes : summary.globalAverageDailyMinutes;
-            string activeCodeTimeAvgStr = SoftwareCoUtil.HumanizeMinutes(avgActiveCodeTimeMinutes);
-            string activeCodeTimeIcon = ctSummary.activeCodeTimeMinutes > avgActiveCodeTimeMinutes ? "bolt.png" : "bolt-grey.png";
-            StatsPanel.Children.Add(BuildLabelItem("ActiveCodeTimeMinutesPanel", activeCodeTimeIcon, activeCodeTimeStr + " (" + activeCodeTimeAvgStr + " avg)"));
-
-            string linesAddedStr = "Lines added: " + SoftwareCoUtil.FormatNumber(summary.currentDayLinesAdded);
-            long avgLinesAdded = refClass.Equals("user") ? summary.averageDailyLinesAdded : summary.globalAverageLinesAdded;
-            string linesAddedAvgStr = SoftwareCoUtil.FormatNumber(avgLinesAdded);
-            string linesAddedIcon = summary.currentDayLinesAdded > avgLinesAdded ? "bolt.png" : "bolt-grey.png";
-            StatsPanel.Children.Add(BuildLabelItem("LinesAddedPanel", linesAddedIcon, linesAddedStr + " (" + linesAddedAvgStr + " avg)"));
-
-            string linesRemovedStr = "Lines removed: " + SoftwareCoUtil.FormatNumber(summary.currentDayLinesRemoved);
-            long avgLinesRemoved = refClass.Equals("user") ? summary.averageDailyLinesRemoved : summary.globalAverageLinesRemoved;
-            string linesRemovedAvgStr = SoftwareCoUtil.FormatNumber(avgLinesRemoved);
-            string linesRemovedIcon = summary.currentDayLinesRemoved > avgLinesRemoved ? "bolt.png" : "bolt-grey.png";
-            StatsPanel.Children.Add(BuildLabelItem("LinesRemovedPanel", linesRemovedIcon, linesRemovedStr + " (" + linesRemovedAvgStr + " avg)"));
-
-            string keystrokesStr = "Keystrokes: " + SoftwareCoUtil.FormatNumber(summary.currentDayKeystrokes);
-            long avgKeystrokes = refClass.Equals("user") ? summary.averageDailyKeystrokes : summary.globalAverageDailyKeystrokes;
-            string keystrokesAvgStr = SoftwareCoUtil.FormatNumber(avgKeystrokes);
-            string keystrokesIcon = summary.currentDayKeystrokes > avgKeystrokes ? "bolt.png" : "bolt-grey.png";
-            StatsPanel.Children.Add(BuildLabelItem("KeystrokesPanel", keystrokesIcon, keystrokesStr + " (" + keystrokesAvgStr + " avg)"));
+            // settings button
+            StatsPanel.Children.Add(BuildClickLabel("DashboardPanel", "files.png", "Settings", SettingsClickHandler));
 
             // dashboard button
-            StatsPanel.Children.Add(BuildClickLabel("DashboardPanel", "dashboard.png", "Dashboard", DashboardClickHandler));
+            StatsPanel.Children.Add(BuildClickLabel("DashboardPanel", "dashboard.png", "Dashboard Summary", DashboardClickHandler));
 
             // more at software button
             StatsPanel.Children.Add(BuildClickLabel("WebAnalyticsPanel", "paw.png", "More data at Software.com", LaunchWebDashboard));
@@ -284,20 +230,6 @@ namespace SoftwareCo
             SlackManager.UpdateSlackPresence("auto");
         }
 
-        private void TodayVsAvgHandler(object sender, MouseButtonEventArgs args)
-        {
-            string refClass = FileManager.getItemAsString("reference-class", "user");
-            if (refClass.Equals("user"))
-            {
-                refClass = "global";
-            } else
-            {
-                refClass = "user";
-            }
-            FileManager.setItem("reference-class", refClass);
-            RebuildStatsButtonsAsync();
-        }
-
         private void SwitchAccountsClickHandler(object sender, MouseButtonEventArgs args)
         {
             SwitchAccountDialog dialog = new SwitchAccountDialog();
@@ -349,6 +281,33 @@ namespace SoftwareCo
             entity.cta_text = "See rich data visualizations in the web app";
             entity.icon_name = "paw";
             TrackerEventManager.TrackUIInteractionEvent(UIInteractionType.click, entity);
+        }
+
+        private void ExitFlowModeHandler(object sender, MouseButtonEventArgs args)
+        {
+            if (!SoftwareCoPackage.INITIALIZED)
+            {
+                return;
+            }
+            FlowManager.Instance.DisableFlow();
+        }
+
+        private void EnterFlowModeHandler(object sender, MouseButtonEventArgs args)
+        {
+            if (!SoftwareCoPackage.INITIALIZED)
+            {
+                return;
+            }
+            FlowManager.Instance.EnableFlow(false);
+        }
+
+        private void SettingsClickHandler(object sender, MouseButtonEventArgs args)
+        {
+            if (!SoftwareCoPackage.INITIALIZED)
+            {
+                return;
+            }
+            DashboardManager.Instance.LaunchSettingsView();
         }
 
         private void DashboardClickHandler(object sender, MouseButtonEventArgs args)

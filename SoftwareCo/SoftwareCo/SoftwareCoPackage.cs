@@ -146,6 +146,8 @@ namespace SoftwareCo
             InitializeReadme();
 
             WallclockManager.UpdateSessionSummaryFromServerAsync();
+
+            FlowManager.Instance.init();
         }
 
         private async void InitializeStatusBarAndWallClock()

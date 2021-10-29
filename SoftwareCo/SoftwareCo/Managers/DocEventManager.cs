@@ -371,8 +371,6 @@ namespace SoftwareCo
                 FileManager.setNumericItem("latestPayloadTimestampEndUtc", nowTime.now);
 
                 _pluginData = null;
-
-                WallclockManager.DispatchUpdatesProcessorAsync();
             }
         }
     }

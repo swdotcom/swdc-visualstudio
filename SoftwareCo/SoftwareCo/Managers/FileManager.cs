@@ -90,6 +90,11 @@ namespace SoftwareCo
             return getSoftwareDataDir(true) + "\\device.json";
         }
 
+        public static string getFlowChangeFile()
+        {
+            return getSoftwareDataDir(true) + "\\flowChange.json";
+        }
+
         public static bool FileChangeInfoSummaryFileExists()
         {
             string file = getSoftwareDataDir(false) + "\\fileChangeSummary.json";
@@ -394,7 +399,9 @@ namespace SoftwareCo
                     content = SoftwareCoUtil.CleanJsonToDeserialize(content);
                     integrations = JsonConvert.DeserializeObject<List<Integration>>(content);
                 }
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 Logger.Warning("Error reading integrations file: " + e.Message);
             }
 
@@ -473,7 +480,68 @@ namespace SoftwareCo
             {
             }
         }
-    }
 
+        public static bool IsInFlow()
+        {
+            string file = getFlowChangeFile();
+            if (!File.Exists(file))
+            {
+                // create it
+                UpdateFlowChange(false);
+            }
+
+            string content = File.ReadAllText(file, System.Text.Encoding.UTF8);
+
+            object val = null;
+            if (content != null)
+            {
+
+                val = SimpleJson.GetValue(content, "in_flow");
+                if (val == null)
+                {
+                    val = "false";
+                }
+            }
+
+            if (val != null)
+            {
+                try
+                {
+                    return Convert.ToBoolean(val);
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
+            }
+            return false;
+
+        }
+
+        public static void UpdateFlowChange(object val)
+        {
+            string file = getFlowChangeFile();
+
+            try
+            {
+                string content = "";
+                IDictionary<string, object> dict = new Dictionary<string, object>();
+                if (File.Exists(file))
+                {
+
+                    content = File.ReadAllText(file, System.Text.Encoding.UTF8);
+                    content = SoftwareCoUtil.CleanJsonToDeserialize(content);
+                    dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
+                }
+                dict["in_flow"] = val;
+                content = JsonConvert.SerializeObject(dict);
+
+                File.WriteAllText(file, content, System.Text.Encoding.UTF8);
+            }
+            catch (Exception)
+            {
+            }
+        }
+    }
 
 }
