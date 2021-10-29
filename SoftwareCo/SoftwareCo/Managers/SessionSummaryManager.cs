@@ -119,15 +119,13 @@ namespace SoftwareCo
 
         public async Task UpdateStatusBarWithSummaryDataAsync()
         {
-            CodeTimeSummary ctSummary = TimeDataManager.Instance.GetCodeTimeSummary();
-
             _sessionSummary = GetSessionSummayData();
             long averageDailyMinutesVal = _sessionSummary.averageDailyMinutes;
 
-            string currentDayMinutesTime = SoftwareCoUtil.HumanizeMinutes(ctSummary.currentDayMinutes);
+            string currentDayMinutesTime = SoftwareCoUtil.HumanizeMinutes(_sessionSummary.currentDayMinutes);
 
             // Code time today:  4 hrs | Avg: 3 hrs 28 min
-            string iconName = ctSummary.activeCodeTimeMinutes > averageDailyMinutesVal ? "rocket.png" : "cpaw.png";
+            string iconName = _sessionSummary.currentDayMinutes > averageDailyMinutesVal ? "rocket.png" : "cpaw.png";
 
             // it's ok not to await on this
             PackageManager.UpdateStatusBarButtonText(currentDayMinutesTime, iconName);
